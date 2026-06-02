@@ -1,0 +1,179 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Brand colors (RGB channels for Tailwind opacity support) */
+  --brand-pink: 243 85 136;
+  --brand-pink-dark: 204 51 119;
+  --brand-cyan: 0 217 255;
+  --brand-orange: 255 106 61;
+  --brand-purple: 168 85 247;
+  --brand-purple-dark: 147 51 234;
+
+  /* Surface colors (RGB channels for Tailwind opacity support) */
+  --surface-base: 10 10 10;
+  --surface-card: 10 15 30;
+  --surface-shell: 26 34 56;
+  --surface-deep: 46 34 87;
+  --surface-panel: 35 31 57;
+  --surface-border: 47 42 71;
+  --surface-light: 237 242 247;
+
+  /* Ink colors */
+  --ink-inverse: 255 255 255;
+  --ink-muted: 107 114 128;
+  --ink-subtle: 75 85 99;
+  --ink-soft: 158 156 182;
+
+  --color-text: 255 255 255;
+  --color-muted: 158 156 182;
+  --color-bg: 31 25 52;
+  --color-surface-1: 57 58 71;
+  --color-surface-2: 46 34 87;
+  --color-surface-3: 10 15 30;
+  --color-surface-4: 26 34 56;
+  --color-surface-5: 10 10 10;
+  --color-accent: 243 85 136;
+  --color-accent-strong: 204 51 119;
+  --color-accent-alt: 255 106 61;
+  --color-accent-cyan: 0 217 255;
+  --color-purple-500: 168 85 247;
+  --color-purple-600: 147 51 234;
+  --color-success: 34 197 94;
+  --color-card: 41 34 64;
+  --color-card-overlay: 35 31 57;
+  --color-panel: 30 26 54;
+  --color-chip-border: 47 42 71;
+  --color-info-300: 83 139 223;
+  --color-melon: 255 187 180;
+  --color-bud-green: 113 169 90;
+  --color-dartmouth-green: 0 121 68;
+  --color-dark-bg: 19 20 36;
+  --color-arcade-purple: 139 92 246;
+  --color-purple-soft: 65 47 123;
+  --color-purple-soft-hover: 89 65 169;
+  --color-gray-600: 75 85 99;
+  --color-gray-500: 107 114 128;
+  --color-gray-100: 237 242 247;
+  --color-indigo-600: 79 70 229;
+}
+
+html,
+body {
+  /* height: 100%; */
+  color: rgb(var(--color-text));
+  background: rgb(var(--color-bg));
+}
+
+main {
+  background: rgb(var(--color-surface-1));
+  height: 100vh;
+  height: 100dvh;
+}
+
+.swiper-horizontal > .swiper-pagination-bullets .swiper-pagination-bullet,
+.swiper-pagination-horizontal.swiper-pagination-bullets
+  .swiper-pagination-bullet {
+  background-color: rgb(var(--color-accent));
+}
+
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+.bg-gray-300 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(var(--color-info-300) / 30%);
+}
+
+/* City scroll animation for introduction banner - seamless infinite loop */
+@keyframes city-scroll {
+  0% {
+    background-position: 0 15px;
+  }
+  100% {
+    background-position: -1920px 15px;
+  }
+}
+
+.animate-city-scroll {
+  animation: city-scroll 40s linear infinite;
+}
+
+/* Faster animation on desktop */
+@media (min-width: 768px) {
+  .animate-city-scroll {
+    animation: city-scroll 20s linear infinite;
+  }
+}
+
+/* ========================================
+   DISABLE NEXTUI INPUT HOVER EFFECTS
+   ======================================== */
+
+/* Disable NextUI data attribute hover/focus states */
+[data-hover=true] .bg-default-200,
+[data-hover=true].bg-default-200 {
+  background-color: #1f2937 !important;
+}
+
+.group-data-[focus=true] .bg-default-100,
+[data-focus=true].bg-default-100 {
+  background-color: #1f2937 !important;
+}
+
+/* Disable all hover effects on input wrappers */
+[data-slot="input-wrapper"][data-hover=true],
+[data-slot="input-wrapper"]:hover {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Disable all focus effects on input wrappers */
+[data-slot="input-wrapper"][data-focus=true],
+[data-slot="input-wrapper"]:focus-within {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Disable hover on Select trigger */
+[data-slot="trigger"][data-hover=true],
+[data-slot="trigger"]:hover {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+}
+
+/* Disable hover on Textarea wrapper */
+[data-slot="wrapper"][data-hover=true],
+[data-slot="wrapper"]:hover {
+  background-color: #1f2937 !important;
+  border-color: #4b5563 !important;
+}
+
+/* Force white text in Select components */
+.nextui-select-value,
+.nextui-select-value .nextui-select-value-text,
+[data-slot="value"],
+[data-slot="value"] * {
+  color: white !important;
+}
+
+/* Force white text in Select items */
+.nextui-select-item,
+.nextui-select-item * {
+  color: white !important;
+}
+
+/* Force white text in Select trigger */
+.nextui-select-trigger,
+.nextui-select-trigger * {
+  color: white !important;
+}
