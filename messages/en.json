@@ -1433,7 +1433,9 @@
     "our": "Our",
     "partners": "Partners",
     "deepfcRole": "Automations",
-    "nandarkRole": "Custom Development & AI SaaS"
+    "nandarkRole": "Custom Development & AI SaaS",
+    "torySkateshopRole": "Skateshop Partner",
+    "visitSite": "VISIT SITE"
   },
   "portfolio": {
     "latest": "Latest",

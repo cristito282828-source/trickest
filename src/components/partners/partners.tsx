@@ -1,113 +1,136 @@
 'use client';
 import Image from 'next/image';
-import styles from './Partners.module.css';
 import { useTranslations } from 'next-intl';
+
+interface Partner {
+  name: string;
+  roleKey: 'deepfcRole' | 'nandarkRole' | 'torySkateshopRole';
+  imageSrc: string;
+  website?: string;
+}
+
+const partners: Partner[] = [
+  {
+    name: 'DeepFC',
+    roleKey: 'deepfcRole',
+    imageSrc: '/logo-deep-fc.gif',
+  },
+  {
+    name: 'Nandark',
+    roleKey: 'nandarkRole',
+    imageSrc: '/nandark-isotipo.png',
+  },
+  {
+    name: 'Tory Skateshop',
+    roleKey: 'torySkateshopRole',
+    imageSrc: '/logo-tory.jpg',
+  },
+];
 
 const Partners = () => {
   const t = useTranslations('partnersComponent');
 
-  const partners = [
-    {
-      name: 'DeepFC',
-      roleKey: 'deepfcRole',
-      imageSrc: '/logo-deep-fc.gif',
-      website: 'https://deepfc.com/',
-    },
-    {
-      name: 'Nandark',
-      roleKey: 'nandarkRole',
-      imageSrc: '/nandark-isotipo.png',
-      website: 'https://nandark.com/',
-    },
-  ];
-
   return (
-    <div>
-      <div
-        id="team"
-        className={`section relative pt-20 pb-8 md:pt-16 bg-surface-deep ${styles.container}`}
-      >
-        <div
-          className={`container xl:max-w-6xl mx-auto px-4 ${styles.teamContainer}`}
-        >
-          <header className="text-center mx-auto mb-12">
-            <h2 className="text-2xl leading-normal mb-2 font-bold text-neutral-200">
-              <span className="font-light">{t('our')}</span> {t('partners')}
-            </h2>
-            <svg
-              version="1.1"
-              xmlns="http://www.w3.org/2000/svg"
-              x="0px"
-              y="0px"
-              viewBox="0 0 100 60"
-              className={`mx-auto h-10 ${styles.svg}`}
-            >
-              <circle cx="50.1" cy="30.4" r="5" className="stroke-primary" />
-              <line
-                x1="55.1"
-                y1="30.4"
-                x2="100"
-                y2="30.4"
-                className="stroke-primary"
-              />
-              <line
-                x1="45.1"
-                y1="30.4"
-                x2="0"
-                y2="30.4"
-                className="stroke-primary"
-              />
-            </svg>
-          </header>
+    <section
+      id="team"
+      className="relative py-20 md:py-24 bg-gradient-to-br from-neutral-900 via-accent-purple-900 to-neutral-900 overflow-hidden"
+    >
+      {/* Decorative background blurs */}
+      <div className="absolute top-10 left-10 w-64 h-64 bg-accent-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-64 h-64 bg-accent-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          <div
-            className={`flex flex-wrap flex-row -mx-4 justify-center ${styles.team}`}
+      <div className="container xl:max-w-6xl mx-auto px-4 relative z-10">
+        {/* Header */}
+        <header className="text-center mx-auto mb-16">
+          <h2 className="text-4xl md:text-5xl font-black text-accent-cyan-400 uppercase tracking-wider mb-4">
+            <span className="font-light text-neutral-300">{t('our')}</span>{' '}
+            {t('partners')}
+          </h2>
+          <svg
+            version="1.1"
+            xmlns="http://www.w3.org/2000/svg"
+            x="0px"
+            y="0px"
+            viewBox="0 0 100 60"
+            className="mx-auto h-10"
+            aria-hidden="true"
           >
-            <div
-              className={`flex flex-wrap flex-row -mx-4 justify-center ${styles.team}`}
-            >
-              {partners.map((partner, index) => (
-                <div
-                  key={index}
-                  className={`flex-shrink max-w-full px-4 w-2/3 sm:w-1/2 md:w-5/12 lg:w-1/4 xl:px-6 ${styles.profile}`}
-                >
-                  <div
-                    className={`relative overflow-hidden bg-neutral-800/50 mb-12 hover-grayscale-0 wow fadeInUp ${styles.profileContainer}`}
-                  >
-                    <div
-                      className={`relative overflow-hidden px-6 ${styles.imageContainer}`}
-                    >
+            <circle cx="50.1" cy="30.4" r="5" className="stroke-accent-cyan-400 fill-none stroke-2" />
+            <line
+              x1="55.1"
+              y1="30.4"
+              x2="100"
+              y2="30.4"
+              className="stroke-accent-cyan-400 stroke-2"
+            />
+            <line
+              x1="45.1"
+              y1="30.4"
+              x2="0"
+              y2="30.4"
+              className="stroke-accent-cyan-400 stroke-2"
+            />
+          </svg>
+        </header>
+
+        {/* Partners grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+          {partners.map((partner) => {
+            const Wrapper = partner.website ? 'a' : 'div';
+            const wrapperProps = partner.website
+              ? {
+                  href: partner.website,
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                }
+              : {};
+
+            return (
+              <Wrapper
+                key={partner.name}
+                {...wrapperProps}
+                className="group relative block bg-gradient-to-r from-accent-cyan-500 to-accent-purple-600 p-1 rounded-2xl shadow-2xl shadow-accent-cyan-500/20 hover:shadow-accent-cyan-500/50 transform hover:scale-105 transition-all duration-300"
+              >
+                <div className="bg-neutral-900 rounded-2xl p-8 md:p-10 flex flex-col items-center text-center h-full">
+                  {/* Logo container with circular border */}
+                  <div className="relative mb-6">
+                    {/* Glow on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-accent-cyan-500 to-accent-purple-600 rounded-full blur-xl opacity-0 group-hover:opacity-60 transition-opacity duration-300" />
+
+                    {/* Logo */}
+                    <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full bg-neutral-50 border-4 border-accent-cyan-400 group-hover:border-accent-cyan-300 overflow-hidden flex items-center justify-center transition-all">
                       <Image
-                        width={80}
-                        height={80}
+                        width={200}
+                        height={200}
                         src={partner.imageSrc}
-                        className="max-w-full h-auto mx-auto rounded-full bg-neutral-50 grayscale"
-                        alt="title image"
+                        alt={`${partner.name} logo`}
+                        className="w-full h-full object-contain p-4 grayscale group-hover:grayscale-0 transition-all duration-500"
                       />
                     </div>
-                    <div className="pt-6 text-center">
-                      <a
-                        href={partner.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block hover:opacity-80 transition-opacity"
-                      >
-                        <p className="text-neutral-200 text-lg leading-normal font-bold mb-1">
-                          {partner.name}
-                        </p>
-                        <p className="text-neutral-400 leading-relaxed font-light">
-                          {t(partner.roleKey)}
-                        </p>
-                      </a>
-                    </div>
                   </div>
+
+                  {/* Name + role */}
+                  <p className="text-2xl md:text-3xl font-black text-accent-cyan-400 uppercase tracking-wider mb-2 group-hover:text-accent-cyan-300 transition-colors">
+                    {partner.name}
+                  </p>
+                  <p className="text-neutral-400 text-sm md:text-base font-light">
+                    {t(partner.roleKey)}
+                  </p>
+
+                  {/* Visit indicator — solo si tiene website */}
+                  {partner.website && (
+                    <div className="mt-4 inline-flex items-center gap-2 text-xs text-neutral-500 group-hover:text-accent-cyan-400 uppercase tracking-wider font-bold transition-colors">
+                      {t('visitSite') || 'VISIT SITE'}
+                      <span className="transform group-hover:translate-x-1 transition-transform">→</span>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
+              </Wrapper>
+            );
+          })}
         </div>
       </div>
-    </div>
+    </section>
   );
 };
 
