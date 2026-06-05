@@ -1600,5 +1600,23 @@
     "terms": "Terms of Service",
     "cookies": "Cookie Policy",
     "admin": "Admin"
+  },
+  "toryFeatured": {
+    "title": "Tory Skateshop",
+    "badge": "Partner Store",
+    "subtitle": "Check out the latest gear from our official partner",
+    "viewAll": "View all products",
+    "externalDisclaimer": "Products and prices shown from {store}. Purchases are made on their site.",
+    "errorLoading": "Could not load products"
+  },
+  "supplsPage": {
+    "metaTitle": "Supplies",
+    "metaDescription": "Browse our gear catalog.",
+    "title": "Supplies",
+    "badge": "Gear Catalog",
+    "subtitle": "Discover our featured products. Click any item to see more details.",
+    "productCount": "{count, plural, =0 {No products} =1 {1 product} other {# products}}",
+    "noProducts": "No products available at the moment.",
+    "externalDisclaimer": "Products and prices shown for reference. Click each item for more information."
   }
 }

@@ -121,6 +121,15 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'img.youtube.com',
       },
+      // Tory Skateshop (WooCommerce) - productos destacados
+      {
+        protocol: 'https',
+        hostname: 'toryskateshop.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.toryskateshop.com',
+      },
     ],
   },
 

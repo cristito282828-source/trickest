@@ -1600,5 +1600,23 @@
     "terms": "Términos de Servicio",
     "cookies": "Política de Cookies",
     "admin": "Admin"
+  },
+  "toryFeatured": {
+    "title": "Tory Skateshop",
+    "badge": "Tienda Asociada",
+    "subtitle": "Descubre el mejor skate de nuestra tienda asociada oficial",
+    "viewAll": "Ver todos los productos",
+    "externalDisclaimer": "Productos y precios mostrados desde {store}. Las compras se realizan en su sitio.",
+    "errorLoading": "No se pudieron cargar los productos"
+  },
+  "supplsPage": {
+    "metaTitle": "Supplies",
+    "metaDescription": "Explora nuestro catálogo de productos.",
+    "title": "Supplies",
+    "badge": "Catálogo",
+    "subtitle": "Descubre nuestros productos destacados. Haz clic en cualquier producto para ver más detalles.",
+    "productCount": "{count, plural, =0 {Sin productos} =1 {1 producto} other {# productos}}",
+    "noProducts": "No hay productos disponibles por el momento.",
+    "externalDisclaimer": "Productos y precios mostrados como referencia. Haz clic en cada producto para más información."
   }
 }
