@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { BRAND } from '@/config/branding';
 import { Metadata } from 'next';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -165,7 +166,7 @@ export default async function PrivacyPage() {
               </h2>
               <p className="mb-2">For privacy inquiries, contact us at:</p>
               <p className="text-accent-cyan-500 font-bold">
-                📧 privacy@trickest.com
+                📧 {BRAND.email.privacy}
               </p>
             </section>
 

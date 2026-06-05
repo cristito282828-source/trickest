@@ -1,18 +1,15 @@
 import { SITE_URL, SITE_NAME } from '@/config/site';
+import { BRAND, BRAND_SAME_AS } from '@/config/branding';
 
 // Schema JSON-LD for TRICKEST.
 // Helps Google and AI search engines (ChatGPT, Perplexity, Gemini) understand
-// the site as an entity. All URLs derive from SITE_URL (see src/config/site.ts),
-// so changing the domain is a one-variable change.
+// the site as an entity. All URLs derive from SITE_URL (see src/config/site.ts)
+// and identity from BRAND (see src/config/branding.ts), so a rebrand/domain
+// change propagates here automatically.
 //
-// TODO (high impact for AI visibility): fill `sameAs` with the official social
-// profiles below. An empty sameAs means AI models cannot link the brand to its
-// presence on Instagram / TikTok / YouTube.
-const SOCIAL_PROFILES: string[] = [
-  // 'https://www.instagram.com/__REPLACE__',
-  // 'https://www.tiktok.com/@__REPLACE__',
-  // 'https://www.youtube.com/@__REPLACE__',
-];
+// TODO (high impact for AI visibility): set the social handles in
+// src/config/branding.ts so `sameAs` is populated. An empty sameAs means AI
+// models cannot link the brand to Instagram / TikTok / YouTube.
 
 export function generateSchemaLd(locale: string = 'en') {
   const schema = {
@@ -29,7 +26,13 @@ export function generateSchemaLd(locale: string = 'en') {
         },
         description:
           'TheTrickest is a skateboarding challenge platform connecting skaters worldwide through competitive video submissions and judge scoring.',
-        sameAs: SOCIAL_PROFILES,
+        sameAs: BRAND_SAME_AS,
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer service',
+          email: BRAND.email.privacy,
+          availableLanguage: ['en', 'es'],
+        },
       },
       {
         '@type': 'WebSite',

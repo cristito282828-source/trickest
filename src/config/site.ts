@@ -11,11 +11,13 @@
  *   NEXT_PUBLIC_APP_URL=https://www.thetrickest.app
  */
 
+import { BRAND } from './branding';
+
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 ).replace(/\/$/, '');
 
-export const SITE_NAME = 'TRICKEST';
+export const SITE_NAME = BRAND.name;
 
 export const SUPPORTED_LOCALES = ['en', 'es'] as const;
 export const DEFAULT_LOCALE = 'en';

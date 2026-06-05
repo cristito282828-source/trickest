@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { SITE_URL } from '@/config/site';
+import { BRAND } from '@/config/branding';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }: ProfileLayoutProps): Promise<
           title: `${profile.name || 'Skater'} - Trickest Profile ${roleEmoji[profile.role as keyof typeof roleEmoji] || '🛹'}`,
           description: `${roleEmoji[profile.role as keyof typeof roleEmoji] || '🛹'} ${profile.role} skater with ${profile.stats?.totalScore || 0} points and ${profile.stats?.challengesCompleted || 0} completed tricks. ${achievements} unlocked achievements. Join the community!`,
           url: profileUrl,
-          siteName: 'Trickest',
+          siteName: BRAND.name,
           images: [
             {
               url: ogImage,
@@ -59,7 +60,7 @@ export async function generateMetadata({ params }: ProfileLayoutProps): Promise<
           card: 'summary_large_image',
           title: `${profile.name || 'Skater'} - Trickest ${roleEmoji[profile.role as keyof typeof roleEmoji] || '🛹'}`,
           description: `${roleEmoji[profile.role as keyof typeof roleEmoji] || '🛹'} ${profile.stats?.totalScore || 0} points, ${profile.stats?.challengesCompleted || 0} tricks, ${achievements} achievements. Check out their profile!`,
-          creator: '@trickestapp',
+          creator: BRAND.social.twitter,
           images: [ogImage],
         },
         robots: {
@@ -86,13 +87,13 @@ export async function generateMetadata({ params }: ProfileLayoutProps): Promise<
   }
 
   // Fallback metadata
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trickest.com';
+  const baseUrl = SITE_URL;
   return {
     title: 'Trickest Profile',
     description: 'Skater profile on Trickest',
     openGraph: {
       url: `${baseUrl}/${locale}/profile/${username}`,
-      siteName: 'Trickest',
+      siteName: BRAND.name,
     },
   };
 }
