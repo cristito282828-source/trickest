@@ -1621,6 +1621,7 @@
     "clickHint": "Haz clic en cualquier producto para ver detalles",
     "closePanel": "Cerrar",
     "viewProduct": "Ver producto",
-    "escapeHint": "Presiona ESC para liberar"
+    "escapeHint": "Presiona ESC para liberar",
+    "loadingProducts": "Cargando productos..."
   }
 }

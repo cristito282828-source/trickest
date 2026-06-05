@@ -1621,6 +1621,7 @@
     "clickHint": "Click any product to see details",
     "closePanel": "Close",
     "viewProduct": "View product",
-    "escapeHint": "Press ESC to release"
+    "escapeHint": "Press ESC to release",
+    "loadingProducts": "Loading products..."
   }
 }

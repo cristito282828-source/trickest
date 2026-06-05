@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { OrbitalEngine, OrbitalState, type OrbitalProduct } from './orbital-engine';
+import { preloadAll, getCachedImage } from './product-images';
 import { MdClose, MdOpenInNew, MdCheck } from 'react-icons/md';
 
 interface OrbitalCanvasProps {
@@ -20,6 +21,30 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
   const lastTimeRef = useRef<number>(0);
 
   const [anchored, setAnchored] = useState<OrbitalState | null>(null);
+  const [imagesReady, setImagesReady] = useState(false);
+
+  // Pre-cargar imágenes al montar (o cuando cambien los productos)
+  useEffect(() => {
+    let cancelled = false;
+
+    const urls = products
+      .map((p) => p.imageUrl)
+      .filter((u): u is string => Boolean(u));
+
+    if (urls.length === 0) {
+      setImagesReady(true);
+      return;
+    }
+
+    setImagesReady(false);
+    preloadAll(urls).then(() => {
+      if (!cancelled) setImagesReady(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [products]);
 
   // Callback para obtener coords del mouse relativas al canvas
   const getCanvasCoords = useCallback((e: MouseEvent | React.MouseEvent) => {
@@ -114,7 +139,7 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
     };
   }, [products]);
 
-  // Render del canvas (Fase 1: círculos de colores, sin imágenes todavía)
+  // Render del canvas con imágenes reales (Fase 2)
   const render = (
     ctx: CanvasRenderingContext2D,
     engine: OrbitalEngine,
@@ -162,25 +187,53 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
         ctx.shadowBlur = 0;
       }
 
-      // Cuerpo del círculo: gradiente cyan→purple
-      const gradient = ctx.createLinearGradient(
-        p.x - radius,
-        p.y - radius,
-        p.x + radius,
-        p.y + radius,
-      );
-      if (isAnchored) {
-        gradient.addColorStop(0, '#ff3eb5');
-        gradient.addColorStop(1, '#a855f7');
-      } else {
-        gradient.addColorStop(0, '#34efc2');
-        gradient.addColorStop(1, '#a855f7');
-      }
+      // Intentar cargar la imagen cacheada
+      const img = p.product.imageUrl ? getCachedImage(p.product.imageUrl) : null;
 
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
-      ctx.fill();
+      if (img) {
+        // Render con imagen: clip circular + drawImage
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+
+        // Cubrir el círculo con la imagen
+        // object-fit: cover simulado: tomar el lado mayor y centrar
+        const size = radius * 2;
+        const aspect = img.naturalWidth / img.naturalHeight;
+        let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+        if (aspect > 1) {
+          // Imagen más ancha que alta: crop horizontal
+          sw = img.naturalHeight;
+          sx = (img.naturalWidth - sw) / 2;
+        } else {
+          // Imagen más alta que ancha: crop vertical
+          sh = img.naturalWidth;
+          sy = (img.naturalHeight - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, p.x - radius, p.y - radius, size, size);
+        ctx.restore();
+      } else {
+        // Fallback: gradiente cyan→purple + inicial
+        const gradient = ctx.createLinearGradient(
+          p.x - radius,
+          p.y - radius,
+          p.x + radius,
+          p.y + radius,
+        );
+        if (isAnchored) {
+          gradient.addColorStop(0, '#ff3eb5');
+          gradient.addColorStop(1, '#a855f7');
+        } else {
+          gradient.addColorStop(0, '#34efc2');
+          gradient.addColorStop(1, '#a855f7');
+        }
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // Borde
       ctx.shadowBlur = 0;
@@ -190,14 +243,18 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
           ? '#34efc2'
           : 'rgba(255, 255, 255, 0.4)';
       ctx.lineWidth = isAnchored || isHovered ? 3 : 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Inicial del nombre (primera letra) en el centro
-      ctx.fillStyle = '#ffffff';
-      ctx.font = `bold ${radius * 0.6}px sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(p.product.name.charAt(0).toUpperCase(), p.x, p.y);
+      // Si no hay imagen cargada, mostrar inicial
+      if (!img) {
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${radius * 0.6}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(p.product.name.charAt(0).toUpperCase(), p.x, p.y);
+      }
 
       // Si está anclado, mostrar el nombre completo debajo
       if (isAnchored) {
@@ -265,6 +322,18 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
           onClick={handleClick}
           className="block cursor-pointer"
         />
+
+        {/* Loading overlay mientras se cargan las imágenes */}
+        {!imagesReady && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="text-center">
+              <div className="w-12 h-12 border-4 border-accent-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-accent-cyan-400 font-bold uppercase tracking-wider text-sm">
+                {t('loadingProducts')}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Panel de detalle cuando hay un producto anclado */}
