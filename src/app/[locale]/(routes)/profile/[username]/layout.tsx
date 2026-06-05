@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { SITE_URL } from '@/config/site';
 
 interface ProfileLayoutProps {
   children: React.ReactNode;
@@ -10,7 +11,7 @@ export async function generateMetadata({ params }: ProfileLayoutProps): Promise<
 
   try {
     // Fetch profile data for metadata
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://trickest.com';
+    const baseUrl = SITE_URL;
     const response = await fetch(`${baseUrl}/api/users/profile/${username}`, {
       cache: 'no-store'
     });

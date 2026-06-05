@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   THEME / BRAND TOKENS — SINGLE SOURCE OF TRUTH
+   ------------------------------------------------------------
+   To restyle the whole site (rebrand colors), edit ONLY the
+   values in this :root block. Tailwind (tailwind.config.ts) and
+   NextUI both read these variables, so changing a value here
+   propagates everywhere. Values are RGB channels (no commas) so
+   Tailwind opacity modifiers like `bg-brand-pink/50` work.
+   ============================================================ */
 :root {
   /* Brand colors (RGB channels for Tailwind opacity support) */
   --brand-pink: 243 85 136;
@@ -57,6 +66,10 @@
   --color-gray-500: 107 114 128;
   --color-gray-100: 237 242 247;
   --color-indigo-600: 79 70 229;
+
+  /* Form control overrides (NextUI inputs/selects) */
+  --color-input-bg: 31 41 55;     /* slate-800 */
+  --color-input-border: 75 85 99; /* slate-600 */
 }
 
 html,
@@ -118,19 +131,19 @@ main {
 /* Disable NextUI data attribute hover/focus states */
 [data-hover=true] .bg-default-200,
 [data-hover=true].bg-default-200 {
-  background-color: #1f2937 !important;
+  background-color: rgb(var(--color-input-bg)) !important;
 }
 
 .group-data-[focus=true] .bg-default-100,
 [data-focus=true].bg-default-100 {
-  background-color: #1f2937 !important;
+  background-color: rgb(var(--color-input-bg)) !important;
 }
 
 /* Disable all hover effects on input wrappers */
 [data-slot="input-wrapper"][data-hover=true],
 [data-slot="input-wrapper"]:hover {
-  background-color: #1f2937 !important;
-  border-color: #4b5563 !important;
+  background-color: rgb(var(--color-input-bg)) !important;
+  border-color: rgb(var(--color-input-border)) !important;
   box-shadow: none !important;
   outline: none !important;
 }
@@ -138,8 +151,8 @@ main {
 /* Disable all focus effects on input wrappers */
 [data-slot="input-wrapper"][data-focus=true],
 [data-slot="input-wrapper"]:focus-within {
-  background-color: #1f2937 !important;
-  border-color: #4b5563 !important;
+  background-color: rgb(var(--color-input-bg)) !important;
+  border-color: rgb(var(--color-input-border)) !important;
   box-shadow: none !important;
   outline: none !important;
 }
@@ -147,15 +160,15 @@ main {
 /* Disable hover on Select trigger */
 [data-slot="trigger"][data-hover=true],
 [data-slot="trigger"]:hover {
-  background-color: #1f2937 !important;
-  border-color: #4b5563 !important;
+  background-color: rgb(var(--color-input-bg)) !important;
+  border-color: rgb(var(--color-input-border)) !important;
 }
 
 /* Disable hover on Textarea wrapper */
 [data-slot="wrapper"][data-hover=true],
 [data-slot="wrapper"]:hover {
-  background-color: #1f2937 !important;
-  border-color: #4b5563 !important;
+  background-color: rgb(var(--color-input-bg)) !important;
+  border-color: rgb(var(--color-input-border)) !important;
 }
 
 /* Force white text in Select components */

@@ -9,6 +9,16 @@ import ContactCTAButton from '@/components/ContactCTAButton';
 import ActivityTicker from '@/components/ActivityTicker';
 import { getTranslations } from 'next-intl/server';
 import AuthRedirect from '@/components/AuthRedirect';
+import { localizedAlternates } from '@/config/site';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  return { alternates: localizedAlternates(locale) };
+}
 
 export default async function Home({
   searchParams,
