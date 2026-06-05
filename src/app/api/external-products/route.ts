@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { graphqlFetch } from '@/lib/woocommerce/graphql-client';
 import { FEATURED_PRODUCTS_QUERY, CATEGORY_INFO_QUERY } from '@/lib/woocommerce/queries';
 import type { ExternalProduct, ExternalCategory } from '@/lib/woocommerce/types';
@@ -6,17 +6,23 @@ import type { ExternalProduct, ExternalCategory } from '@/lib/woocommerce/types'
 const FEATURED_CATEGORY = process.env.WC_FEATURED_CATEGORY || 'trickest';
 const DEFAULT_LIMIT = 8;
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Cache de 1 hora
 
 /**
  * GET /api/external-products
  * Devuelve productos destacados de la categoría configurada en Tory Skateshop
  *
+ * Las URLs de imágenes se devuelven YA proxied a través de
+ * /api/external-image?url=... para evitar problemas de CORS en el canvas
+ * (el navegador bloquea ctx.drawImage con imágenes de otro origen sin
+ * headers CORS, y toryskateshop.com no envía esos headers).
+ *
  * Query params:
  *   - limit: número de productos (default 8, max 20)
  *   - category: override de categoría (opcional)
  */
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const limitParam = searchParams.get('limit');
@@ -40,8 +46,21 @@ export async function GET(request: Request) {
       { category, first: limit }
     );
 
-    const products = productsData?.products?.nodes ?? [];
+    const rawProducts = productsData?.products?.nodes ?? [];
     const categoryInfo = categoryData?.productCategory ?? null;
+
+    // Proxy las URLs de imágenes a través de nuestro server
+    // para evitar CORS al usarlas en un canvas
+    const products = rawProducts.map((p) => ({
+      ...p,
+      image: p.image
+        ? {
+            ...p.image,
+            // Reescribimos la URL al proxy same-origin
+            sourceUrl: `/api/external-image?url=${encodeURIComponent(p.image.sourceUrl)}`,
+          }
+        : null,
+    }));
 
     if (products.length === 0) {
       return NextResponse.json({

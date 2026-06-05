@@ -86,6 +86,7 @@ export default async function SupplsPage() {
               name: p.name,
               slug: p.slug,
               price: p.price,
+              // El backend ya devuelve la URL proxied (/api/external-image?url=...)
               imageUrl: p.image?.sourceUrl ?? null,
             }))}
           />
