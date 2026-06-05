@@ -1617,6 +1617,10 @@
     "subtitle": "Descubre nuestros productos destacados. Haz clic en cualquier producto para ver más detalles.",
     "productCount": "{count, plural, =0 {Sin productos} =1 {1 producto} other {# productos}}",
     "noProducts": "No hay productos disponibles por el momento.",
-    "externalDisclaimer": "Productos y precios mostrados como referencia. Haz clic en cada producto para más información."
+    "externalDisclaimer": "Productos y precios mostrados como referencia. Haz clic en cada producto para más información.",
+    "clickHint": "Haz clic en cualquier producto para ver detalles",
+    "closePanel": "Cerrar",
+    "viewProduct": "Ver producto",
+    "escapeHint": "Presiona ESC para liberar"
   }
 }

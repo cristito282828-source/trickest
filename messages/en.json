@@ -1617,6 +1617,10 @@
     "subtitle": "Discover our featured products. Click any item to see more details.",
     "productCount": "{count, plural, =0 {No products} =1 {1 product} other {# products}}",
     "noProducts": "No products available at the moment.",
-    "externalDisclaimer": "Products and prices shown for reference. Click each item for more information."
+    "externalDisclaimer": "Products and prices shown for reference. Click each item for more information.",
+    "clickHint": "Click any product to see details",
+    "closePanel": "Close",
+    "viewProduct": "View product",
+    "escapeHint": "Press ESC to release"
   }
 }
