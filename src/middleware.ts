@@ -13,7 +13,20 @@ const protectedRoutes = ['/dashboard'];
 // Rutas públicas (accesibles sin autenticación)
 const publicRoutes = ['/', '/es', '/en', '/pt'];
 
+// Canonical production host. Only the exact legacy/staging alias is redirected,
+// so Vercel preview deploys (longer *.vercel.app subdomains) keep working.
+const LEGACY_HOST = 'trickest.vercel.app';
+const CANONICAL_ORIGIN = 'https://www.thetrickest.app';
+
 export default async function middleware(request: any) {
+  // ─── 0. Neutralizar el clon indexable trickest.vercel.app ──────────────────────
+  const host = request.headers.get('host') || '';
+  if (host === LEGACY_HOST) {
+    const url = new URL(request.nextUrl?.pathname || '/', CANONICAL_ORIGIN);
+    url.search = request.nextUrl?.search || '';
+    return NextResponse.redirect(url, 308);
+  }
+
   // ─── 1. Obtener pathname correctamente ────────────────────────────────────────
   const pathname = request.nextUrl?.pathname || '/';
 
