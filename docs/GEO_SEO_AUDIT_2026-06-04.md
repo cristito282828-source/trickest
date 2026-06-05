@@ -134,24 +134,26 @@ Bonus crítico de marca: **"Trickest" (sin "The") ya es una empresa de cibersegu
 
 # ✅ CHECKLIST — GEO + SEO
 
+> **Progreso (2026-06-05):** la tanda de bloqueantes técnicos está aplicada en el branch `fix/launch-seo` (PR #1). Falta **1 acción manual en Vercel**: setear `NEXT_PUBLIC_APP_URL=https://www.thetrickest.app`. Leyenda: `[x]` hecho · `[~]` parcial / requiere input · `[ ]` pendiente.
+
 ## 🔴 Bloqueantes (no lanzar sin esto)
 
-- [ ] Neutralizar el clon `trickest.vercel.app` (redirect 308 → `www.thetrickest.app`, o `X-Robots-Tag: noindex` + `Disallow: /` solo en ese dominio)
-- [ ] Corregir `robots.txt`: `Sitemap: https://www.thetrickest.app/sitemap.xml`
-- [ ] Regenerar sitemap con URLs **www** (hoy lista non-www que redirigen 308)
-- [ ] Reescribir o `noindex` las páginas zombie: `/about`, `/services`, `/portfolio`, `/testimonials`
-- [ ] Schema: reemplazar TODOS los `trickest.vercel.app` → `https://www.thetrickest.app` en el `@graph`
-- [ ] Unificar dominio en `og:url` y JSON-LD a `https://www.thetrickest.app`
+- [x] Neutralizar el clon `trickest.vercel.app` (redirect 308 → `www.thetrickest.app`) — middleware, solo host exacto, previews intactos · _PR #1_
+- [x] Corregir `robots.txt` → reemplazado por `app/robots.ts` dinámico (sitemap deriva de `SITE_URL`) · _PR #1_
+- [~] Regenerar sitemap con URLs **www** — código listo (deriva de `SITE_URL`); **requiere setear `NEXT_PUBLIC_APP_URL=https://www.thetrickest.app` en Vercel** · _PR #1 + acción Vercel_
+- [x] `noindex` las páginas zombie `/about`, `/services`, `/portfolio`, `/testimonials` + sacadas del sitemap · _PR #1_
+- [x] Schema: reemplazados TODOS los `trickest.vercel.app` → `SITE_URL` en el `@graph` (+ removido SearchAction roto y SportsActivityLocation mal aplicado) · _PR #1_
+- [x] Unificado dominio en `og:url` y JSON-LD vía `SITE_URL` · _PR #1_
 
 ## 🟠 Alto (semana de lanzamiento)
 
-- [ ] Poblar `Organization.sameAs` con Instagram / TikTok / YouTube reales (mayor ROI individual para GEO)
-- [ ] Agregar `<link rel="canonical">` self-referencing en cada página (hoy: cero)
-- [ ] Deployar `llms.txt` en la raíz del dominio
+- [~] Poblar `Organization.sameAs` con Instagram / TikTok / YouTube reales — **placeholder listo en `schema-ld.ts`, falta pasar las URLs reales** · _PR #1_
+- [~] `<link rel="canonical">` self-referencing — **hecho en el home + helper `localizedAlternates()` listo; falta aplicarlo a las subpáginas** · _PR #1_
+- [ ] Deployar `llms.txt` en la raíz del dominio (generado en `/tmp/trickest-geo/llms.txt`)
 - [ ] Crear página "Cómo funciona / cómo se puntúan los tricks" (explicar scoring + jueces)
 - [ ] Agregar `FAQPage` schema con respuestas de 40-60 palabras ("¿Qué es?", "¿Es gratis?", "¿Cómo se puntúa?", "¿Premios?")
 - [ ] SSR / pre-render del contenido de `/spots` y `/explore` (hoy las IAs ven "0 SPOTS / loading")
-- [ ] Duplicar hreflang en el `<head>` HTML (hoy solo en HTTP Link header, e inconsistente www/non-www)
+- [x] hreflang en el `<head>` HTML — home (vía `localizedAlternates`); subpáginas pendientes junto al canonical · _PR #1_
 - [ ] Desambiguar marca: usar "TheTrickest" + "skateboarding LATAM" en titles/descriptions
 
 ## 🟡 Medio (primeras 4 semanas)
