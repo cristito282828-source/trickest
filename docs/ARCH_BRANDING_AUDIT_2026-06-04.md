@@ -131,30 +131,32 @@ export const BRAND = {
 
 # ✅ CHECKLIST — Rebrand (orden de ejecución)
 
-## Fase 1 — Setup (30 min)
+> **Progreso (2026-06-05):** centralización aplicada en `fix/launch-seo` (PR #1). La identidad (nombre, emails, redes, bucket) y el dominio ahora viven en `src/config/branding.ts` + `src/config/site.ts`. **Un rebrand real ahora = editar esos 2 archivos + colores en `globals.css` + logo + migrar el bucket en Supabase.** Las Fases 3-4 (i18n, manifest, logo, bucket) solo aplican cuando se ejecute un rebrand de verdad. Leyenda: `[x]` hecho · `[~]` parcial · `[ ]` pendiente.
 
-- [ ] Crear `src/config/branding.ts` con la constante `BRAND`
-- [ ] Actualizar colores RGB en `src/app/globals.css` (`:root`)
-- [ ] Verificar mapeo en `tailwind.config.ts` (ya apunta a `:root`)
+## Fase 1 — Setup
 
-## Fase 2 — Referencias en código (~1.5h)
+- [x] Crear `src/config/branding.ts` con la constante `BRAND` (+ `BRAND_SAME_AS`) · _PR #1_
+- [~] `src/app/globals.css` (`:root`) marcado como fuente única del tema + hex sueltos eliminados; **listo para editar colores** (no se cambió la paleta) · _PR #1_
+- [x] Verificado mapeo en `tailwind.config.ts` (apunta a `:root`)
 
-- [ ] `src/app/layout.tsx` (metadatos, title, OG)
-- [ ] `src/app/[locale]/layout.tsx` (favicon/metadata locale)
-- [ ] `src/app/[locale]/(routes)/profile/[username]/layout.tsx` (URLs, twitter creator, OG)
-- [ ] `src/app/[locale]/privacy/page.tsx`, `terms/page.tsx`, `cookies/page.tsx` (emails)
-- [ ] 3× `src/app/api/upload/{photo,profile-image,team-logo}/route.ts` (bucket → `BRAND.supabase.bucket`)
-- [ ] `src/components/ContactForm.tsx` (email footer)
-- [ ] `src/lib/schema-ld.ts` (logo URL, email, org name, dominio)
-- [ ] `src/components/Appbar.tsx` (alt del logo)
+## Fase 2 — Referencias en código (centralizadas, valores sin cambiar)
 
-## Fase 3 — i18n (30 min)
+- [~] `src/app/[locale]/layout.tsx` — `siteName`/`og:url` derivan de `SITE_NAME`/`SITE_URL`; title/desc vienen de i18n · _PR #1_
+- [x] `profile/[username]/layout.tsx` — `siteName`/`creator` desde `BRAND`; fallback `trickest.com` corregido a `SITE_URL` · _PR #1_
+- [x] `privacy/page.tsx`, `terms/page.tsx`, `cookies/page.tsx` — emails desde `BRAND.email` · _PR #1_
+- [x] 3× `src/app/api/upload/{photo,profile-image,team-logo}/route.ts` — bucket desde `BRAND.storage.bucket` · _PR #1_
+- [x] `src/lib/schema-ld.ts` — `sameAs` desde `BRAND_SAME_AS`, `contactPoint` desde `BRAND.email`, dominio desde `SITE_URL` · _PR #1_
+- [ ] `src/components/ContactForm.tsx` (footer "Enviado desde trickest.com") — pendiente
+- [ ] `src/components/Appbar.tsx` (alt del logo) — pendiente
+- [ ] Copy con "Trickest" embebido en titles/descriptions (no estructural) — opcional
+
+## Fase 3 — i18n (solo al hacer rebrand real)
 
 - [ ] `messages/en.json` (buscar "Trickest" → clave `common.brandName` o reemplazo)
 - [ ] `messages/es.json` (ídem)
 - [ ] `public/manifest.json` (`name`, `short_name`)
 
-## Fase 4 — Assets + Supabase (CRÍTICO, 2-3h)
+## Fase 4 — Assets + Supabase (solo al hacer rebrand real, CRÍTICO)
 
 - [ ] Reemplazar `public/logo-main.png` y `public/logo-icon.png`
 - [ ] Crear nuevo bucket en Supabase + migrar archivos del viejo `trickest-spots`
