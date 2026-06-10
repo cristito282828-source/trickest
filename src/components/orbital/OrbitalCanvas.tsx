@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { OrbitalEngine, OrbitalState, type OrbitalProduct } from './orbital-engine';
 import { preloadAll, getCachedImage } from './product-images';
-import { MdClose, MdOpenInNew, MdCheck } from 'react-icons/md';
+import { useCart } from '@/components/providers/CartProvider';
+import { MdClose, MdOpenInNew, MdCheck, MdShoppingCart, MdCheckCircle } from 'react-icons/md';
 
 interface OrbitalCanvasProps {
   products: OrbitalProduct[];
@@ -14,6 +15,7 @@ const CANVAS_BG = '#0a0a0f'; // Casi negro con tinte morado muy sutil
 
 export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
   const t = useTranslations('supplsPage');
+  const { addItem, isInCart, getQuantity } = useCart();
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<OrbitalEngine | null>(null);
@@ -22,6 +24,7 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
 
   const [anchored, setAnchored] = useState<OrbitalState | null>(null);
   const [imagesReady, setImagesReady] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
 
   // Pre-cargar imágenes al montar (o cuando cambien los productos)
   useEffect(() => {
@@ -361,14 +364,52 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
             </p>
           )}
 
+          <button
+            type="button"
+            onClick={() => {
+              addItem(
+                {
+                  productId: anchored.product.id,
+                  productName: anchored.product.name,
+                  productPrice: anchored.product.price ?? '',
+                  productImage: anchored.product.imageUrl,
+                  productSlug: anchored.product.slug,
+                },
+                1
+              );
+              setJustAdded(true);
+              setTimeout(() => setJustAdded(false), 2000);
+            }}
+            disabled={justAdded}
+            className={`flex items-center justify-center gap-2 w-full py-3 px-6 rounded-lg border-2 uppercase tracking-wider text-sm shadow-lg transform transition-all font-black ${
+              justAdded || isInCart(anchored.product.id)
+                ? 'bg-accent-cyan-500 text-neutral-900 border-white'
+                : 'bg-accent-pink-500 hover:bg-accent-pink-600 text-white border-white hover:scale-105'
+            }`}
+          >
+            {justAdded || isInCart(anchored.product.id) ? (
+              <>
+                <MdCheckCircle />
+                {t('addedToCart')}
+                {getQuantity(anchored.product.id) > 0 &&
+                  ` (${getQuantity(anchored.product.id)})`}
+              </>
+            ) : (
+              <>
+                <MdShoppingCart />
+                {t('addToCart')}
+              </>
+            )}
+          </button>
+
           <a
             href={`https://toryskateshop.com/?product=${anchored.product.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full bg-accent-pink-500 hover:bg-accent-pink-600 text-white font-black py-3 px-6 rounded-lg border-2 border-white uppercase tracking-wider text-sm shadow-lg transform hover:scale-105 transition-all"
+            className="flex items-center justify-center gap-2 w-full mt-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold py-2 px-6 rounded-lg border border-neutral-700 uppercase tracking-wider text-xs transition-all"
           >
             <MdOpenInNew />
-            {t('viewProduct')}
+            {t('viewOnStore')}
           </a>
 
           <p className="text-neutral-500 text-xs mt-3 text-center flex items-center justify-center gap-1">

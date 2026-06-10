@@ -25,6 +25,7 @@ export default function ProfilePage() {
     ciudad: '',
     departamento: '',
     estado: '',
+    address: '',
   });
 
   useEffect(() => {
@@ -53,6 +54,7 @@ export default function ProfilePage() {
           estado: data.user?.estado || '',
           departamento: data.user?.departamento || '',
           ciudad: data.user?.ciudad || '',
+          address: data.user?.address || '',
           birthdate: data.user?.birthdate
             ? data.user.birthdate.split('T')[0]
             : '',
@@ -70,7 +72,9 @@ export default function ProfilePage() {
     fetchProfile();
   }, [status, session?.user?.email]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -111,6 +115,7 @@ export default function ProfilePage() {
         ciudad: formData.ciudad,
         departamento: formData.departamento,
         estado: formData.estado,
+        address: formData.address,
         birthdate: formData.birthdate,
         birthskate: formData.birthskate,
       };
@@ -325,6 +330,29 @@ export default function ProfilePage() {
             </div>
             <p className="text-neutral-400 text-xs mt-1 italic">
               💡 {t('stateHint')}
+            </p>
+          </div>
+
+          {/* Address - Shipping address for orders */}
+          <div className="group col-span-1 md:col-span-2">
+            <label
+              htmlFor="address"
+              className="block text-accent-cyan-400 font-bold mb-2 uppercase tracking-wide text-sm md:text-base"
+            >
+              {`🏠 ${t('address')}`}
+            </label>
+            <textarea
+              className="w-full bg-neutral-800 border-4 border-neutral-600 rounded-lg py-3 px-4 text-white placeholder-neutral-400 focus:border-accent-cyan-500 focus:outline-none transition-all group-hover:border-accent-cyan-400 resize-none"
+              id="address"
+              name="address"
+              placeholder={t('addressPlaceholder')}
+              value={formData.address}
+              onChange={handleChange}
+              rows={2}
+              maxLength={300}
+            />
+            <p className="text-neutral-400 text-xs mt-1 italic">
+              💡 {t('addressHint')}
             </p>
           </div>
 

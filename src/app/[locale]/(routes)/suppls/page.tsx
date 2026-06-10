@@ -3,6 +3,7 @@ import { graphqlFetch } from '@/lib/woocommerce/graphql-client';
 import { FEATURED_PRODUCTS_QUERY } from '@/lib/woocommerce/queries';
 import type { ExternalProduct, ExternalCategory } from '@/lib/woocommerce/types';
 import OrbitalCanvas from '@/components/orbital/OrbitalCanvas';
+import FloatingCart from '@/components/orbital/FloatingCart';
 
 const CATEGORY_SLUG = process.env.WC_FEATURED_CATEGORY || 'trickest';
 
@@ -98,6 +99,9 @@ export default async function SupplsPage() {
             {t('externalDisclaimer')}
           </p>
         )}
+
+        {/* Carrito flotante */}
+        <FloatingCart />
       </div>
     </div>
   );

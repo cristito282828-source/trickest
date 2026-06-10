@@ -94,6 +94,56 @@ export const evaluateSubmissionSchema = z.object({
   }
 );
 
+// ==================== ORDER SCHEMAS ====================
+
+const orderItemSchema = z.object({
+  productId: z.string().min(1, "Product ID is required"),
+  productName: z.string().min(1, "Product name is required").max(200),
+  productPrice: z.string().min(1, "Product price is required").max(50),
+  productImage: z.string().url("Invalid product image URL").optional().or(z.literal("")),
+  productSlug: z.string().min(1, "Product slug is required").max(200),
+  quantity: z.number().int("Quantity must be an integer").min(1, "Minimum quantity is 1").max(99, "Maximum quantity is 99"),
+});
+
+export const createOrderSchema = z.object({
+  // Customer info
+  customerName: z.string()
+    .min(2, "Name must be at least 2 characters")
+    .max(100, "Name cannot exceed 100 characters")
+    .trim(),
+  customerEmail: z.string()
+    .min(1, "Email is required")
+    .email("Invalid email format")
+    .toLowerCase()
+    .trim(),
+  customerPhone: z.string()
+    .min(7, "Phone must be at least 7 characters")
+    .max(20, "Phone cannot exceed 20 characters")
+    .trim(),
+
+  // Shipping (texto libre)
+  shippingAddress: z.string()
+    .min(5, "Address must be at least 5 characters")
+    .max(300, "Address cannot exceed 300 characters")
+    .trim(),
+  shippingCity: z.string()
+    .min(2, "City must be at least 2 characters")
+    .max(100, "City cannot exceed 100 characters")
+    .trim(),
+  shippingNotes: z.string()
+    .max(500, "Notes cannot exceed 500 characters")
+    .optional(),
+
+  // Items
+  items: z.array(orderItemSchema)
+    .min(1, "Cart cannot be empty")
+    .max(50, "Cannot order more than 50 different products at once"),
+});
+
+export const updateOrderStatusSchema = z.object({
+  status: z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']),
+});
+
 // ==================== TEAM SCHEMAS ====================
 
 export const createTeamSchema = z.object({

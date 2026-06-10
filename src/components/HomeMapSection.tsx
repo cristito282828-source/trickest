@@ -135,10 +135,8 @@ export default function HomeMapSection() {
       <div className="max-w-7xl mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-6xl font-black uppercase tracking-wider mb-4">
-            <span className="bg-gradient-to-r from-accent-cyan-400 to-accent-purple-600 text-transparent bg-clip-text">
-              {t('title')}
-            </span>
+          <h2 className="text-4xl md:text-6xl font-black text-brand-pink uppercase tracking-wider mb-4">
+            {t('title')}
           </h2>
           <p className="text-xl text-neutral-300 font-bold max-w-2xl mx-auto">
             {t('subtitle')}
