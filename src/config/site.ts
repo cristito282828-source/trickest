@@ -6,15 +6,22 @@
  * .env) — sitemap, robots, JSON-LD schema, canonical tags and Open Graph
  * URLs all derive from here.
  *
- * IMPORTANT: in production NEXT_PUBLIC_APP_URL must be the canonical host
- * that is actually served, i.e. the `www` version:
+ * Set NEXT_PUBLIC_APP_URL in Vercel to the canonical served host (www):
  *   NEXT_PUBLIC_APP_URL=https://www.thetrickest.app
+ *
+ * SAFETY: if the env var is missing, production falls back to the real
+ * production domain — NEVER localhost — so the sitemap/robots/JSON-LD/
+ * canonical never leak a localhost URL to crawlers. Localhost is only the
+ * fallback in non-production (local dev).
  */
 
 import { BRAND } from './branding';
 
+const PRODUCTION_URL = 'https://www.thetrickest.app';
+
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.NODE_ENV === 'production' ? PRODUCTION_URL : 'http://localhost:3000')
 ).replace(/\/$/, '');
 
 export const SITE_NAME = BRAND.name;
