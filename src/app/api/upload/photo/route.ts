@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { BRAND } from '@/config/branding';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +57,7 @@ export async function POST(req: Request) {
       }, { status: 500 });
     }
 
-    const uploadResponse = await fetch(`${supabaseUrl}/storage/v1/object/trickest-spots/${uniqueFilename}`, {
+    const uploadResponse = await fetch(`${supabaseUrl}/storage/v1/object/${BRAND.storage.bucket}/${uniqueFilename}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${supabaseServiceKey}`,
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
     }
 
     // Obtener URL pública (no requiere autenticación)
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/trickest-spots/${uniqueFilename}`;
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/${BRAND.storage.bucket}/${uniqueFilename}`;
 
     console.log('✅ Foto subida successfully:', publicUrl);
 
@@ -138,7 +139,7 @@ export async function DELETE(req: Request) {
     }
 
     // Eliminar de Supabase Storage usando service_role key
-    const deleteResponse = await fetch(`${supabaseUrl}/storage/v1/object/trickest-spots/${filename}`, {
+    const deleteResponse = await fetch(`${supabaseUrl}/storage/v1/object/${BRAND.storage.bucket}/${filename}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${supabaseServiceKey}`

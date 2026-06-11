@@ -5,6 +5,13 @@ import TransitionPage from '@/components/transition-page'
 import React from 'react'
 import { dataPortfolio } from '../../../../../data'
 import { getTranslations } from 'next-intl/server'
+import { Metadata } from 'next'
+
+// TODO: remove noindex once this page is rewritten with real TheTrickest
+// content (currently inherited from the agency template).
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 const page = async () => {
   const t = await getTranslations('portfolio')

@@ -1,8 +1,9 @@
 import { MetadataRoute } from 'next'
+import { SITE_URL } from '@/config/site'
 
+// Dynamic robots.txt — sitemap/host derive from SITE_URL so they always point
+// to the canonical domain (no hardcoded non-www/staging domain).
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://thetrickest.app'
-
   return {
     rules: [
       {
@@ -19,14 +20,14 @@ export default function robots(): MetadataRoute.Robots {
           '/static/',
         ],
       },
-      // Bots de IA (ChatGPT, Claude, etc.) - permitir pero no priorizar
+      // AI bots (ChatGPT, Claude, etc.) — allow public content, keep private areas out
       {
         userAgent: ['GPTBot', 'Claude-Web', 'ClaudeBot', 'PerplexityBot', 'Google-Extended'],
         allow: '/',
         disallow: ['/dashboard/', '/admin/', '/account/'],
       },
     ],
-    sitemap: `${baseUrl}/sitemap.xml`,
-    host: baseUrl,
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   }
 }

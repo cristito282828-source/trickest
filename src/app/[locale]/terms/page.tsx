@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { BRAND } from '@/config/branding';
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -203,7 +204,7 @@ export default function TermsPage() {
               </h2>
               <p className="mb-2">For questions about these Terms, contact us at:</p>
               <p className="text-accent-cyan-500 font-bold">
-                📧 legal@trickest.com
+                📧 {BRAND.email.legal}
               </p>
             </section>
 

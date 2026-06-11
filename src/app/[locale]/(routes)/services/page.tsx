@@ -11,6 +11,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t('metaTitle'),
     description: t('metaDescription'),
+    // TODO: remove noindex once this page is rewritten with real TheTrickest
+    // content (currently inherited from the agency template).
+    robots: { index: false, follow: false },
   }
 }
 

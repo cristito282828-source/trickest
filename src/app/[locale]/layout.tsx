@@ -12,6 +12,7 @@ import Footer from "@/components/Footer";
 import { Providers } from "../providers";
 import { CartProvider } from "@/components/providers/CartProvider";
 import { generateSchemaLd } from "@/lib/schema-ld";
+import { SITE_URL, SITE_NAME } from "@/config/site";
 
 const urbanist = Urbanist({ subsets: ["latin"] });
 
@@ -25,9 +26,7 @@ export async function generateMetadata({ params }: Props) {
 
   const t = await getTranslations({ locale, namespace: 'metadata' });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL
-    ? new URL(process.env.NEXT_PUBLIC_APP_URL)
-    : new URL('http://localhost:3000');
+  const appUrl = new URL(SITE_URL);
 
   return {
     metadataBase: appUrl,
@@ -41,8 +40,8 @@ export async function generateMetadata({ params }: Props) {
     openGraph: {
       title: t('title'),
       description: t('description'),
-      url: appUrl.toString(),
-      siteName: 'TRICKEST',
+      url: `${SITE_URL}/${locale}`,
+      siteName: SITE_NAME,
       images: [
         {
           url: '/trick-est.webp',
@@ -81,7 +80,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   // Providing all messages to the client
   const messages = await getMessages();
 
-  const schema = generateSchemaLd();
+  const schema = generateSchemaLd(locale);
 
   return (
     <html lang={locale}>

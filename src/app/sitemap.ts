@@ -1,25 +1,22 @@
 import { MetadataRoute } from 'next'
 import prisma from '@/app/lib/prisma'
+import { SITE_URL } from '@/config/site'
 
-// Forzar que el sitemap se regenere en cada request en producción
-// (Vercel cachea por 1h por default, esto lo desactiva)
+// Force regeneration on each request in production (disables Vercel's 1h cache)
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://thetrickest.app'
+  const baseUrl = SITE_URL
   const locales = ['en', 'es']
 
-  // Static routes (rutas públicas que se indexan)
+  // Static public, indexable routes only. about/services/portfolio/testimonials
+  // are noindex template pages — excluded until rewritten with real content.
   const staticRoutes = [
     '',
-    'about',
     'contacto',
     'spots',
     'explore',
-    'testimonials',
-    'services',
-    'portfolio',
   ]
 
   // Rutas privadas (no se indexan)

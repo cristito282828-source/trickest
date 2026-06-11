@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth';
+import { BRAND } from '@/config/branding';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     }
 
     const uploadResponse = await fetch(
-      `${supabaseUrl}/storage/v1/object/trickest-spots/${fileName}`,
+      `${supabaseUrl}/storage/v1/object/${BRAND.storage.bucket}/${fileName}`,
       {
         method: 'POST',
         headers: {
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
     }
 
     // Obtener URL pública
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/trickest-spots/${fileName}`;
+    const publicUrl = `${supabaseUrl}/storage/v1/object/public/${BRAND.storage.bucket}/${fileName}`;
 
     console.log('✅ Foto de perfil subida exitosamente:', publicUrl);
 
