@@ -219,7 +219,7 @@ export default function HomeLevelSection() {
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-pink-500 to-cyan-400 uppercase tracking-wider mb-4">
+          <h2 className="text-4xl md:text-6xl font-black text-brand-pink uppercase tracking-wider mb-4">
             {t('title')}
           </h2>
           <p className="text-cyan-300 text-lg md:text-xl max-w-3xl mx-auto">

@@ -48,6 +48,7 @@ export async function PUT(req: Request) {
       estado,
       departamento,
       ciudad,
+      address,
       birthdate,
       birthskate,
     } = data;
@@ -100,6 +101,7 @@ export async function PUT(req: Request) {
         gender,
         departamento,
         ciudad,
+        address: address || undefined,
         estado,
         birthdate: birthdate ? new Date(birthdate) : undefined,
         birthskate: birthskate ? new Date(birthskate) : undefined,

@@ -21,6 +21,7 @@ model User {
   password      String? // Contraseña hasheada (opcional para usuarios de Google)
   name          String?
   phone         String? // Campo para el número de celular
+  address       String? // Dirección de envío (texto libre) — auto-completar en checkout
   photo         String?
   gender        String? // "male" | "female" | "prefer_not_to_say"
   estado        String?
@@ -50,6 +51,7 @@ model User {
   comments         SpotComment[] // Comentarios del usuario
   commentVotes     CommentVote[] // Votos en comentarios
   userRewards      UserReward[]
+  orders           Order[] // Pedidos que el skater ha hecho
 }
 
 model SocialMedia {
@@ -497,6 +499,55 @@ model UserReward {
   @@unique([userEmail, challengeId])
   @@index([userEmail])
   @@index([challengeId])
+}
+
+// ==================== ORDERS SYSTEM (Tory Skateshop supplies) ====================
+
+model Order {
+  id              Int      @id @default(autoincrement())
+  userId          String?  // Email del skater (opcional, permite guest checkout)
+
+  // Datos del cliente
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+
+  // Envío (texto libre)
+  shippingAddress String
+  shippingCity    String
+  shippingNotes   String?
+
+  // Estado: pending → confirmed → shipped → delivered
+  //          ↘ cancelled
+  status          String   @default("pending")
+
+  // Metadata
+  totalItems      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relación
+  user            User?         @relation(fields: [userId], references: [email], onDelete: SetNull)
+  items           OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id            Int      @id @default(autoincrement())
+  orderId       Int
+  productId     String   // ID de Tory Skateshop
+  productName   String
+  productPrice  String   // "190.000" como string
+  productImage  String?
+  productSlug   String
+  quantity      Int      @default(1)
+
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
 }
 
 // Enums for Dynamic Challenges

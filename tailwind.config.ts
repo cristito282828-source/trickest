@@ -73,40 +73,40 @@ const config: Config = {
       themes: {
         dark: {
           colors: {
-            background: "rgb(var(--surface-base) / 1)",
-            foreground: "rgb(var(--ink-inverse) / 1)",
-            content1: "rgb(var(--surface-card) / 1)",
-            content2: "rgb(var(--surface-shell) / 1)",
+            background: "hsl(0, 0%, 4%)",         // --surface-base
+            foreground: "hsl(0, 0%, 100%)",       // --ink-inverse
+            content1:   "hsl(225, 50%, 8%)",      // --surface-card
+            content2:   "hsl(224, 37%, 16%)",     // --surface-shell
             primary: {
-              DEFAULT: "rgb(var(--brand-pink) / 1)",
-              foreground: "rgb(var(--ink-inverse) / 1)",
+              DEFAULT:    "hsl(341, 87%, 64%)",   // --brand-pink
+              foreground: "hsl(0, 0%, 100%)",     // --ink-inverse
             },
             secondary: {
-              DEFAULT: "rgb(var(--brand-cyan) / 1)",
-              foreground: "rgb(var(--surface-base) / 1)",
+              DEFAULT:    "hsl(189, 100%, 50%)",  // --brand-cyan
+              foreground: "hsl(0, 0%, 4%)",       // --surface-base
             },
-            success: "rgb(var(--color-success) / 1)",
-            warning: "rgb(var(--brand-orange) / 1)",
-            danger: "rgb(239 68 68 / 1)",
+            success: "hsl(142, 71%, 45%)",        // --color-success
+            warning: "hsl(14, 100%, 62%)",        // --brand-orange
+            danger:  "hsl(0, 84%, 60%)",
           },
         },
         light: {
           colors: {
-            background: "rgb(var(--surface-light) / 1)",
-            foreground: "rgb(var(--surface-base) / 1)",
-            content1: "rgb(var(--ink-inverse) / 1)",
-            content2: "rgb(var(--surface-light) / 1)",
+            background: "hsl(210, 38%, 95%)",     // --surface-light
+            foreground: "hsl(0, 0%, 4%)",         // --surface-base
+            content1:   "hsl(0, 0%, 100%)",       // --ink-inverse
+            content2:   "hsl(210, 38%, 95%)",     // --surface-light
             primary: {
-              DEFAULT: "rgb(var(--brand-pink) / 1)",
-              foreground: "rgb(var(--ink-inverse) / 1)",
+              DEFAULT:    "hsl(341, 87%, 64%)",   // --brand-pink
+              foreground: "hsl(0, 0%, 100%)",     // --ink-inverse
             },
             secondary: {
-              DEFAULT: "rgb(var(--brand-cyan) / 1)",
-              foreground: "rgb(var(--surface-base) / 1)",
+              DEFAULT:    "hsl(189, 100%, 50%)",  // --brand-cyan
+              foreground: "hsl(0, 0%, 4%)",       // --surface-base
             },
-            success: "rgb(var(--color-success) / 1)",
-            warning: "rgb(var(--brand-orange) / 1)",
-            danger: "rgb(239 68 68 / 1)",
+            success: "hsl(142, 71%, 45%)",        // --color-success
+            warning: "hsl(14, 100%, 62%)",        // --brand-orange
+            danger:  "hsl(0, 84%, 60%)",
           },
         },
       },

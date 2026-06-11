@@ -1,4 +1,5 @@
 import { Urbanist } from "next/font/google";
+import Script from "next/script";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -6,10 +7,10 @@ import { routing } from '@/i18n/routing';
 import Header from "@/components/header";
 import ArcadeButtonsWrapper from "@/components/ArcadeButtonsWrapper";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
-import MicrosoftClarity from "@/components/MicrosoftClarity";
 import CookieBanner from "@/components/CookieBanner";
 import Footer from "@/components/Footer";
 import { Providers } from "../providers";
+import { CartProvider } from "@/components/providers/CartProvider";
 import { generateSchemaLd } from "@/lib/schema-ld";
 
 const urbanist = Urbanist({ subsets: ["latin"] });
@@ -91,23 +92,53 @@ export default async function LocaleLayout({ children, params }: Props) {
             __html: JSON.stringify(schema)
           }}
         />
+
+        {/* Google Tag Manager */}
+        <Script id="gtm-script" strategy="afterInteractive">
+          {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+          new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+          j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+          'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+          })(window,document,'script','dataLayer','GTM-K4JDCBQQ');`}
+        </Script>
+
+        {/* Microsoft Clarity (ID: x506iw1c9j) */}
+        <Script id="clarity-script" strategy="afterInteractive">
+          {`(function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "x506iw1c9j");`}
+        </Script>
       </head>
       <body className={`${urbanist.className} bg-surface-deep`}>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-K4JDCBQQ"
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          />
+        </noscript>
+
         {/* Analytics */}
         <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''} />
-        <MicrosoftClarity projectId={process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || ''} />
+        {/* Microsoft Clarity se carga via script inline en el <head> (ver arriba) */}
 
         <NextIntlClientProvider messages={messages}>
           <Providers>
-            <div className="flex flex-col min-h-screen bg-surface-deep">
-              <Header />
-              <main className="flex-1 relative !bg-surface-deep">
-                {children}
-              </main>
-              <Footer />
-              <ArcadeButtonsWrapper />
-              <CookieBanner />
-            </div>
+            <CartProvider>
+              <div className="flex flex-col min-h-screen bg-surface-deep">
+                <Header />
+                <main className="flex-1 relative !bg-surface-deep">
+                  {children}
+                </main>
+                <Footer />
+                <ArcadeButtonsWrapper />
+                <CookieBanner />
+              </div>
+            </CartProvider>
           </Providers>
         </NextIntlClientProvider>
       </body>
