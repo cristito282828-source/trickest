@@ -1,7 +1,7 @@
 'use client'
 import React, { useMemo } from 'react'
 import { SidebarMenuItem } from './SidebarMenuItem';
-import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdSettings } from "react-icons/md";
+import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdSettings, MdShoppingCart } from "react-icons/md";
 import { GiSkateboard } from "react-icons/gi";
 import { GiTrophy } from "react-icons/gi";
 import { FaVideo } from "react-icons/fa";
@@ -34,6 +34,12 @@ export const Sidebar = () => {
       icon: <FaVideo size={28} />,
       title: t('menu.submissions'),
       subTitle: t('menu.history')
+    },
+    {
+      path: '/dashboard/skaters/orders',
+      icon: <MdShoppingCart size={28} />,
+      title: t('menu.orders'),
+      subTitle: t('menu.myOrders')
     },
     {
       path: '/dashboard/leaderboard',
@@ -105,6 +111,12 @@ export const Sidebar = () => {
       path: '/dashboard/admin/challenges',
       icon: <GiSkateboard size={28} />,
       title: t('menu.challenges'),
+      subTitle: t('menu.manage')
+    },
+    {
+      path: '/dashboard/admin/orders',
+      icon: <MdShoppingCart size={28} />,
+      title: t('menu.orders'),
       subTitle: t('menu.manage')
     },
     {

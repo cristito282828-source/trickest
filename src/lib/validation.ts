@@ -142,6 +142,7 @@ export const createOrderSchema = z.object({
 
 export const updateOrderStatusSchema = z.object({
   status: z.enum(['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']),
+  shippingGuideUrl: z.string().url().optional(),
 });
 
 // ==================== TEAM SCHEMAS ====================

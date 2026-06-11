@@ -1,6 +1,6 @@
 'use client'
 import React, { useMemo, useState } from 'react'
-import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout } from "react-icons/md";
+import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdShoppingCart } from "react-icons/md";
 import { GiSkateboard } from "react-icons/gi";
 import { GiTrophy } from "react-icons/gi";
 import { FaVideo } from "react-icons/fa";
@@ -99,6 +99,11 @@ export const MobileGameMenu = () => {
     if (userRole === 'admin') {
       return [
         {
+          path: '/dashboard/admin/orders',
+          icon: <MdShoppingCart size={24} />,
+          title: t('menu.orders')
+        },
+        {
           path: '/dashboard/admin/settings',
           icon: <MdAdminPanelSettings size={24} />,
           title: t('menu.settings')
@@ -119,6 +124,11 @@ export const MobileGameMenu = () => {
       ];
     } else {
       return [
+        {
+          path: '/dashboard/skaters/orders',
+          icon: <MdShoppingCart size={24} />,
+          title: t('menu.orders')
+        },
         {
           path: '/dashboard/teams',
           icon: <MdGroups size={24} />,

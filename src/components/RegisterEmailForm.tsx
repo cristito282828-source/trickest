@@ -52,7 +52,11 @@ export default function RegisterEmailForm({ isOpen, onClose, onSuccess, onSwitch
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || t('errorCreating'));
+        const errMsg =
+          (typeof data.error === 'object' && data.error?.message) ||
+          (typeof data.error === 'string' && data.error) ||
+          t('errorCreating');
+        setError(errMsg);
         setIsLoading(false);
         return;
       }

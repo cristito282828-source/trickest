@@ -516,6 +516,7 @@ model Order {
   shippingAddress String
   shippingCity    String
   shippingNotes   String?
+  shippingGuideUrl String?
 
   // Estado: pending → confirmed → shipped → delivered
   //          ↘ cancelled

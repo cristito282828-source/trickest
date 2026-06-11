@@ -76,7 +76,9 @@
     "challenges": "Desafíos",
     "settings": "Configuración",
     "system": "sistema",
-    "score": "puntuación"
+    "score": "puntuación",
+    "orders": "Pedidos",
+    "myOrders": "mis pedidos"
   },
   "home": {
     "followSteps": "Sigue los pasos",
@@ -1155,6 +1157,95 @@
     "feedbackPlaceholder": "Comentarios sobre la evaluación...",
     "cancel": "Cancelar",
     "reevaluate": "Re-evaluar"
+  },
+  "adminOrdersPage": {
+    "title": "GESTIÓN DE PEDIDOS",
+    "subtitle": "Revisar y gestionar los pedidos de la tienda",
+    "stats": {
+      "totalOrders": "Total",
+      "pending": "Pendientes",
+      "confirmed": "Confirmados",
+      "shipped": "Enviados"
+    },
+    "filters": {
+      "title": "Filtros",
+      "status": "Estado",
+      "allStatuses": "Todos los estados",
+      "status_pending": "Pendiente",
+      "status_confirmed": "Confirmado",
+      "status_shipped": "Enviado",
+      "status_delivered": "Entregado",
+      "status_cancelled": "Cancelado",
+      "customerEmail": "Email del cliente",
+      "customerEmailPlaceholder": "Buscar por email...",
+      "clearFilters": "Limpiar filtros"
+    },
+    "list": {
+      "order": "Pedido",
+      "customer": "Cliente",
+      "email": "Email",
+      "items": "Items",
+      "date": "Fecha",
+      "status": "Estado",
+      "actions": {
+        "viewDetail": "Ver detalle"
+      },
+      "empty": "No hay pedidos que coincidan con los filtros",
+      "guestOrder": "Pedido de invitado"
+    },
+    "detail": {
+      "backToList": "Volver al listado",
+      "title": "Detalle del Pedido",
+      "customerInfo": "Información del cliente",
+      "products": "Productos",
+      "quantity": "Cantidad",
+      "unitPrice": "Precio unitario",
+      "subtotal": "Subtotal",
+      "shippingAddress": "Dirección de envío",
+      "shippingCity": "Ciudad",
+      "notes": "Notas",
+      "shippingNotes": "Notas de envío",
+      "totalItems": "Total de items",
+      "createdAt": "Fecha de creación",
+      "notProvided": "No proporcionado",
+      "openProduct": "Ver producto",
+      "skaterAccount": "Cuenta de skater vinculada",
+      "guestAccount": "Pedido de invitado (sin cuenta)",
+      "shippingGuide": "Guía de envío",
+      "openGuide": "Abrir en nueva pestaña",
+      "noGuide": "Sin guía de envío"
+    },
+    "ship": {
+      "button": "Marcar como enviado",
+      "modalTitle": "Subir guía de envío",
+      "selectImage": "Seleccionar imagen",
+      "imageHelp": "Sube la foto de la guía de envío de la transportadora",
+      "preview": "Vista previa",
+      "cancel": "Cancelar",
+      "submit": "Marcar como enviado",
+      "submitting": "Subiendo...",
+      "errorUpload": "Error al subir la imagen",
+      "errorUpdate": "Error al actualizar la orden"
+    }
+  },
+  "skaterOrdersPage": {
+    "title": "MIS PEDIDOS",
+    "subtitle": "Historial de tus pedidos en la tienda",
+    "empty": "Aún no hiciste ningún pedido",
+    "browseStore": "Ir a la tienda",
+    "list": {
+      "order": "Pedido",
+      "items": "Items",
+      "date": "Fecha",
+      "status": "Estado"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "confirmed": "Confirmado",
+      "shipped": "Enviado",
+      "delivered": "Entregado",
+      "cancelled": "Cancelado"
+    }
   },
   "logrosPage": {
     "title": "LOGROS",

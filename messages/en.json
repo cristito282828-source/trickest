@@ -76,7 +76,9 @@
     "challenges": "Challenges",
     "settings": "Settings",
     "system": "system",
-    "score": "score"
+    "score": "score",
+    "orders": "Orders",
+    "myOrders": "my orders"
   },
   "home": {
     "followSteps": "Follow the Steps",
@@ -1155,6 +1157,95 @@
     "feedbackPlaceholder": "Comments about the evaluation...",
     "cancel": "Cancel",
     "reevaluate": "Re-evaluate"
+  },
+  "adminOrdersPage": {
+    "title": "ORDERS MANAGEMENT",
+    "subtitle": "Review and manage store orders",
+    "stats": {
+      "totalOrders": "Total",
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "shipped": "Shipped"
+    },
+    "filters": {
+      "title": "Filters",
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "status_pending": "Pending",
+      "status_confirmed": "Confirmed",
+      "status_shipped": "Shipped",
+      "status_delivered": "Delivered",
+      "status_cancelled": "Cancelled",
+      "customerEmail": "Customer email",
+      "customerEmailPlaceholder": "Search by email...",
+      "clearFilters": "Clear filters"
+    },
+    "list": {
+      "order": "Order",
+      "customer": "Customer",
+      "email": "Email",
+      "items": "Items",
+      "date": "Date",
+      "status": "Status",
+      "actions": {
+        "viewDetail": "View detail"
+      },
+      "empty": "No orders match the filters",
+      "guestOrder": "Guest order"
+    },
+    "detail": {
+      "backToList": "Back to list",
+      "title": "Order Detail",
+      "customerInfo": "Customer information",
+      "products": "Products",
+      "quantity": "Quantity",
+      "unitPrice": "Unit price",
+      "subtotal": "Subtotal",
+      "shippingAddress": "Shipping address",
+      "shippingCity": "City",
+      "notes": "Notes",
+      "shippingNotes": "Shipping notes",
+      "totalItems": "Total items",
+      "createdAt": "Created at",
+      "notProvided": "Not provided",
+      "openProduct": "View product",
+      "skaterAccount": "Linked skater account",
+      "guestAccount": "Guest order (no account)",
+      "shippingGuide": "Shipping guide",
+      "openGuide": "Open in new tab",
+      "noGuide": "No shipping guide"
+    },
+    "ship": {
+      "button": "Mark as shipped",
+      "modalTitle": "Upload shipping guide",
+      "selectImage": "Select image",
+      "imageHelp": "Upload a photo of the carrier's shipping guide",
+      "preview": "Preview",
+      "cancel": "Cancel",
+      "submit": "Mark as shipped",
+      "submitting": "Uploading...",
+      "errorUpload": "Error uploading image",
+      "errorUpdate": "Error updating order"
+    }
+  },
+  "skaterOrdersPage": {
+    "title": "MY ORDERS",
+    "subtitle": "History of your store orders",
+    "empty": "You haven't placed any orders yet",
+    "browseStore": "Browse the store",
+    "list": {
+      "order": "Order",
+      "items": "Items",
+      "date": "Date",
+      "status": "Status"
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    }
   },
   "logrosPage": {
     "title": "ACHIEVEMENTS",
