@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import prisma from '@/app/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import {
   createOrderSchema,
@@ -144,6 +145,7 @@ export async function POST(request: NextRequest) {
           productImage?: string;
           productSlug: string;
           quantity: number;
+          variation?: unknown;
         }) => ({
           orderId: newOrder.id,
           productId: item.productId,
@@ -152,6 +154,7 @@ export async function POST(request: NextRequest) {
           productImage: item.productImage || null,
           productSlug: item.productSlug,
           quantity: item.quantity,
+          variation: item.variation ?? Prisma.JsonNull,
         })),
       });
 

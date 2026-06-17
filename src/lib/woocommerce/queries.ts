@@ -5,13 +5,17 @@
  * Categoría por defecto: "trickest" (configurable vía env)
  */
 export const FEATURED_PRODUCTS_QUERY = `
-  query GetFeaturedProducts($category: String!, $first: Int = 8) {
+  query GetFeaturedProducts($category: String!, $first: Int = 30) {
     products(where: { category: $category }, first: $first) {
       nodes {
         id
         databaseId
         name
         slug
+        image {
+          sourceUrl
+          altText
+        }
         ... on SimpleProduct {
           price
           regularPrice
@@ -19,10 +23,41 @@ export const FEATURED_PRODUCTS_QUERY = `
         }
         ... on VariableProduct {
           price
-        }
-        image {
-          sourceUrl
-          altText
+          attributes {
+            nodes {
+              name
+              label
+              variation
+              visible
+              options
+            }
+          }
+          variations(first: 30) {
+            nodes {
+              id
+              databaseId
+              name
+              slug
+              sku
+              price
+              regularPrice
+              salePrice
+              stockStatus
+              stockQuantity
+              purchasable
+              image {
+                sourceUrl
+                altText
+              }
+              attributes {
+                nodes {
+                  name
+                  value
+                  label
+                }
+              }
+            }
+          }
         }
       }
     }

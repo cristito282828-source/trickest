@@ -89,6 +89,9 @@ export default async function SupplsPage() {
               price: p.price,
               // El backend ya devuelve la URL proxied (/api/external-image?url=...)
               imageUrl: p.image?.sourceUrl ?? null,
+              // WPGQL WC devuelve variations como { nodes: [...] } (connection wrapper)
+              variations: p.variations?.nodes ?? [],
+              attributes: p.attributes?.nodes ?? [],
             }))}
           />
         )}

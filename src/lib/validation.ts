@@ -96,6 +96,19 @@ export const evaluateSubmissionSchema = z.object({
 
 // ==================== ORDER SCHEMAS ====================
 
+const orderVariationSchema = z.object({
+  databaseId: z.number().int().positive(),
+  name: z.string().max(200),
+  price: z.string().max(50).nullable().optional(),
+  attributes: z.object({
+    nodes: z.array(z.object({
+      name: z.string(),
+      value: z.string(),
+      label: z.string(),
+    })),
+  }),
+}).optional();
+
 const orderItemSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
   productName: z.string().min(1, "Product name is required").max(200),
@@ -103,6 +116,7 @@ const orderItemSchema = z.object({
   productImage: z.string().url("Invalid product image URL").optional().or(z.literal("")),
   productSlug: z.string().min(1, "Product slug is required").max(200),
   quantity: z.number().int("Quantity must be an integer").min(1, "Minimum quantity is 1").max(99, "Maximum quantity is 99"),
+  variation: orderVariationSchema,
 });
 
 export const createOrderSchema = z.object({

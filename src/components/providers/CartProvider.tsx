@@ -20,6 +20,15 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
  * }
  */
 
+export interface CartItemVariation {
+  databaseId: number;
+  name: string;
+  price: string | null;
+  attributes: { nodes: { name: string; value: string; label: string }[] };
+  /** Label legible del talle (ej: "US 7.0 / EUR 38 / 25 cm"). */
+  displayLabel?: string;
+}
+
 export interface CartItem {
   productId: string;
   productName: string;
@@ -27,6 +36,7 @@ export interface CartItem {
   productImage: string | null;
   productSlug: string;
   quantity: number;
+  variation?: CartItemVariation;
 }
 
 interface CartContextValue {
@@ -75,14 +85,19 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items, hydrated]);
 
-  // Agregar item (o incrementar cantidad si ya existe)
+  // Agregar item (o incrementar cantidad si ya existe con la misma variation)
   const addItem = useCallback(
     (item: Omit<CartItem, 'quantity'>, quantity = 1) => {
       setItems((prev) => {
-        const existing = prev.find((i) => i.productId === item.productId);
+        const existing = prev.find(
+          (i) =>
+            i.productId === item.productId &&
+            (i.variation?.databaseId ?? null) === (item.variation?.databaseId ?? null)
+        );
         if (existing) {
           return prev.map((i) =>
-            i.productId === item.productId
+            i.productId === item.productId &&
+            (i.variation?.databaseId ?? null) === (item.variation?.databaseId ?? null)
               ? { ...i, quantity: i.quantity + quantity }
               : i
           );

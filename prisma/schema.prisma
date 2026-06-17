@@ -544,6 +544,7 @@ model OrderItem {
   productPrice  String   // "190.000" como string
   productImage  String?
   productSlug   String
+  variation     Json?    // { databaseId, name, price, attributes } cuando es un VariableProduct
   quantity      Int      @default(1)
 
   order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)

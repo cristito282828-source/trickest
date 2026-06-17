@@ -99,6 +99,11 @@ export default function FloatingCart() {
                         <p className="text-white font-bold text-sm truncate">
                           {item.productName}
                         </p>
+                        {item.variation?.displayLabel && (
+                          <p className="text-accent-cyan-400 text-xs truncate font-bold">
+                            {item.variation.displayLabel}
+                          </p>
+                        )}
                         <p className="text-accent-yellow-400 text-sm font-bold">
                           {item.productPrice}
                         </p>

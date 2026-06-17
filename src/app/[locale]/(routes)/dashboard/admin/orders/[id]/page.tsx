@@ -30,6 +30,12 @@ interface OrderItem {
   productImage: string | null;
   productSlug: string;
   quantity: number;
+  variation?: {
+    databaseId: number;
+    name: string;
+    price: string | null;
+    attributes: { nodes: { name: string; value: string; label: string }[] };
+  } | null;
 }
 
 interface Order {
@@ -475,6 +481,14 @@ export default function AdminOrderDetailPage({
                       <p className="text-white font-bold truncate">
                         {item.productName}
                       </p>
+                      {item.variation && (
+                        <p className="text-accent-cyan-400 text-xs truncate">
+                          Variación: {item.variation.name}
+                          {item.variation.price && (
+                            <span className="text-slate-500"> · {item.variation.price}</span>
+                          )}
+                        </p>
+                      )}
                       <p className="text-slate-400 text-xs">
                         {t('detail.unitPrice')}: {formatPrice(item.productPrice)}
                       </p>
