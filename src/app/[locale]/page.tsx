@@ -7,6 +7,7 @@ import HomeMapSection from '@/components/HomeMapSection';
 import HomeRanking from '@/components/HomeRanking';
 import ContactCTAButton from '@/components/ContactCTAButton';
 import ActivityTicker from '@/components/ActivityTicker';
+import FloatingCartOrbit from '@/components/orbital/FloatingCartOrbit';
 import { getTranslations } from 'next-intl/server';
 import AuthRedirect from '@/components/AuthRedirect';
 
@@ -72,6 +73,9 @@ export default async function Home({
       {/* <div>
         <Footer />
       </div> */}
+
+      {/* Floating cart orbit (carrito de compras que rebota por toda la pantalla) */}
+      <FloatingCartOrbit />
     </>
   );
 }

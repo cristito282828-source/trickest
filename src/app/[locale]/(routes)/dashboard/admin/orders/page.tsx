@@ -29,6 +29,7 @@ interface Order {
   shippingAddress: string;
   shippingCity: string;
   shippingNotes: string | null;
+  shippingGuideUrl: string | null;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   totalItems: number;
   createdAt: string;
@@ -259,6 +260,14 @@ export default function AdminOrdersPage() {
                         #{order.id}
                       </span>
                       {getStatusBadge(order.status)}
+                      {order.shippingGuideUrl && (
+                        <span
+                          className="text-[10px] bg-accent-purple-500/20 border border-accent-purple-400 text-accent-purple-300 px-2 py-0.5 rounded-full font-black uppercase tracking-wider whitespace-nowrap"
+                          title={t('list.hasGuide')}
+                        >
+                          📦 {t('list.hasGuide')}
+                        </span>
+                      )}
                     </div>
 
                     {/* Customer info */}

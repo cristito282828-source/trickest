@@ -1191,7 +1191,8 @@
         "viewDetail": "View detail"
       },
       "empty": "No orders match the filters",
-      "guestOrder": "Guest order"
+      "guestOrder": "Guest order",
+      "hasGuide": "With guide"
     },
     "detail": {
       "backToList": "Back to list",
@@ -1245,6 +1246,11 @@
       "shipped": "Shipped",
       "delivered": "Delivered",
       "cancelled": "Cancelled"
+    },
+    "guide": {
+      "title": "Shipping guide",
+      "viewGuide": "View guide",
+      "help": "Tap to view full size"
     }
   },
   "logrosPage": {

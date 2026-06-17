@@ -1191,7 +1191,8 @@
         "viewDetail": "Ver detalle"
       },
       "empty": "No hay pedidos que coincidan con los filtros",
-      "guestOrder": "Pedido de invitado"
+      "guestOrder": "Pedido de invitado",
+      "hasGuide": "Con guía"
     },
     "detail": {
       "backToList": "Volver al listado",
@@ -1245,6 +1246,11 @@
       "shipped": "Enviado",
       "delivered": "Entregado",
       "cancelled": "Cancelado"
+    },
+    "guide": {
+      "title": "Guía de envío",
+      "viewGuide": "Ver guía",
+      "help": "Toca para ver en grande"
     }
   },
   "logrosPage": {

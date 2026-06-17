@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Card, CardBody } from '@nextui-org/react';
-import { MdShoppingCart, MdStorefront } from 'react-icons/md';
+import { MdShoppingCart, MdStorefront, MdLocalShipping, MdOpenInNew } from 'react-icons/md';
 import { Button } from '@/components/atoms';
 import { Link } from '@/i18n/routing';
 
@@ -28,6 +29,7 @@ interface Order {
   shippingAddress: string;
   shippingCity: string;
   shippingNotes: string | null;
+  shippingGuideUrl: string | null;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   totalItems: number;
   createdAt: string;
@@ -175,6 +177,49 @@ export default function SkaterOrdersPage() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Shipping guide (visible only when uploaded) */}
+                  {order.shippingGuideUrl && (
+                    <div className="mt-4 pt-4 border-t border-slate-700">
+                      <div className="flex items-center gap-2 mb-2">
+                        <MdLocalShipping className="text-accent-purple-400" size={16} />
+                        <p className="text-white font-black uppercase tracking-wider text-xs">
+                          {t('guide.title')}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <a
+                          href={order.shippingGuideUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="relative shrink-0 w-20 h-20 bg-slate-800 rounded-lg overflow-hidden border-2 border-slate-700 hover:border-accent-purple-400 transition-colors group"
+                          title={t('guide.help')}
+                        >
+                          <Image
+                            src={order.shippingGuideUrl}
+                            alt="Shipping guide"
+                            fill
+                            sizes="80px"
+                            className="object-contain p-1 group-hover:scale-105 transition-transform"
+                          />
+                        </a>
+                        <div className="flex-1 min-w-0">
+                          <a
+                            href={order.shippingGuideUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-bold text-sm"
+                          >
+                            {t('guide.viewGuide')}
+                            <MdOpenInNew size={14} />
+                          </a>
+                          <p className="text-slate-500 text-xs mt-1">
+                            {t('guide.help')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardBody>
               </Card>
             ))}
