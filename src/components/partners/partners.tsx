@@ -74,8 +74,8 @@ const Partners = () => {
         </header>
 
         {/* Partners grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
-          {partners.map((partner) => {
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 lg:gap-8 max-w-6xl mx-auto">
+          {partners.map((partner, idx) => {
             const Wrapper = partner.website ? 'a' : 'div';
             const wrapperProps = partner.website
               ? {
@@ -84,21 +84,24 @@ const Partners = () => {
                   rel: 'noopener noreferrer',
                 }
               : {};
+            const isLast = idx === partners.length - 1;
 
             return (
               <Wrapper
                 key={partner.name}
                 {...wrapperProps}
-                className="group relative block bg-gradient-to-r from-accent-cyan-500 to-accent-purple-600 p-1 rounded-2xl shadow-2xl shadow-accent-cyan-500/20 hover:shadow-accent-cyan-500/50 transform hover:scale-105 transition-all duration-300"
+                className={`group relative block bg-gradient-to-r from-accent-cyan-500 to-accent-purple-600 p-1 rounded-2xl shadow-2xl shadow-accent-cyan-500/20 hover:shadow-accent-cyan-500/50 transform hover:scale-105 transition-all duration-300 ${
+                  isLast ? 'md:col-span-1 col-span-2 max-w-[calc(50%-0.5rem)] mx-auto' : ''
+                }`}
               >
-                <div className="bg-neutral-900 rounded-2xl p-8 md:p-10 flex flex-col items-center text-center h-full">
+                <div className="bg-neutral-900 rounded-2xl p-4 md:p-10 flex flex-col items-center text-center h-full">
                   {/* Logo container with circular border */}
                   <div className="relative mb-6">
                     {/* Glow on hover */}
                     <div className="absolute inset-0 bg-gradient-to-r from-accent-cyan-500 to-accent-purple-600 rounded-full blur-xl opacity-0 group-hover:opacity-60 transition-opacity duration-300" />
 
                     {/* Logo */}
-                    <div className="relative w-40 h-40 md:w-48 md:h-48 rounded-full bg-neutral-50 border-4 border-accent-cyan-400 group-hover:border-accent-cyan-300 overflow-hidden flex items-center justify-center transition-all">
+                    <div className="relative w-24 h-24 md:w-48 md:h-48 rounded-full bg-neutral-50 border-4 border-accent-cyan-400 group-hover:border-accent-cyan-300 overflow-hidden flex items-center justify-center transition-all">
                       <Image
                         width={200}
                         height={200}

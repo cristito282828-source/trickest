@@ -7,7 +7,7 @@ import { preloadAll, getCachedImage } from './product-images';
 import { useCart } from '@/components/providers/CartProvider';
 import type { Variation, ProductAttribute } from '@/lib/woocommerce/types';
 import { formatSizeOption } from '@/lib/woocommerce/size-format';
-import { MdClose, MdOpenInNew, MdCheck, MdShoppingCart, MdCheckCircle } from 'react-icons/md';
+import { MdClose, MdCheck, MdShoppingCart, MdCheckCircle } from 'react-icons/md';
 
 interface OrbitalCanvasProps {
   products: OrbitalProduct[];
@@ -491,16 +491,6 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
               </>
             )}
           </button>
-
-          <a
-            href={`https://toryskateshop.com/?product=${anchored.product.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full mt-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold py-2 px-6 rounded-lg border border-neutral-700 uppercase tracking-wider text-xs transition-all"
-          >
-            <MdOpenInNew />
-            {t('viewOnStore')}
-          </a>
 
           <p className="text-neutral-500 text-xs mt-3 text-center flex items-center justify-center gap-1">
             <MdCheck className="text-accent-cyan-400" />
