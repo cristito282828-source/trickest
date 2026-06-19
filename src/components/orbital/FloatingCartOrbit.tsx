@@ -116,11 +116,11 @@ export default function FloatingCartOrbit() {
       {/* Main: solo la imagen PNG con su drop-shadow */}
       <div className="relative w-full h-full flex items-center justify-center hover:scale-110 active:scale-95 transition-transform">
         <Image
-          src="/snich.png"
+          src="/snich-final.png"
           alt="Golden snitch"
-          width={72}
-          height={72}
-          className="w-[72px] h-[72px] object-contain wing-flap pointer-events-none drop-shadow-lg"
+          width={56}
+          height={56}
+          className="w-[56px] h-[56px] object-contain wing-flap pointer-events-none drop-shadow-lg"
         />
       </div>
 
