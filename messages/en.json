@@ -322,6 +322,12 @@
     "skatersLegend": "Points are calculated by adding the scores of all approved submissions.",
     "teamsLegend": "Team points are the sum of all members' points."
   },
+  "topReels": {
+    "title": "TOP REELS",
+    "subtitle": "The best ranked tricks",
+    "viewAll": "View full leaderboard",
+    "close": "Close"
+  },
   "challengeCard": {
     "submitYourVideo": "Submit Your Video",
     "pendingEvaluation": "Pending Evaluation...",

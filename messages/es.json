@@ -322,6 +322,12 @@
     "skatersLegend": "Los puntos se calculan sumando los scores de todas las entregas aprobadas.",
     "teamsLegend": "Los puntos del equipo son la suma de los puntos de todos sus miembros."
   },
+  "topReels": {
+    "title": "TOP REELS",
+    "subtitle": "Los mejores trucos rankeados",
+    "viewAll": "Ver clasificación completa",
+    "close": "Cerrar"
+  },
   "challengeCard": {
     "submitYourVideo": "Enviar Tu Video",
     "pendingEvaluation": "Evaluación Pendiente...",

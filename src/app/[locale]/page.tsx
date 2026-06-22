@@ -5,6 +5,7 @@ import TransitionPage from '@/components/transition-page';
 import HomeLevelSection from '@/components/HomeLevelSection';
 import HomeMapSection from '@/components/HomeMapSection';
 import HomeRanking from '@/components/HomeRanking';
+import TopReels from '@/components/TopReels';
 import ContactCTAButton from '@/components/ContactCTAButton';
 import ActivityTicker from '@/components/ActivityTicker';
 import FloatingCartOrbit from '@/components/orbital/FloatingCartOrbit';
@@ -40,6 +41,9 @@ export default async function Home({
 
       {/* Ranking Section */}
       <HomeRanking />
+
+      {/* Top Reels Section - submissions rankeadas */}
+      <TopReels />
 
       {/* How to Win Section */}
       <HowWin />
