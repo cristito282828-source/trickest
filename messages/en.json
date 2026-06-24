@@ -326,7 +326,11 @@
     "title": "TOP REELS",
     "subtitle": "The best ranked tricks",
     "viewAll": "View full leaderboard",
-    "close": "Close"
+    "close": "Close",
+    "like": "Like",
+    "liked": "Liked",
+    "loginToLike": "Sign in to like",
+    "comments": "Comments ({count})"
   },
   "challengeCard": {
     "submitYourVideo": "Submit Your Video",

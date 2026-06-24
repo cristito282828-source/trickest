@@ -73,8 +73,8 @@ const Partners = () => {
           </svg>
         </header>
 
-        {/* Partners grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 lg:gap-8 max-w-6xl mx-auto">
+        {/* Partners — estilo Instagram: círculos con nombre debajo */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto md:justify-items-center">
           {partners.map((partner, idx) => {
             const Wrapper = partner.website ? 'a' : 'div';
             const wrapperProps = partner.website
@@ -84,50 +84,43 @@ const Partners = () => {
                   rel: 'noopener noreferrer',
                 }
               : {};
+            // Centrar el último card (Tory) en desktop: en mobile sigue col-span-2
             const isLast = idx === partners.length - 1;
 
             return (
               <Wrapper
                 key={partner.name}
                 {...wrapperProps}
-                className={`group relative block bg-gradient-to-r from-accent-cyan-500 to-accent-purple-600 p-1 rounded-2xl shadow-2xl shadow-accent-cyan-500/20 hover:shadow-accent-cyan-500/50 transform hover:scale-105 transition-all duration-300 ${
-                  isLast ? 'md:col-span-1 col-span-2 max-w-[calc(50%-0.5rem)] mx-auto' : ''
+                className={`group flex flex-col items-center text-center ${
+                  isLast ? 'col-span-2 md:col-span-1' : ''
                 }`}
               >
-                <div className="bg-neutral-900 rounded-2xl p-4 md:p-10 flex flex-col items-center text-center h-full">
-                  {/* Logo container with circular border */}
-                  <div className="relative mb-6">
-                    {/* Glow on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-accent-cyan-500 to-accent-purple-600 rounded-full blur-xl opacity-0 group-hover:opacity-60 transition-opacity duration-300" />
+                {/* Círculo del logo con border gradiente (cyan → verde tóxico → purple) */}
+                <div className="relative w-32 h-32 md:w-44 md:h-44 mb-4">
+                  {/* Glow on hover */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent-cyan-500 via-toxic-green-500 to-accent-purple-600 blur-lg opacity-40 group-hover:opacity-80 transition-opacity duration-300" />
 
-                    {/* Logo */}
-                    <div className="relative w-24 h-24 md:w-48 md:h-48 rounded-full bg-neutral-50 border-4 border-accent-cyan-400 group-hover:border-accent-cyan-300 overflow-hidden flex items-center justify-center transition-all">
+                  {/* Border gradiente */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-accent-cyan-500 via-toxic-green-500 to-accent-purple-600 p-[3px]">
+                    <div className="w-full h-full rounded-full bg-neutral-50 overflow-hidden flex items-center justify-center">
                       <Image
                         width={200}
                         height={200}
                         src={partner.imageSrc}
                         alt={`${partner.name} logo`}
-                        className="w-full h-full object-contain p-4 grayscale group-hover:grayscale-0 transition-all duration-500"
+                        className="w-full h-full object-contain p-3 grayscale group-hover:grayscale-0 transition-all duration-500"
                       />
                     </div>
                   </div>
-
-                  {/* Name + role */}
-                  <p className="text-2xl md:text-3xl font-black text-accent-cyan-400 uppercase tracking-wider mb-2 group-hover:text-accent-cyan-300 transition-colors">
-                    {partner.name}
-                  </p>
-                  <p className="text-neutral-400 text-sm md:text-base font-light">
-                    {t(partner.roleKey)}
-                  </p>
-
-                  {/* Visit indicator — solo si tiene website */}
-                  {partner.website && (
-                    <div className="mt-4 inline-flex items-center gap-2 text-xs text-neutral-500 group-hover:text-accent-cyan-400 uppercase tracking-wider font-bold transition-colors">
-                      {t('visitSite') || 'VISIT SITE'}
-                      <span className="transform group-hover:translate-x-1 transition-transform">→</span>
-                    </div>
-                  )}
                 </div>
+
+                {/* Name con detalle verde tóxico en hover */}
+                <p className="text-base md:text-lg font-black text-accent-cyan-400 uppercase tracking-wider mb-1 group-hover:text-toxic-green-400 transition-colors">
+                  {partner.name}
+                </p>
+                <p className="text-neutral-400 text-xs md:text-sm font-light">
+                  {t(partner.roleKey)}
+                </p>
               </Wrapper>
             );
           })}

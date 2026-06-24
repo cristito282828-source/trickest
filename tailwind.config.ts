@@ -21,6 +21,7 @@ const config: Config = {
           orange: "rgb(var(--brand-orange) / <alpha-value>)",
           purple: "rgb(var(--brand-purple) / <alpha-value>)",
           purpleDark: "rgb(var(--brand-purple-dark) / <alpha-value>)",
+          'toxic-green': "#39FF14",  // Verde tóxico neón para acentos contrastantes
         },
         surface: {
           base: "rgb(var(--surface-base) / <alpha-value>)",

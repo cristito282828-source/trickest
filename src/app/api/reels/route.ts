@@ -1,5 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
+import { getServerSession } from 'next-auth';
 import prisma from '@/app/lib/prisma';
+import { authOptions } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -10,23 +12,26 @@ export const dynamic = 'force-dynamic';
  * Devuelve el top 10 de submissions aprobadas rankeadas por score.
  * Usado por la sección pública "Top Reels" del home.
  *
+ * Si el usuario está logueado, incluye `userVote` (boolean) por reel
+ * y `commentCount` (count de ReelComment).
+ *
  * Solo expone: id, videoUrl, score, submittedAt, upvotes, voteCount,
  *              challenge {name, level, difficulty, points, isBonus},
  *              user {email, name, photo, username}.
- *
- * NO expone userId (email del skater — si está logueado) ni datos sensibles.
  */
-export async function GET() {
+export async function GET(_request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    const userEmail = session?.user?.email ?? null;
+
     const submissions = await prisma.submission.findMany({
       where: {
         status: 'approved',
-        // Solo submissions que tienen video (defensivo)
         videoUrl: { not: '' },
       },
       orderBy: [
         { score: 'desc' },
-        { submittedAt: 'desc' }, // tiebreaker
+        { submittedAt: 'desc' },
       ],
       take: 10,
       include: {
@@ -47,10 +52,35 @@ export async function GET() {
             username: true,
           },
         },
+        _count: {
+          select: { reelComments: true },
+        },
       },
     });
 
-    return successResponse({ reels: submissions, count: submissions.length });
+    // Si hay sesión, batch-fetch los likes del usuario en una sola query
+    let userLikes = new Map<number, boolean>();
+    if (userEmail && submissions.length > 0) {
+      const submissionIds = submissions.map((s) => s.id);
+      const votes = await prisma.vote.findMany({
+        where: {
+          submissionId: { in: submissionIds },
+          userId: userEmail,
+          voteType: 'upvote',
+        },
+        select: { submissionId: true },
+      });
+      userLikes = new Map(votes.map((v) => [v.submissionId, true]));
+    }
+
+    // Enriquecer cada reel con userVote y commentCount
+    const enriched = submissions.map((s) => ({
+      ...s,
+      userVote: userLikes.has(s.id) ? 'upvote' as const : null,
+      commentCount: s._count?.reelComments ?? 0,
+    }));
+
+    return successResponse({ reels: enriched, count: enriched.length });
   } catch (error) {
     console.error('[API /reels] GET error:', error);
     return errorResponse('INTERNAL_ERROR', 'Error fetching reels', 500);

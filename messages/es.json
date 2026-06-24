@@ -326,7 +326,11 @@
     "title": "TOP REELS",
     "subtitle": "Los mejores trucos rankeados",
     "viewAll": "Ver clasificación completa",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "like": "Me gusta",
+    "liked": "Te gusta",
+    "loginToLike": "Inicia sesión para dar like",
+    "comments": "Comentarios ({count})"
   },
   "challengeCard": {
     "submitYourVideo": "Enviar Tu Video",

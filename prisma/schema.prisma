@@ -50,6 +50,8 @@ model User {
   notifications    Notification[]   @relation("UserNotifications") // Notificaciones recibidas
   comments         SpotComment[] // Comentarios del usuario
   commentVotes     CommentVote[] // Votos en comentarios
+  reelComments     ReelComment[] // Comentarios en reels del usuario
+  reelCommentVotes ReelCommentVote[] // Votos en comentarios de reels
   userRewards      UserReward[]
   orders           Order[] // Pedidos que el skater ha hecho
 }
@@ -116,6 +118,7 @@ model Submission {
   challenge Challenge @relation(fields: [challengeId], references: [id])
   judge     User?     @relation("JudgeEvaluations", fields: [evaluatedBy], references: [email])
   votes     Vote[] // Relación con los votos
+  reelComments ReelComment[] // Comentarios en este reel
 
   @@index([userId, challengeId])
   @@index([status])
@@ -174,6 +177,46 @@ model Vote {
   @@index([submissionId])
   @@index([userId])
   @@index([voteType])
+}
+
+model ReelComment {
+  id              Int      @id @default(autoincrement())
+  submissionId    Int
+  userId          String
+  content         String   @db.Text
+  likes           Int      @default(0)
+  dislikes        Int      @default(0)
+  isPinned        Boolean  @default(false)
+  isHidden        Boolean  @default(false)
+  parentCommentId Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  submission    Submission     @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [email])
+  parentComment ReelComment?  @relation("ReelCommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies       ReelComment[] @relation("ReelCommentReplies")
+  votes         ReelCommentVote[]
+
+  @@index([submissionId])
+  @@index([userId])
+  @@index([parentCommentId])
+  @@index([createdAt])
+}
+
+model ReelCommentVote {
+  id        Int      @id @default(autoincrement())
+  commentId Int
+  userId    String
+  voteType  String
+  createdAt DateTime @default(now())
+
+  comment ReelComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [email])
+
+  @@unique([commentId, userId])
+  @@index([commentId])
+  @@index([userId])
 }
 
 model Follow {
