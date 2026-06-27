@@ -74,7 +74,10 @@ export default function PromoVideoModal() {
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
             <button
               type="button"
-              onClick={() => setShowRegister(true)}
+              onClick={() => {
+                setShowRegister(true);
+                setIsOpen(false); // Cerrar el modal de video para que el form sea el topmost
+              }}
               className="inline-block px-8 py-3 bg-brand-pink text-white font-black uppercase tracking-wider text-sm rounded-full shadow-lg shadow-brand-pink/30 hover:scale-105 transition-transform"
             >
               {t('registerNow')}
