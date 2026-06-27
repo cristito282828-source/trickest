@@ -398,6 +398,10 @@
     "continuingIn": "Continuando en {seconds}s...",
     "skip": "SALTAR"
   },
+  "promoModal": {
+    "registerNow": "Registrarse ahora",
+    "close": "Cerrar"
+  },
   "submissionHistoryCard": {
     "bonus": "BONUS",
     "level": "Nivel {level}",

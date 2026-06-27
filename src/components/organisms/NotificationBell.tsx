@@ -251,14 +251,14 @@ export default function NotificationBell() {
       <button
         onClick={handleOpen}
         disabled={!userEmail}
-        className="relative p-2 rounded-full hover:bg-slate-700 transition-colors disabled:opacity-50"
+        className="relative p-2 rounded-full bg-lime-500/15 hover:bg-lime-500/30 border border-lime-500/50 hover:border-lime-400 transition-all disabled:opacity-50"
         title={userEmail ? t('title') : t('signInToSee')}
       >
-        <Bell className="w-6 h-6 text-slate-300" />
+        <Bell className="w-6 h-6 text-lime-400" />
 
         {/* Badge con contador */}
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 min-w-[1.25rem] flex items-center justify-center px-1 animate-pulse">
+          <span className="absolute -top-1 -right-1 bg-lime-400 text-black text-xs font-bold rounded-full h-5 min-w-[1.25rem] flex items-center justify-center px-1 animate-pulse">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -270,7 +270,7 @@ export default function NotificationBell() {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-slate-700">
             <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-cyan-400" />
+              <Bell className="w-5 h-5 text-lime-400" />
               <h3 className="font-bold text-white">
                 {t('title')}
                 {unreadCount > 0 && (
@@ -309,7 +309,7 @@ export default function NotificationBell() {
               </div>
             ) : notifications.length === 0 ? (
               <div className="text-center py-8">
-                <Bell className="w-12 h-12 text-slate-600 mx-auto mb-2" />
+                <Bell className="w-12 h-12 text-lime-600 mx-auto mb-2" />
                 <p className="text-slate-500 text-sm">{t('empty')}</p>
               </div>
             ) : (
