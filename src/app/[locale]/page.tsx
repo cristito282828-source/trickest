@@ -4,8 +4,8 @@ import Partners from '@/components/partners/partners';
 import TransitionPage from '@/components/transition-page';
 import HomeLevelSection from '@/components/HomeLevelSection';
 import HomeMapSection from '@/components/HomeMapSection';
-import HomeRanking from '@/components/HomeRanking';
-import TopReels from '@/components/TopReels';
+// import HomeRanking from '@/components/HomeRanking';
+// import TopReels from '@/components/TopReels';
 import ContactCTAButton from '@/components/ContactCTAButton';
 import ActivityTicker from '@/components/ActivityTicker';
 import FloatingCartOrbit from '@/components/orbital/FloatingCartOrbit';
@@ -40,11 +40,8 @@ export default async function Home({
         <HighScore />
       </div> */}
 
-      {/* Ranking Section */}
-      <HomeRanking />
-
-      {/* Top Reels Section - submissions rankeadas */}
-      <TopReels />
+      {/* Ranking Section - hidden */}
+      {/* Top Reels Section - hidden */}
 
       {/* How to Win Section */}
       <HowWin />
