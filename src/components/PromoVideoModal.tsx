@@ -32,6 +32,8 @@ export default function PromoVideoModal() {
 
   // Body scroll lock + ESC handler (activo mientras el video O el register estén abiertos).
   useEffect(() => {
+    // No aplicar scroll lock si el usuario ya está autenticado y no hay register abierto.
+    if (status === 'authenticated' && !showRegister) return;
     if (!isOpen && !showRegister) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -48,7 +50,7 @@ export default function PromoVideoModal() {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', onKey);
     };
-  }, [isOpen, showRegister]);
+  }, [isOpen, showRegister, status]);
 
   // Early returns DESPUÉS de todos los hooks.
   if (status === 'authenticated' && !showRegister) return null;
