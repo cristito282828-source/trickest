@@ -1,345 +1,393 @@
-# 🛹 Trickest Skate Platform
+# 🛹 TheTrickest
 
-Plataforma de challenges de skateboarding con sistema de evaluación, comentarios en spots, y economía fantasy (en desarrollo).
+Plataforma social + marketplace para la comunidad de skateboarding. Red social de skaters con challenges rankeados, spots geolocalizados, equipos, sistema de pedidos a tienda WooCommerce y panel admin completo.
 
----
+**Stack:** Next.js 14.2.21 (App Router) · TypeScript · Prisma 6 + PostgreSQL (Supabase) · NextAuth 4 · next-intl 4 · Tailwind 3.4 · NextUI 2.2 · Vercel
 
-## 🚀 **Características Principales**
-
-### **Core Features**
-- ✅ **Sistema de Challenges** - 10 niveles + bonus challenge
-- ✅ **Submission System** - Upload de videos a YouTube para evaluación
-- ✅ **Judge Evaluation** - Jueces evalúan submissions con score 0-100
-- ✅ **User Profiles** - Perfiles completos de skaters con redes sociales
-- ✅ **Spot System** - Mapa de spots con validación social
-- ✅ **Comments & Replies** - Hilos de comentarios en spots
-- ✅ **Notifications** - Sistema de notificaciones para actividad
-- ✅ **Teams** - Sistema de equipos de skaters
-
-### **Coming Soon** (ver [ROADMAP.md](docs/ROADMAP.md))
-- 🔄 **SkateCoins** - Economía virtual del sistema
-- 🔄 **Fantasy Teams** - Mercado de skaters
-- 🔄 **AI Judge** - Análisis de videos con GLM-4V
-- 🔄 **Leaderboards** - Rankings globales
+**Repo:** `cristito282828-source/trickest` · **Producción:** `thetrickest.app` · **Última actualización:** 2026-06-30
 
 ---
 
-## 🛠️ **Tech Stack**
+## 🎯 Visión general
 
-### **Frontend**
-- **Framework:** Next.js 14 (App Router)
-- **Styling:** Tailwind CSS + NextUI
-- **State:** React Server Components + Client Components
-- **Auth:** NextAuth.js v4 (Google OAuth + Credentials)
+TheTrickest es un híbrido entre red social de skate + marketplace. Los skaters se registran, suben videos de trucos, los jueces los evalúan, y los mejores rankean en un leaderboard. Además, hay un marketplace integrado con **Tory Skateshop** (WooCommerce) donde los skaters pueden comprar productos de skate directamente desde la plataforma.
 
-### **Backend**
-- **API:** Next.js API Routes
-- **Database:** PostgreSQL (Supabase)
-- **ORM:** Prisma
-- **Session:** JWT with NextAuth
-
-### **Infraestructura**
-- **Deployment:** Vercel
-- **Database:** Supabase (PostgreSQL + Connection Pooling)
-- **Storage:** YouTube (videos)
+**Audiencia objetivo:** comunidad de skate local de Cali, Colombia (escala inicial).
 
 ---
 
-## 📋 **Requisitos Previos**
+## ✅ Funcionalidades implementadas
 
-- Node.js 18+
-- npm/yarn/pnpm/bun
-- Cuenta de Google Cloud (para OAuth)
-- Cuenta de Supabase
-- Cuenta de YouTube (para videos)
+### Públicas (sin login)
+
+| Ruta | Función |
+|---|---|
+| `/` | Home con: video promocional modal (autoplay al cargar), challenges teaser "1000 skaters = primer truco", home level section, ranking top 10, top reels (carrusel con likes + comments), mapa de spots, partners, how to win, activity ticker. |
+| `/suppls` | Catálogo de productos Tory Skateshop (WooCommerce GraphQL). Las skates rebotan con física custom (`orbital-engine.ts`) en un canvas HTML. Cart orbital flotante que lleva a checkout por WhatsApp. Variants reales (talle) con filtro por marca. |
+| `/profile/[username]` | Perfil público del skater con dream setup, redes sociales, ubicación. |
+| `/spots` | Mapa interactivo (Leaflet) con spots registrados. |
+| `/teams` y `/teams/[name]` | Teams con capitán, miembros, logo. |
+| `/search` y `/search/[collection]` | Búsqueda de productos + listado por categoría. |
+| `/product/[slug]` | Detalle de producto con variations, stock, add-to-cart. |
+| `/politica-*` y `/terminos-*` | Páginas legales. |
+| `/interested` | Captura de leads. |
+
+### Multi-idioma
+
+- **EN/ES** con prefijo de locale (`/en/...`, `/es/...`). Configurado en `src/i18n/routing.ts`.
+- Mensajes en `messages/es.json` y `messages/en.json`.
+- `next-intl` 4.8 con `getTranslations` server-side y `useTranslations` client-side.
+
+### Autenticación
+
+- **NextAuth** con 2 providers:
+  - **Google OAuth** (`next-auth/providers/google`).
+  - **Credentials** (email + password con bcrypt).
+- JWT sessions, expira a 30 días.
+- Modal `SetPasswordModal` para usuarios de Google sin password.
+- Middleware en `src/middleware.ts` protege `/dashboard/*` y `/admin/*`.
+
+### Dashboard del skater (`/dashboard/skaters/*`)
+
+| Ruta | Función |
+|---|---|
+| `/profile` | Perfil editable: foto (upload Supabase), datos personales, redes sociales, dream setup, ubicación. |
+| `/tricks` | Lista de 10 niveles + 1 bonus, con demo video, dificultad y puntos. |
+| `/submissions` | Historial de submissions con score, feedback, status. |
+| `/orders` | Mis pedidos con thumbnail de la guía de envío. |
+| `/leaderboard` | Ranking individual y por equipos. |
+| `/teams` | Crear/unirse a teams, invitaciones. |
+| `/logros` | Achievements con badges. |
+| `/vote` | Votar submissions de la comunidad. |
+
+### Dashboard de jueces (`/dashboard/judges/*`)
+
+- `/judges/evaluate`: cola de submissions pendientes con score 0-100 + feedback.
+
+### Dashboard admin (`/dashboard/admin/*`)
+
+| Ruta | Función |
+|---|---|
+| `/admin` | Dashboard con stats globales. |
+| `/admin/users` | Listado de usuarios con cambio de rol inline (skater/judge/admin). |
+| `/admin/challenges` | CRUD completo de challenges (modal con form). |
+| `/admin/submissions` | Re-evaluar submissions. |
+| `/admin/orders` | Lista de órdenes + detalle + **botón "Marcar como enviado"** que sube foto de guía a Supabase Storage y notifica al skater. |
+| `/admin/settings` | Settings globales (`total_levels` y similares). |
+
+### Sistema de órdenes (`/suppls` → checkout)
+
+- Cart orbital flotante con animación física de productos (motor custom en `src/components/orbital/orbital-engine.ts`).
+- **Variations** reales del producto: al anclar un producto Tory, selector con talles parseados (`US 7.0 / EUR 38 / 25 cm`). Filtra solo `IN_STOCK`.
+- Backend: `POST /api/orders` con Zod validation (`orderItemSchema` con `variation` opcional JSONB).
+- Checkout manual por WhatsApp (`https://wa.me/...`).
+- **NO hay pasarela de pago real** (Stripe, MercadoPago) — es un MVP.
+
+### Sistema de notificaciones
+
+- Tabla `Notification` (PostgreSQL) con tipo, link, metadata, read state.
+- Suscripción Realtime vía `SupabaseRealtimeProvider` (`src/providers/SupabaseRealtimeProvider.tsx`).
+- Triggers: nuevo follower, team invitation, submission evaluada, voto recibido, order creada (admin), order status changed (skater), comment_reply, new_spot_comment.
+- UI: campana con badge de count en `Appbar`, dropdown con últimas 10, mark-all-as-read, mark-individual.
+
+### Top Reels (nuevo)
+
+- Sección en home con carrusel horizontal de las mejores submissions rankeadas.
+- **Likes** (reusando tabla `Vote` con `voteType='upvote'`).
+- **Comments** con replies anidados (tablas `ReelComment` + `ReelCommentVote`).
+- **Filtrado por marca** clickeable en panel lateral derecho.
+- Placeholder inteligente si no hay productos / filtro no tiene matches (siempre muestra panel de marcas).
+- Modal estilo Instagram Reels con overlay lateral de acciones (avatar + like + comments).
+
+### Modal de video promocional (nuevo)
+
+- Modal automático al cargar la home con video de presentación (`public/2026-06-27 00_16_48.MP4`).
+- Botón "Registrarse ahora" (rosa `bg-brand-pink`) que abre el `RegisterEmailForm`.
+- No aparece para usuarios logueados (`useSession().status === 'authenticated'`).
+- ESC, click en backdrop, click en X → cierra.
+- Body scroll lock cuando está abierto.
+
+### Integraciones externas
+
+- **Supabase**: PostgreSQL (DB) + Storage (fotos perfil, spots, shipping guides, logos teams) + Realtime (notificaciones).
+- **WooCommerce GraphQL** (`toryskateshop.com/graphqltory`): productos destacados + variations + attributes.
+- **Google OAuth**: login.
+- **Vercel**: hosting + deploys automáticos.
+- **Sentry**: error tracking (config en `.config/sentry*`).
+- **Microsoft Clarity** + **Google Tag Manager** + **Google Analytics** (configurados en layout).
+
+### APIs (60+ endpoints en `src/app/api/`)
+
+Auth (`auth/[...nextauth]`, `auth/register`, `auth/set-password`), users (`users/[email]/profile`, `users/me`, `users/profile/[username]`, `users/score`, `users/search`, `users/check-username`, `users/count`), follow, spots (CRUD completo + comments + replies + votes + photos + validate + register + nearby), challenges, submissions (CRUD + evaluate + auto-approve + vote), teams, leaderboards, skate_profiles, notifications, orders, upload (photo/profile-image/team-logo), external-products, external-image (proxy de imágenes con CORS), settings, admin, reels (`/api/reels` + `/api/reels/[id]/like` + `/api/reels/[id]/comments/*`), top-reels, marketing, etc.
 
 ---
 
-## 🚦 **Quick Start**
+## 📊 Modelo de datos (Prisma)
 
-### **1. Clonar e Instalar Dependencias**
+### Conteos actuales (junio 2026)
+
+| Modelo | Cantidad |
+|---|---|
+| `User` | 10 |
+| `Order` | 3 |
+| `OrderItem` | 3 |
+| `Submission` | 2 |
+| `Spot` | 0 |
+| `Team` | 1 |
+| `Notification` | 13 |
+| `Challenge` | 2 (debería haber 11 según seed) |
+| `SocialMedia` | 1 |
+| `TeamInvitation` | 1 |
+| `Vote` | 0 |
+| `ReelComment` | 0 |
+
+### Modelos principales
+
+```
+User (auth, perfil, score, role: skater|judge|admin)
+├── submissions (1:N)
+├── evaluations (1:N como judge)
+├── ownedTeams (1:N como owner)
+├── team (N:1 como miembro)
+├── orders (1:N)
+├── socialMedia (1:1)
+├── WishSkate (1:1)
+├── votes (1:N)
+└── notifications (1:N)
+
+Challenge (10 niveles + 1 bonus)
+└── submissions (1:N)
+
+Order
+├── items (1:N, con variation JSONB)
+└── user (N:1)
+
+Submission
+├── challenge (N:1)
+├── user (N:1)
+└── judge (N:1, nullable)
+
+Team
+├── owner (N:1)
+├── members (1:N via User.team)
+└── invitations (1:N)
+
+ReelComment (Top Reels feature)
+├── submission (N:1)
+├── user (N:1)
+├── parentComment (self-ref, replies)
+└── votes (ReelCommentVote 1:N)
+
+Notification (userId, type, title, message, link, metadata JSONB, isRead)
+```
+
+**Schema completo:** `prisma/schema.prisma` · **Migraciones:** `prisma/migrations/`
+
+---
+
+## 🏗️ Hosting y deploy
+
+- **Vercel**: hosting de producción. Deploy automático en cada push a `master` (repo `cristito282828-source/trickest`).
+- **Supabase** (`znyukjpgbiqjiarnvvck`): PostgreSQL + Storage + Realtime. Plan free tier.
+- **WooCommerce** de Tory Skateshop: externo, vía GraphQL público (`toryskateshop.com/graphqltory`).
+- **Dominio propio**: `thetrickest.app`.
+- **Costos operativos** (free tier actual): $0/mes, escalando a ~$25/mes cuando se pase de límites de Supabase + Vercel Pro si crece.
+
+**Variables de entorno críticas** (en `.env`):
+- `DATABASE_URL` (Supabase pooler)
+- `DIRECT_URL` (Supabase session mode, para migraciones)
+- `NEXTAUTH_URL` / `NEXTAUTH_SECRET`
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`
+- `SHOPIFY_STORE_DOMAIN` / `SHOPIFY_STOREFRONT_ACCESS_TOKEN` (legado, no se usa activamente)
+
+---
+
+## 📁 Estructura del proyecto
+
+```
+src/
+├── app/
+│   ├── [locale]/
+│   │   ├── (routes)/              # Rutas con prefijo de locale
+│   │   │   ├── dashboard/         # Dashboards de skater/judge/admin
+│   │   │   ├── suppls/           # Catálogo de productos
+│   │   │   ├── product/[slug]/   # Detalle de producto
+│   │   │   ├── teams/            # Teams
+│   │   │   ├── spots/            # Spots
+│   │   │   └── ...
+│   │   ├── layout.tsx            # Layout root (con providers, i18n, analytics)
+│   │   └── page.tsx              # Home
+│   └── api/                       # 60+ endpoints
+│       ├── auth/                  # NextAuth + register
+│       ├── users/                 # CRUD usuarios
+│       ├── challenges/
+│       ├── submissions/
+│       ├── spots/                 # CRUD + comments + votes
+│       ├── teams/
+│       ├── orders/                # Órdenes a tienda
+│       ├── notifications/
+│       ├── upload/                # Foto/profile/team-logo
+│       ├── reels/                 # Top Reels (likes + comments)
+│       ├── graphql/               # Proxy CORS a WPGraphQL
+│       └── ...
+├── components/
+│   ├── atoms/                     # Componentes UI primitivos (Button, Input, etc.)
+│   ├── molecules/                 # CommentItem, CommentForm, CommentThread
+│   ├── organisms/                 # SpotComments, NotificationBell, SpotModal
+│   ├── custom/                    # Componentes específicos (FeaturedProducts, Hero, etc.)
+│   ├── layout/                    # Navbar, Footer
+│   └── PromoVideoModal.tsx        # Modal de video promocional
+├── lib/
+│   ├── woocommerce/                # Cliente GraphQL + types + queries
+│   ├── auth.ts                    # Configuración NextAuth
+│   ├── prisma.ts                  # Singleton de Prisma client
+│   ├── youtube.ts                 # Helpers para YouTube (thumbnails, embed)
+│   ├── validation/                # Schemas Zod
+│   └── ...
+├── providers/
+│   ├── CartProvider.tsx
+│   ├── SupabaseRealtimeProvider.tsx
+│   └── ...
+├── i18n/
+│   ├── routing.ts                 # next-intl routing
+│   └── request.ts                 # Server-side messages
+├── middleware.ts                  # Auth + locale
+└── messages/
+    ├── es.json
+    └── en.json
+```
+
+---
+
+## 🛠️ Comandos útiles
 
 ```bash
-# Clonar repositorio
-git clone <repo-url>
-cd trickest-next
+# Desarrollo
+npm run dev                          # Dev server (HMR)
+npm run build                        # Build de producción
+npm run start                        # Sirve el build en :3000
 
-# Instalar dependencias
-npm install
-# o
-bun install
+# Prisma
+npx prisma generate                  # Regenera el client
+npx prisma migrate dev               # Crea/aplica migración local
+npx prisma migrate deploy            # Aplica migraciones en prod
+npx prisma studio                    # GUI para ver la BD
+
+# Testing
+npm run test                         # Jest (no está configurado aún)
 ```
 
-### **2. Configurar Variables de Entorno**
+---
+
+## 🚧 Lo que NO tiene aún (roadmap 2-3 meses)
+
+### Críticas para escalar
+
+1. **Email transaccional** (Resend) — confirmaciones de orden, invitaciones, reset password.
+2. **Analytics/tracking** (Plausible, ~$9/mes) — medir todo lo demás.
+3. **Tests automatizados** (unit + e2e con Playwright) — prácticamente no hay.
+4. **CI/CD** (GitHub Actions con typecheck, lint, test) — no hay.
+5. **Sistema de pagos** (Stripe o MercadoPago) — el checkout es manual por WhatsApp.
+6. **Push notifications** (PWA con service worker) — retention.
+7. **Backups automatizados** de la BD (Supabase PITR + restore probado).
+
+### Features de producto
+
+8. Sistema de comentarios en submissions (no solo spots).
+9. Follows UI completa.
+10. Repost/share de submissions en redes.
+11. Búsqueda global.
+12. Filtros avanzados en spots.
+13. Toggle de modo oscuro.
+14. i18n expandido (PT/FR).
+15. API pública documentada (OpenAPI).
+16. Webhooks.
+
+### Comunidad y admin
+
+17. Torneos/eventos con brackets.
+18. Reglas automáticas de otorgamiento de achievements.
+19. Direct messages.
+20. Stories/reels cortos.
+21. Streaming en vivo de trucos.
+22. Dashboard de revenue.
+23. Sistema de moderación.
+24. Status page público.
+
+### Crecimiento
+
+25. App nativa (React Native).
+26. Múltiples ciudades/regiones (hoy solo Cali).
+27. Marketplace C2C de productos usados.
+
+---
+
+## ⚠️ Deuda técnica conocida
+
+- **Migración de BD desincronizada**: shadow database de Prisma no puede replicar el estado real. Las migraciones `20260605_add_orders` y `20260605_add_user_address` se aplicaron por SQL directo (no por `prisma migrate dev`).
+- **Cero tests automatizados**: cada cambio en el carrito, orders o admin puede romper algo sin aviso.
+- **Checkout manual por WhatsApp**: depende de vos contestar mensajes. No escala.
+- **Sentry configurado pero sin alertas activas**: errores en producción pueden pasar desapercibidos.
+- **Sin rate limiting en APIs públicas** (excepto submitTrick y orders).
+- **Sin CSRF protection explícito** (NextAuth lo trae por default pero hay que verificar el resto).
+- **Bundle de home 1.3 MB**: la home carga muchos componentes. Hace falta code splitting más agresivo.
+- **Auth via JWT en cookies**: el middleware valida pero no verifica roles. Un skater puede navegar rutas admin si conoce la URL.
+
+---
+
+## 🔗 Integraciones externas activas
+
+| Servicio | Uso | Plan |
+|---|---|---|
+| **Supabase** (PostgreSQL + Storage + Realtime) | DB, fotos, notificaciones en vivo | Free tier |
+| **WooCommerce** (Tory Skateshop) | Catálogo de productos + variations | - |
+| **Google OAuth** | Login | Free |
+| **Vercel** | Hosting + deploys automáticos | Hobby (free) |
+| **Sentry** | Error tracking | Free |
+| **Microsoft Clarity** | Analytics de UX | Free |
+| **Google Tag Manager** + **Google Analytics** | Tracking | Free |
+
+---
+
+## 🤝 Personas clave
+
+- **Jonathan Vargas** (`jonathanfelipe0111@hotmail.com`) — admin principal, dev senior.
+- **Cristian** (`cristiansk8@trickest.dev`) — admin secundario (vos), dev.
+- **Tory Skateshop** — partner comercial (productos vía WooCommerce GraphQL).
+- **DeepFC**, **Nandark** — partners secundarios (logos en home).
+
+---
+
+## 📝 Convenciones
+
+- **Estilo**: TypeScript estricto. ESLint con config default de Next.
+- **Componentes**: 2 niveles — `src/components/atoms,molecules,organisms/` (reusables) + `src/components/*.tsx` (feature).
+- **Server components** por default. Solo `'use client'` cuando hay estado, eventos o browser APIs.
+- **i18n**: todas las strings de UI van a `messages/{es,en}.json`. Namespace por feature.
+- **API routes**: en `src/app/api/{recurso}/route.ts`. Usan Zod validation en `src/lib/validation.ts` + helpers `errorResponse`/`successResponse`.
+- **DB access**: solo en API routes y server components. Client nunca toca Prisma directo.
+- **Mutations críticas**: notificaciones + update de status van en transacciones donde es posible.
+
+---
+
+## 🚀 Deploy
 
 ```bash
-# Copiar .env.example a .env
-cp .env.example .env
-
-# Editar .env con tus credenciales:
+git add .
+git commit -m "..."
+git push origin master
 ```
 
-Variables requeridas (ver [`.env.example`](.env.example)):
-- `NEXTAUTH_URL` - URL de la aplicación
-- `NEXTAUTH_SECRET` - Secreto para JWT
-- `GOOGLE_CLIENT_ID` - Google OAuth Client ID
-- `GOOGLE_CLIENT_SECRET` - Google OAuth Secret
-- `DATABASE_URL` - Supabase connection string (port 6543)
-- `DIRECT_URL` - Supabase direct connection (port 5432)
-- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase anon key
-- `NEXT_PUBLIC_BACKEND_URL` - Backend API URL
-
-### **3. Configurar Base de Datos**
-
-```bash
-# Generar Prisma Client
-npx prisma generate
-
-# Hacer push del schema a la BD
-npx prisma db push
-
-# (Opcional) Seed de datos de prueba
-npm run seed
-```
-
-### **4. Ejecutar Servidor de Desarrollo**
-
-```bash
-# Opción 1: npm
-npm run dev
-
-# Opción 2: bun (más rápido)
-bun run dev
-```
-
-Abrir [http://localhost:3000](http://localhost:3000)
+Vercel detecta el push y deploya automáticamente. Verificá en el dashboard que el último deploy esté en "Ready" antes de cerrar la sesión.
 
 ---
 
-## 📁 **Estructura del Proyecto**
+## 📂 Documentos relacionados
 
-```
-trickest-next/
-├── docs/                    # Documentación
-│   ├── DESIGN_SYSTEM.md    # Guía de estilos
-│   ├── ROADMAP.md          # Roadmap del proyecto
-│   ├── SKATEWORLD-IMPLEMENTACION-V2.md  # Economía Fantasy
-│   ├── JUDGE_AI_COMPARISON.md          # Juez Virtual AI
-│   └── BUTTON_STYLES.md    # Estilos de botones
-├── scripts/                 # Scripts utilitarios
-│   ├── test/              # Scripts de prueba
-│   ├── check-tables.js    # Verificar tablas BD
-│   └── analyze-existing-submissions.js  # Analizador AI
-├── lib/                    # Librerías compartidas
-│   ├── auth.ts            # Configuración NextAuth
-│   ├── auth-helpers.ts    # Helpers de autenticación
-│   ├── prisma.ts          # Singleton Prisma Client
-│   └── validation.ts      # Utilidades de validación
-├── prisma/
-│   └── schema.prisma      # Esquema de base de datos
-├── src/
-│   ├── app/               # Next.js App Router
-│   │   ├── (routes)/     # Rutas agrupadas
-│   │   │   ├── dashboard/  # Dashboards
-│   │   │   ├── spots/      # Páginas de spots
-│   │   │   └── profile/    # Perfil de usuario
-│   │   ├── api/           # API Routes
-│   │   └── layout.tsx     # Layout raíz
-│   ├── components/        # Componentes React
-│   │   ├── atoms/         # Elementos básicos
-│   │   ├── molecules/     # Combinaciones simples
-│   │   └── organisms/     # Secciones complejas
-│   └── lib/              # Librerías cliente
-├── public/                # Archivos estáticos
-└── .env.example          # Template de variables de entorno
-```
+- [ESTADO_PROYECTO.md](ESTADO_PROYECTO.md) — Estado detallado del proyecto con conteos de BD y deuda técnica.
+- [MIGRATION_CHECKLIST.md](.claude/projects/c--Users-User-mania-store/memory/MIGRATION_CHECKLIST.md) — Checklist de migración (si la necesitás).
+- `~/.claude/plans/lexical-snuggling-mango.md` — Plan file de features grandes.
 
 ---
 
-## 🗄️ **Modelos de Base de Datos Principales**
-
-### **User**
-- Usuarios con 3 roles: `skater`, `judge`, `admin`
-- Autenticación vía Google OAuth o email/password
-- Perfiles con datos personales, redes sociales, y preferencias de skate
-
-### **Challenge**
-- 11 niveles: 1-10 + 1 bonus
-- Cada challenge tiene nombre, descripción, video demo, y puntos
-- Skaters suben videos para completar challenges
-
-### **Submission**
-- Videos de skaters completando challenges
-- Status: `pending` → `approved`/`rejected`
-- Score 0-100 otorgado por jueces
-- Sistema de votación comunitaria
-
-### **Spot**
-- Spots de skate (skateparks, spots street, skateshops)
-- Sistema de validación social (confidence score)
-- Comentarios y check-ins
-- Ubicaciones con coordenadas GPS
-
-### **Team**
-- Equipos de skaters (máx 5 miembros)
-- Dueño puede invitar skaters
-- Sistema de rankings
-
-### **Notification**
-- Tipos: `comment_reply`, `team_invitation`, `submission_evaluated`, etc.
-- Link directos a la acción relevante
-- Metadata JSON para datos extra
-
----
-
-## 🔐 **Sistema de Autenticación**
-
-### **Proveedores Disponibles**
-1. **Google OAuth** - Login con cuenta de Google
-2. **Credentials** - Email + contraseña (opcional)
-
-### **Flujo de Registro**
-1. Usuario se registra con Google
-2. Cuenta se crea con `profileStatus: 'basic'`
-3. Modal guía a completar perfil:
-   - SetPasswordModal
-   - SkateProfileCompletionModal
-   - WelcomeModal
-4. Estado final: `profileStatus: 'complete'`
-
-### **Roles y Permisos**
-- **skater** - Puede submitir tricks, ver challenges
-- **judge** - Puede evaluar submissions, todo lo de skater
-- **admin** - Todo el acceso + gestión del sistema
-
----
-
-## 📱 **Páginas Principales**
-
-### **Públicas**
-- `/` - Landing page
-- `/spots` - Mapa de spots
-- `/spots?spot=X` - Ver spot individual
-- `/profile/[username]` - Perfiles públicos de skaters
-
-### **Dashboard (requieren auth)**
-- `/dashboard` - Dashboard según rol
-- `/dashboard/skaters` - Skaters: ver challenges, submissions
-- `/dashboard/judges` - Jueces: evaluar submissions pendientes
-- `/dashboard/jueces` - (legacy, same as judges)
-
----
-
-## 🧪 **Testing**
-
-### **Verificar Conexión a BD**
-```bash
-node scripts/check-tables.js
-```
-
-### **Verificar Usuario**
-```bash
-node scripts/test/test-db-user.js
-```
-
-### **Seed de Datos**
-```bash
-npm run seed
-```
-
-Crea usuarios de prueba:
-- **Admin:** admin@trickest.com (pass: password123)
-- **Jueces:** judge1-3@trickest.com (pass: password123)
-- **11 Challenges** (levels 1-10 + bonus)
-
----
-
-## 🚀 **Deploy**
-
-### **Vercel (Recomendado)**
-
-```bash
-# Instalar Vercel CLI
-npm i -g vercel
-
-# Login
-vercel login
-
-# Deploy
-vercel
-```
-
-### **Variables de Entorno en Vercel**
-Configurar en el dashboard de Vercel:
-- Todas las variables de `.env.example`
-- Asegurar `DATABASE_URL` use port 6543 (pgbouncer)
-- Configurar `NEXTAUTH_URL` con el dominio de Vercel
-
----
-
-## 📚 **Documentación Adicional**
-
-- **[CLAUDE.md](CLAUDE.md)** - Guía completa para desarrollo con Claude Code
-- **[docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)** - Sistema de diseño visual
-- **[docs/ROADMAP.md](docs/ROADMAP.md)** - Roadmap del proyecto
-- **[docs/SKATEWORLD-IMPLEMENTACION-V2.md](docs/SKATEWORLD-IMPLEMENTACION-V2.md)** - Economía Fantasy (próximo feature)
-- **[docs/JUDGE_AI_COMPARISON.md](docs/JUDGE_AI_COMPARISON.md)** - Sistema de juez AI
-
----
-
-## 🐛 **Troubleshooting**
-
-### **Problema: Error de conexión a BD**
-```bash
-# Verificar que Prisma Client esté generado
-npx prisma generate
-
-# Verificar conexión
-node scripts/check-tables.js
-```
-
-### **Problema: Auth no funciona**
-```bash
-# Verificar variables de entorno
-cat .env | grep NEXTAUTH
-
-# Asegurar NEXTAUTH_URL esté correcta
-# Local: http://localhost:3000
-# Prod: https://tu-dominio.com
-```
-
-### **Problema: Videos no se reproducen**
-- Verificar que el dominio de YouTube esté en `next.config.mjs`
-- Revisar configuración de `image.domains`
-
----
-
-## 🤝 **Contribuir**
-
-Este es un proyecto privado. Para contribuir:
-
-1. Fork el repositorio
-2. Crear rama feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit cambios (`git commit -m 'Add nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abrir Pull Request
-
----
-
-## 📄 **Licencia**
-
-Propiedad privada. Todos los derechos reservados.
-
----
-
-## 👥 **Equipo**
-
-- **Desarrollo:** Trickest Team
-- **Tecnología:** Next.js, Prisma, Supabase, NextAuth
-
----
-
-**Made with ❤️ for the skate community**
-
-🛹 **Happy Shredding!**
+_Generado automáticamente. Última revisión: 2026-06-30. Para actualizarlo, ejecutar auditoría de código y regenerar._

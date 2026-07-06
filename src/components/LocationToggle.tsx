@@ -38,11 +38,17 @@ export default function LocationToggle() {
       return;
     }
 
-    console.log('[LocationToggle] Toggle clicked:', { hasLocation, showOnMap });
+    const newShowOnMapState = !showOnMap;
+    console.log('[LocationToggle] Toggle clicked:', {
+      hasLocation,
+      showOnMap,
+      newState: newShowOnMapState,
+    });
 
-    // If no saved location, request it first
-    if (!hasLocation && !showOnMap) {
-      console.log('[LocationToggle] No location, requesting GPS...');
+    // Activando (OFF -> ON): siempre refrescar GPS para tomar la posición actual.
+    // Desactivando (ON -> OFF): solo flippear el flag, conservar coordenadas en DB.
+    if (newShowOnMapState) {
+      console.log('[LocationToggle] Activating, requesting fresh GPS...');
       if (!navigator.geolocation) {
         alert('❌ ' + t('noGeolocation'));
         return;
@@ -92,14 +98,10 @@ export default function LocationToggle() {
         }
       );
     } else {
-      // Already has location, just change the toggle
-      console.log('[LocationToggle] Has location, changing toggle...');
+      // Desactivando (ON -> OFF): solo flippear el flag, preservar coordenadas existentes.
+      console.log('[LocationToggle] Deactivating, preserving coordinates...');
       setLoading(true);
       try {
-        const newShowOnMapState = !showOnMap;
-        console.log('[LocationToggle] New state:', newShowOnMapState);
-
-        // Build request body: only send showOnMap, preserve existing coordinates
         const requestBody: any = {
           email: session.user.email,
           showOnMap: newShowOnMapState,
