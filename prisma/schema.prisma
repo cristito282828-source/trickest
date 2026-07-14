@@ -595,6 +595,37 @@ model OrderItem {
   @@index([orderId])
 }
 
+// ==================== ROAD REPORT EVENTS (mobile) ====================
+// Eventos detectados por la app RoadReportApp (Android, RN).
+// Los eventos son ANONIMOS — no se vinculan a User. Se identifica el
+// device con un fingerprint local.
+
+model RoadEvent {
+  id           String   @id @default(cuid())
+
+  deviceId     String
+  latitude     Float?
+  longitude    Float?
+  accuracy     Float?
+  magnitude    Float
+  eventType    String   @default("POTHOLE")
+  confidence   Float?
+  speed        Float?
+  bearing      Float?
+  appVersion   String
+  osVersion    String
+  deviceModel  String
+  detectedAt   DateTime
+  createdAt    DateTime @default(now())
+  receivedAt   DateTime @default(now())
+
+  @@index([latitude, longitude])
+  @@index([createdAt])
+  @@index([eventType])
+  @@index([deviceId])
+  @@index([detectedAt])
+}
+
 // Enums for Dynamic Challenges
 enum ChallengeType {
   COMMUNITY_MILESTONE    // Auto-unlock at threshold
