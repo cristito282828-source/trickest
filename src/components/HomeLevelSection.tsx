@@ -33,7 +33,7 @@ export default function HomeLevelSection() {
     };
   }, []);
 
-  const target = 1000;
+  const target = 500;
   const current = registeredCount ?? 0;
   const percent = Math.min(100, Math.round((current / target) * 100));
 
