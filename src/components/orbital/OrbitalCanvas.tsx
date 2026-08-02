@@ -75,9 +75,21 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
       return;
     }
 
+    // Debug: ver qué URLs estamos intentando cargar
+    console.log('[OrbitalCanvas] Preloading', urls.length, 'images:', urls);
+
     setImagesReady(false);
     preloadAll(urls).then(() => {
-      if (!cancelled) setImagesReady(true);
+      if (!cancelled) {
+        // Debug: confirmar cuáles quedaron cacheadas vs cuáles no
+        const loaded = urls.filter((u) => getCachedImage(u) !== null)
+        const failed = urls.filter((u) => getCachedImage(u) === null)
+        console.log('[OrbitalCanvas] Preload finished. Loaded:', loaded.length, '/', urls.length)
+        if (failed.length > 0) {
+          console.warn('[OrbitalCanvas] Failed images (will show fallback gradient):', failed)
+        }
+        setImagesReady(true);
+      }
     });
 
     return () => {

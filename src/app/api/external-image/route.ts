@@ -37,7 +37,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const allowedHosts = ['toryskateshop.com', 'www.toryskateshop.com'];
+    const allowedHosts = [
+      'toryskateshop.com',
+      'www.toryskateshop.com',
+      // Nuevo WordPress host (Hostinger) usado por el partner de pruebas
+      'seagreen-emu-487450.hostingersite.com',
+    ];
     if (!allowedHosts.includes(parsedUrl.hostname)) {
       return NextResponse.json(
         { error: 'Host not allowed' },

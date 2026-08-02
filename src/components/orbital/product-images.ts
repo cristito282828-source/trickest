@@ -26,15 +26,21 @@ export function loadImage(url: string): Promise<HTMLImageElement> {
   // Cargar nueva imagen
   const promise = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image()
-    // crossOrigin para permitir export a canvas si lo necesitamos después
-    img.crossOrigin = 'anonymous'
+    // NOTA: NO seteamos crossOrigin aquí. El proxy /api/external-image
+    // devuelve Access-Control-Allow-Origin: *, y como la URL ya es
+    // same-origin (mismo dominio que la app), no hace falta.
+    // Seteando crossOrigin='anonymous' a veces causa que el browser
+    // rechace imágenes cacheadas sin el header CORS (race condition).
     img.onload = () => {
       imageCache.set(url, img)
       loadingPromises.delete(url)
       resolve(img)
     }
-    img.onerror = () => {
+    img.onerror = (e) => {
       loadingPromises.delete(url)
+      // Loggear para debugging — antes este error se tragaba silenciosamente
+      // y por eso las imágenes no aparecían en el canvas sin explicación
+      console.warn('[product-images] Failed to load image:', url, e)
       reject(new Error(`Failed to load image: ${url}`))
     }
     img.src = url
@@ -47,7 +53,7 @@ export function loadImage(url: string): Promise<HTMLImageElement> {
 /**
  * Pre-carga un batch de imágenes en paralelo.
  * @param urls - Array de URLs a pre-cargar
- * @returns Promise que resuelve cuando TODAS están cargadas (o fallaron)
+ * @returns Promise que resuelve cuando TODAS están cargadas (o fallaron tras reintentos)
  */
 export async function preloadAll(urls: string[]): Promise<void> {
   // Filtrar URLs vacías y dedup
@@ -62,8 +68,22 @@ export async function preloadAll(urls: string[]): Promise<void> {
 
   if (toLoad.length === 0) return
 
-  // Cargar todas en paralelo
-  await Promise.allSettled(toLoad.map((url) => loadImage(url)))
+  // Primer intento: cargar todas en paralelo
+  const results = await Promise.allSettled(toLoad.map((url) => loadImage(url)))
+
+  // Detectar cuáles fallaron para reintentar (algunos CDN tardan en warm-up
+  // la primera vez, especialmente cuando el proxy /api/external-image es nuevo)
+  const failed = toLoad.filter((_, i) => results[i].status === 'rejected')
+
+  if (failed.length > 0) {
+    console.warn(
+      `[product-images] ${failed.length} image(s) failed on first try, retrying in 1s:`,
+      failed
+    )
+    // Esperar 1s y reintentar las fallidas una vez
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await Promise.allSettled(failed.map((url) => loadImage(url)))
+  }
 }
 
 /**
