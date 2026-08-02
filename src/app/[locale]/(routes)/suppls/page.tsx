@@ -109,6 +109,28 @@ export default async function SupplsPage() {
         {products.length === 0 && (
           <div className="text-center py-20">
             <p className="text-neutral-400 text-lg">{t('noProducts')}</p>
+            {/* Debug info — visible siempre, ayuda a diagnosticar producción */}
+            <div className="mt-6 mx-auto max-w-2xl text-left text-xs font-mono bg-neutral-900/70 border border-neutral-700 rounded-lg p-4 space-y-1">
+              <p className="text-accent-cyan-400 font-bold mb-2">Debug /suppls</p>
+              <p className="text-neutral-300">
+                <span className="text-neutral-500">WC_GRAPHQL_URL:</span>{' '}
+                {process.env.WC_GRAPHQL_URL || '(not set — using default toryskateshop.com/graphqltory)'}
+              </p>
+              <p className="text-neutral-300">
+                <span className="text-neutral-500">WC_FEATURED_CATEGORY:</span>{' '}
+                {process.env.WC_FEATURED_CATEGORY || '(not set — using default "trickest")'}
+              </p>
+              <p className="text-neutral-300">
+                <span className="text-neutral-500">Products fetched:</span> {products.length}
+              </p>
+              <p className="text-neutral-300">
+                <span className="text-neutral-500">Category fetched:</span>{' '}
+                {category ? `${category.name} (${category.count} products in WC)` : 'null'}
+              </p>
+              <p className="text-neutral-500 mt-2">
+                Pegá <code className="text-accent-yellow-400">/api/debug/suppls</code> en el browser para más detalle.
+              </p>
+            </div>
           </div>
         )}
 

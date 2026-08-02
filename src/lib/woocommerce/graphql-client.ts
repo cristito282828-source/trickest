@@ -20,6 +20,7 @@ export async function graphqlFetch<T = any>(
   revalidateSeconds = 3600 // Cache de 1 hora por defecto
 ): Promise<T | null> {
   try {
+    console.log('[WC GraphQL] Fetching:', WC_GRAPHQL_ENDPOINT, 'vars:', JSON.stringify(variables));
     const response = await fetch(WC_GRAPHQL_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -29,8 +30,10 @@ export async function graphqlFetch<T = any>(
       next: { revalidate: revalidateSeconds },
     });
 
+    console.log('[WC GraphQL] Status:', response.status, 'OK:', response.ok);
+
     if (!response.ok) {
-      console.error(`[WC GraphQL] HTTP error: ${response.status}`);
+      console.error(`[WC GraphQL] HTTP error: ${response.status} ${response.statusText}`);
       return null;
     }
 
