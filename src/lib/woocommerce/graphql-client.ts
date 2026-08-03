@@ -21,19 +21,30 @@ export async function graphqlFetch<T = any>(
 ): Promise<T | null> {
   try {
     console.log('[WC GraphQL] Fetching:', WC_GRAPHQL_ENDPOINT, 'vars:', JSON.stringify(variables));
-    const response = await fetch(WC_GRAPHQL_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ query, variables }),
-      next: { revalidate: revalidateSeconds },
-    });
+    const startTime = Date.now();
+    let response: Response;
+    try {
+      response = await fetch(WC_GRAPHQL_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query, variables }),
+        next: { revalidate: revalidateSeconds },
+      });
+    } catch (fetchErr) {
+      const elapsed = Date.now() - startTime;
+      console.error(`[WC GraphQL] Fetch throw after ${elapsed}ms:`, fetchErr);
+      return null;
+    }
 
-    console.log('[WC GraphQL] Status:', response.status, 'OK:', response.ok);
+    const elapsed = Date.now() - startTime;
+    console.log(`[WC GraphQL] Status: ${response.status} OK: ${response.ok} (${elapsed}ms)`);
 
     if (!response.ok) {
-      console.error(`[WC GraphQL] HTTP error: ${response.status} ${response.statusText}`);
+      let body = '';
+      try { body = await response.text(); } catch {}
+      console.error(`[WC GraphQL] HTTP error: ${response.status} ${response.statusText}`, body.slice(0, 300));
       return null;
     }
 
