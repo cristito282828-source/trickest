@@ -94,6 +94,49 @@ export default async function SupplsPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-accent-purple-900 to-neutral-900 py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
+        {/* ═══════════════════════════════════════════════════════════════
+            DEBUG BANNER — FIXED VISIBLE, NO OCULTAR
+            Si ves este banner en /suppls pero no hay productos, lee abajo.
+            ═══════════════════════════════════════════════════════════════ */}
+        <div
+          data-testid="suppls-debug"
+          style={{
+            background: '#000',
+            color: '#0f0',
+            border: '3px solid #ff0',
+            padding: '16px',
+            margin: '0 0 24px 0',
+            fontFamily: 'monospace',
+            fontSize: '13px',
+            lineHeight: '1.5',
+            borderRadius: '8px',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}
+        >
+{`=== SUPPLS DEBUG ${new Date().toISOString()} ===
+WC_GRAPHQL_URL:        ${process.env.WC_GRAPHQL_URL || '(NOT SET → default toryskateshop.com/graphqltory)'}
+WC_FEATURED_CATEGORY:  ${process.env.WC_FEATURED_CATEGORY || '(NOT SET → default "trickest")'}
+CATEGORY_IS_NUMERIC:   ${CATEGORY_IS_NUMERIC}
+CATEGORY_SLUG:         ${CATEGORY_SLUG}
+skipCache:             ${skipCache}
+
+--- CATEGORY DATA ---
+${category ? JSON.stringify(category, null, 2) : 'NULL'}
+
+--- PRODUCTS COUNT: ${products.length} ---
+${products.length > 0
+  ? `First product:\n${JSON.stringify(products[0], null, 2)}`
+  : '(NO PRODUCTS FETCHED)'}
+
+--- RAW categoryData ---
+${JSON.stringify(categoryData, null, 2)}
+
+--- RAW productsData ---
+${JSON.stringify(productsData, null, 2)}
+=== END DEBUG ===`}
+        </div>
+
         {/* Header */}
         <div className="text-center mb-6">
           <span className="inline-block bg-accent-pink-500/20 text-accent-pink-300 border-2 border-accent-pink-500 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-3">
@@ -111,57 +154,6 @@ export default async function SupplsPage({
             </p>
           )}
         </div>
-
-        {/* Debug panel — SIEMPRE visible para diagnosticar producción */}
-        <details className="mt-6 mx-auto max-w-3xl text-xs font-mono bg-neutral-900/70 border border-accent-cyan-700 rounded-lg p-4 space-y-1" open>
-          <summary className="text-accent-cyan-400 font-bold cursor-pointer">
-            🔍 Debug /suppls (click para colapsar)
-          </summary>
-          <p className="text-neutral-300 mt-2">
-            <span className="text-neutral-500">WC_GRAPHQL_URL:</span>{' '}
-            {process.env.WC_GRAPHQL_URL || '(not set — using default toryskateshop.com/graphqltory)'}
-          </p>
-          <p className="text-neutral-300">
-            <span className="text-neutral-500">WC_FEATURED_CATEGORY:</span>{' '}
-            {process.env.WC_FEATURED_CATEGORY || '(not set — using default "trickest")'}
-          </p>
-          <p className="text-neutral-300">
-            <span className="text-neutral-500">CATEGORY_IS_NUMERIC:</span>{' '}
-            {CATEGORY_IS_NUMERIC ? 'true' : 'false'}
-          </p>
-          <p className="text-neutral-300">
-            <span className="text-neutral-500">Products fetched:</span> {products.length}
-          </p>
-          <p className="text-neutral-300">
-            <span className="text-neutral-500">Category fetched:</span>{' '}
-            {category ? `${category.name} (${category.count ?? '?'} products in WC)` : 'null'}
-          </p>
-          {products.length > 0 && (
-            <details className="mt-2 ml-4">
-              <summary className="text-accent-yellow-400 cursor-pointer">
-                Primer producto (sample):
-              </summary>
-              <pre className="text-neutral-400 mt-1 whitespace-pre-wrap break-all text-[10px]">
-                {JSON.stringify(
-                  {
-                    id: products[0].id,
-                    name: products[0].name,
-                    slug: products[0].slug,
-                    image: products[0].image,
-                    price: products[0].price,
-                  },
-                  null,
-                  2
-                )}
-              </pre>
-            </details>
-          )}
-          <p className="text-neutral-500 mt-2">
-            Si no hay productos, revisá los logs del server Node (pm2/systemd) — vas a ver líneas
-            <code className="text-accent-yellow-400 mx-1">[WC GraphQL]</code>
-            con el status real del fetch a WooCommerce.
-          </p>
-        </details>
 
         {/* Empty state */}
         {products.length === 0 && (
