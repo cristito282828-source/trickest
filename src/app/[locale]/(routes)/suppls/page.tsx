@@ -4,6 +4,7 @@ import { FEATURED_PRODUCTS_QUERY } from '@/lib/woocommerce/queries';
 import type { ExternalProduct, ExternalCategory } from '@/lib/woocommerce/types';
 import OrbitalCanvas from '@/components/orbital/OrbitalCanvas';
 import FloatingCart from '@/components/orbital/FloatingCart';
+import SupplsDebugBanner from '@/components/orbital/SupplsDebugBanner';
 
 const CATEGORY_SLUG = process.env.WC_FEATURED_CATEGORY || 'trickest';
 const CATEGORY_IS_NUMERIC = /^\d+$/.test(CATEGORY_SLUG);
@@ -94,6 +95,8 @@ export default async function SupplsPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-accent-purple-900 to-neutral-900 py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
+        {/* Banner debug — SIEMPRE visible. Componente client que hace su propio fetch */}
+        <SupplsDebugBanner productsCount={products.length} />
         {/* ═══════════════════════════════════════════════════════════════
             DEBUG BANNER — FIXED VISIBLE, NO OCULTAR
             Si ves este banner en /suppls pero no hay productos, lee abajo.
