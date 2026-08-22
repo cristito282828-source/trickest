@@ -30,10 +30,11 @@ export async function generateMetadata() {
 export default async function SupplsPage({
   searchParams,
 }: {
-  searchParams: { nocache?: string };
+  searchParams: { nocache?: string; debug?: string };
 }) {
   const t = await getTranslations('supplsPage');
   const skipCache = searchParams?.nocache === '1';
+  const showDebug = searchParams?.debug === '1' || process.env.NEXT_PUBLIC_DEBUG_SUPPLS === '1';
 
   // Fetch en paralelo: categoría + productos. Soportamos slug o ID numérico.
   let categoryData: CategoryResponse | null = null;
@@ -95,50 +96,8 @@ export default async function SupplsPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-accent-purple-900 to-neutral-900 py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
-        {/* Banner debug — SIEMPRE visible. Componente client que hace su propio fetch */}
-        <SupplsDebugBanner productsCount={products.length} />
-        {/* ═══════════════════════════════════════════════════════════════
-            DEBUG BANNER — FIXED VISIBLE, NO OCULTAR
-            Si ves este banner en /suppls pero no hay productos, lee abajo.
-            ═══════════════════════════════════════════════════════════════ */}
-        <div
-          data-testid="suppls-debug"
-          style={{
-            background: '#000',
-            color: '#0f0',
-            border: '3px solid #ff0',
-            padding: '16px',
-            margin: '0 0 24px 0',
-            fontFamily: 'monospace',
-            fontSize: '13px',
-            lineHeight: '1.5',
-            borderRadius: '8px',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-          }}
-        >
-{`=== SUPPLS DEBUG ${new Date().toISOString()} ===
-WC_GRAPHQL_URL:        ${process.env.WC_GRAPHQL_URL || '(NOT SET → default toryskateshop.com/graphqltory)'}
-WC_FEATURED_CATEGORY:  ${process.env.WC_FEATURED_CATEGORY || '(NOT SET → default "trickest")'}
-CATEGORY_IS_NUMERIC:   ${CATEGORY_IS_NUMERIC}
-CATEGORY_SLUG:         ${CATEGORY_SLUG}
-skipCache:             ${skipCache}
-
---- CATEGORY DATA ---
-${category ? JSON.stringify(category, null, 2) : 'NULL'}
-
---- PRODUCTS COUNT: ${products.length} ---
-${products.length > 0
-  ? `First product:\n${JSON.stringify(products[0], null, 2)}`
-  : '(NO PRODUCTS FETCHED)'}
-
---- RAW categoryData ---
-${JSON.stringify(categoryData, null, 2)}
-
---- RAW productsData ---
-${JSON.stringify(productsData, null, 2)}
-=== END DEBUG ===`}
-        </div>
+        {/* Banner debug — solo visible con ?debug=1 o si NEXT_PUBLIC_DEBUG_SUPPLS=1 */}
+        {showDebug && <SupplsDebugBanner productsCount={products.length} />}
 
         {/* Header */}
         <div className="text-center mb-6">
