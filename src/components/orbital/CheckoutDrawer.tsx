@@ -142,6 +142,7 @@ export default function CheckoutDrawer({ isOpen, onClose }: CheckoutDrawerProps)
             productImage: item.productImage,
             productSlug: item.productSlug,
             quantity: item.quantity,
+            variation: item.variation ?? undefined,
           })),
         }),
       });
@@ -254,10 +255,17 @@ export default function CheckoutDrawer({ isOpen, onClose }: CheckoutDrawerProps)
               <ul className="space-y-0.5 max-h-20 overflow-y-auto text-sm text-neutral-300">
                 {items.map((item) => (
                   <li
-                    key={item.productId}
+                    key={`${item.productId}-${item.variation?.databaseId ?? 'no-var'}`}
                     className="flex items-center gap-2 truncate"
                   >
-                    <span className="truncate flex-1 text-xs">{item.productName}</span>
+                    <span className="truncate flex-1 text-xs">
+                      {item.productName}
+                      {item.variation?.displayLabel && (
+                        <span className="text-accent-cyan-400 ml-1 font-bold">
+                          ({item.variation.displayLabel})
+                        </span>
+                      )}
+                    </span>
                     <span className="text-accent-yellow-400 font-bold text-xs">×{item.quantity}</span>
                   </li>
                 ))}

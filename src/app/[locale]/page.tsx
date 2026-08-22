@@ -4,9 +4,12 @@ import Partners from '@/components/partners/partners';
 import TransitionPage from '@/components/transition-page';
 import HomeLevelSection from '@/components/HomeLevelSection';
 import HomeMapSection from '@/components/HomeMapSection';
-import HomeRanking from '@/components/HomeRanking';
+// import HomeRanking from '@/components/HomeRanking';
+// import TopReels from '@/components/TopReels';
 import ContactCTAButton from '@/components/ContactCTAButton';
 import ActivityTicker from '@/components/ActivityTicker';
+import FloatingCartOrbit from '@/components/orbital/FloatingCartOrbit';
+import PromoVideoModal from '@/components/PromoVideoModal';
 import { getTranslations } from 'next-intl/server';
 import AuthRedirect from '@/components/AuthRedirect';
 import { localizedAlternates } from '@/config/site';
@@ -47,8 +50,8 @@ export default async function Home({
         <HighScore />
       </div> */}
 
-      {/* Ranking Section */}
-      <HomeRanking />
+      {/* Ranking Section - hidden */}
+      {/* Top Reels Section - hidden */}
 
       {/* How to Win Section */}
       <HowWin />
@@ -82,6 +85,12 @@ export default async function Home({
       {/* <div>
         <Footer />
       </div> */}
+
+      {/* Floating cart orbit (carrito de compras que rebota por toda la pantalla) */}
+      <FloatingCartOrbit />
+
+      {/* Modal promocional con CTA de registro */}
+      <PromoVideoModal />
     </>
   );
 }

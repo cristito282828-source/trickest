@@ -26,6 +26,15 @@ const SigninButton = () => {
   const [selectedOption, setSelectedOption] = useState(0);
   const t = useTranslations('signinMenu');
 
+  // Escuchar eventos externos para abrir el modal de login (ej. desde PromoVideoModal)
+  useEffect(() => {
+    const onOpenSignin = () => {
+      setShowLoginForm(true);
+    };
+    window.addEventListener('trickest:open-signin', onOpenSignin);
+    return () => window.removeEventListener('trickest:open-signin', onOpenSignin);
+  }, []);
+
   const handleModal = () => setModal(!openModal);
   const handleMenu = () => {
     setOpenMenu(!openMenu);

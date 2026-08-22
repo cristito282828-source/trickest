@@ -91,7 +91,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status } = await validateRequest(updateOrderStatusSchema, body);
+    const { status, shippingGuideUrl } = await validateRequest(updateOrderStatusSchema, body);
 
     // Verificar que la orden existe
     const existing = await prisma.order.findUnique({
@@ -103,10 +103,13 @@ export async function PATCH(
       return errorResponse('NOT_FOUND', 'Order not found', 404);
     }
 
-    // Actualizar status
+    // Actualizar status (y shippingGuideUrl si vino en el body)
     const updated = await prisma.order.update({
       where: { id: orderId },
-      data: { status },
+      data: {
+        status,
+        ...(shippingGuideUrl && { shippingGuideUrl }),
+      },
     });
 
     // Notificar al skater dueño de la orden
@@ -133,6 +136,7 @@ export async function PATCH(
               orderId,
               status,
               previousStatus: existing.status,
+              ...(shippingGuideUrl && { shippingGuideUrl }),
             },
           },
         });
@@ -144,6 +148,21 @@ export async function PATCH(
     return successResponse({ order: updated });
   } catch (error) {
     console.error('[API /orders/[id]] PATCH error:', error);
+
+    // Distinguish ValidationError so el cliente ve el mensaje real
+    if (error instanceof Error && error.name === 'ValidationError') {
+      return errorResponse('VALIDATION_ERROR', error.message, 400, (error as any).details);
+    }
+
+    // Prisma column-not-found / DB errors
+    if (error instanceof Error && /column.*does not exist/i.test(error.message)) {
+      return errorResponse(
+        'DB_MIGRATION_REQUIRED',
+        `Database column missing — run \`npx prisma migrate dev\`. Original: ${error.message}`,
+        500
+      );
+    }
+
     return errorResponse('INTERNAL_ERROR', 'Error updating order', 500);
   }
 }

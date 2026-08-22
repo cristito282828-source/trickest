@@ -141,32 +141,37 @@ const SkateProfileCompletionModal: React.FC<ModalProps> = ({ openModal, handleMo
     if (!openModal) return null;
 
     return (
-        <div className="fixed inset-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center z-50">
-            <div className="w-full h-full md:max-w-[460px] md:h-auto bg-white shadow-lg py-2 rounded-md flex flex-col">
-                <h2 className="text-sm font-medium text-neutral-900 border-b border-neutral-300 py-3 px-4 mb-4">
+        <div className="fixed inset-0 w-full h-full bg-black bg-opacity-70 flex justify-center items-center z-50 backdrop-blur-sm">
+            <div className="w-full h-full md:max-w-[460px] md:h-auto bg-neutral-900 shadow-2xl shadow-accent-pink-500/30 py-2 rounded-md flex flex-col border-2 border-accent-pink-400">
+                <h2 className="text-base font-black uppercase tracking-wider text-accent-pink-400 border-b border-accent-pink-400/30 py-3 px-4 mb-4">
                     {t('title')}
                 </h2>
 
                 {/* Error message */}
                 {error && (
-                    <div className="mx-4 mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                        <p className="text-sm">{error}</p>
+                    <div className="mx-4 mb-4 bg-red-900/40 border border-red-500 text-red-200 px-4 py-3 rounded">
+                        <p className="text-sm font-medium">{error}</p>
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-4 px-4 pb-4 flex-grow">
                     {/* Username field */}
                     <div>
-                        <label className="block text-neutral-700 text-sm font-bold mb-2">Username:</label>
+                        <label className="block text-accent-cyan-400 text-xs font-black uppercase tracking-wider mb-2">
+                            Username:
+                        </label>
                         <div className="relative">
                             <input
                                 type="text"
                                 name="username"
                                 value={formData.username}
                                 onChange={handleChange}
-                                className={`w-full px-3 py-2 border rounded shadow-sm focus:outline-none bg-white text-neutral-900 pr-10 ${
-                                    usernameStatus === 'taken' ? 'border-red-500' :
-                                    usernameStatus === 'available' ? 'border-green-500' : ''
+                                className={`w-full px-3 py-2 border-2 rounded shadow-sm focus:outline-none bg-neutral-800 text-white placeholder:text-neutral-500 pr-10 transition-colors ${
+                                    usernameStatus === 'taken'
+                                        ? 'border-red-500 focus:border-red-400'
+                                        : usernameStatus === 'available'
+                                            ? 'border-green-500 focus:border-green-400'
+                                            : 'border-neutral-700 focus:border-accent-cyan-400'
                                 }`}
                                 placeholder="@yourusername"
                                 required
@@ -177,33 +182,35 @@ const SkateProfileCompletionModal: React.FC<ModalProps> = ({ openModal, handleMo
                             {/* Status indicator */}
                             <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                 {usernameStatus === 'checking' && (
-                                    <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                                    <div className="animate-spin h-4 w-4 border-2 border-accent-cyan-400 border-t-transparent rounded-full"></div>
                                 )}
                                 {usernameStatus === 'available' && (
-                                    <span className="text-green-500 text-lg">✓</span>
+                                    <span className="text-green-400 text-lg font-bold">✓</span>
                                 )}
                                 {usernameStatus === 'taken' && (
-                                    <span className="text-red-500 text-lg">✗</span>
+                                    <span className="text-red-400 text-lg font-bold">✗</span>
                                 )}
                             </div>
                         </div>
-                        <p className="text-neutral-500 text-xs mt-1">
-                            {usernameStatus === 'checking' && 'Checking availability...'}
-                            {usernameStatus === 'available' && <span className="text-green-600">Username available!</span>}
-                            {usernameStatus === 'taken' && <span className="text-red-600">Username already taken</span>}
+                        <p className="text-neutral-400 text-xs mt-1">
+                            {usernameStatus === 'checking' && <span className="text-accent-cyan-400">Checking availability...</span>}
+                            {usernameStatus === 'available' && <span className="text-green-400 font-bold">Username available!</span>}
+                            {usernameStatus === 'taken' && <span className="text-red-400 font-bold">Username already taken</span>}
                             {(usernameStatus === 'idle' || usernameStatus === 'checking') && '3-20 characters, letters, numbers and underscores only'}
                         </p>
                     </div>
 
                     {/* Phone field */}
                     <div>
-                        <label className="block text-neutral-700 text-sm font-bold mb-2">{t('phone')}:</label>
+                        <label className="block text-accent-cyan-400 text-xs font-black uppercase tracking-wider mb-2">
+                            {t('phone')}:
+                        </label>
                         <input
                             type="tel"
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border rounded shadow-sm focus:outline-none bg-white text-neutral-900"
+                            className="w-full px-3 py-2 border-2 border-neutral-700 focus:border-accent-cyan-400 rounded shadow-sm focus:outline-none bg-neutral-800 text-white placeholder:text-neutral-500 transition-colors"
                             required
                         />
                     </div>
@@ -219,7 +226,7 @@ const SkateProfileCompletionModal: React.FC<ModalProps> = ({ openModal, handleMo
                     {/* Submit button */}
                     <button
                         type="submit"
-                        className="w-full bg-accent-blue-500 hover:bg-accent-blue-700 text-white font-bold py-2 px-4 rounded"
+                        className="w-full bg-accent-pink-500 hover:bg-accent-pink-600 active:scale-95 text-white font-black uppercase tracking-wider py-3 px-4 rounded border-2 border-accent-pink-300 shadow-lg shadow-accent-pink-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={loading}
                     >
                         {loading ? t('loading') : t('submit')}
@@ -227,8 +234,12 @@ const SkateProfileCompletionModal: React.FC<ModalProps> = ({ openModal, handleMo
                 </form>
 
                 {/* Close button */}
-                <div className="border-t border-neutral-300 flex justify-between items-center px-4 pt-2">
-                    <button type="button" className="h-8 px-2 text-sm rounded-md bg-neutral-700 text-white" onClick={handleModal}>
+                <div className="border-t border-accent-pink-400/30 flex justify-between items-center px-4 pt-2">
+                    <button
+                        type="button"
+                        className="h-8 px-3 text-sm rounded-md bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border border-neutral-700 transition-colors"
+                        onClick={handleModal}
+                    >
                         {t('close')}
                     </button>
                 </div>

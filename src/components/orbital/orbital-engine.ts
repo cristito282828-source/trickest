@@ -15,6 +15,7 @@
  *   engine.handleClick(x, y)  // para anclar
  *   engine.handleHover(x, y)  // para resaltar
  */
+import type { Variation, ProductAttribute } from '@/lib/woocommerce/types';
 
 export interface OrbitalProduct {
   id: string
@@ -22,6 +23,8 @@ export interface OrbitalProduct {
   slug: string
   price: string | null
   imageUrl: string | null
+  variations?: Variation[]
+  attributes?: ProductAttribute[]
 }
 
 export interface OrbitalState {

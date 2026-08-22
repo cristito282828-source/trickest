@@ -240,66 +240,79 @@ const Appbar = () => {
         </div>
       )}
 
-      {/* User Score Badge - mobile: avatar + score compacto | desktop: card completo */}
+      {/* User Block: badge compacto (solo score) en dashboard, card completo (avatar + nombre + score) fuera */}
       {session?.user && (
-        <Link href="/dashboard/skaters/profile" className="ml-2 md:ml-4 flex">
-          {/* Mobile: solo avatar + score (chip compacto) */}
-          <div className="flex md:hidden items-center gap-1.5 bg-neutral-800/80 px-2 py-1.5 rounded-lg border-2 border-accent-cyan-500/50 active:scale-95 transition-transform">
-            <div className="flex-shrink-0">
-              {(userScore?.photo || session.user.image) ? (
-                <img
-                  src={userScore?.photo || session.user.image || ''}
-                  alt={userScore?.name || session.user.name || 'User'}
-                  className="w-7 h-7 rounded-full border-2 border-accent-cyan-400 object-cover"
-                />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent-cyan-500 to-accent-blue-500 flex items-center justify-center border-2 border-accent-cyan-400">
-                  <span className="text-white font-black text-xs">
-                    {(userScore?.name || session.user.name)?.charAt(0).toUpperCase() || '?'}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-0.5">
-              <span className="text-accent-yellow-400 text-xs">⭐</span>
-              <span className="text-accent-yellow-400 font-bold text-xs">
+        <Link
+          href="/dashboard/skaters/profile"
+          className="ml-2 md:ml-4 flex"
+        >
+          {/* Dashboard: badge compacto solo score */}
+          {isDashboard ? (
+            <div className="flex items-center gap-1.5 bg-neutral-800/80 px-2 py-1.5 md:px-3 md:py-2 rounded-lg border-2 border-accent-cyan-500/50 hover:border-accent-cyan-400 hover:shadow-lg hover:shadow-accent-cyan-500/30 transition-all cursor-pointer hover:scale-105 active:scale-95">
+              <span className="text-accent-yellow-400 text-sm md:text-base font-black">⭐</span>
+              <span className="text-accent-yellow-400 font-bold text-sm md:text-base">
                 {userScore?.totalScore?.toLocaleString() || 0}
+                <span className="hidden md:inline ml-0.5">PTS</span>
               </span>
             </div>
-          </div>
-
-          {/* Desktop: card completo avatar + nombre + score */}
-          <div className="hidden md:flex items-center gap-2 md:gap-3 bg-neutral-800/80 px-3 py-2 rounded-lg border-2 border-accent-cyan-500/50 hover:border-accent-cyan-400 hover:shadow-lg hover:shadow-accent-cyan-500/30 transition-all cursor-pointer hover:scale-105">
-            {/* Avatar */}
-            <div className="flex-shrink-0">
-              {(userScore?.photo || session.user.image) ? (
-                <img
-                  src={userScore?.photo || session.user.image || ''}
-                  alt={userScore?.name || session.user.name || 'User'}
-                  className="w-10 h-10 rounded-full border-2 border-accent-cyan-400 object-cover"
-                />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-cyan-500 to-accent-blue-500 flex items-center justify-center border-2 border-accent-cyan-400">
-                  <span className="text-white font-black text-lg">
-                    {(userScore?.name || session.user.name)?.charAt(0).toUpperCase() || '?'}
+          ) : (
+            <>
+              {/* Mobile (fuera de dashboard): chip avatar + score */}
+              <div className="flex md:hidden items-center gap-1.5 bg-neutral-800/80 px-2 py-1.5 rounded-lg border-2 border-accent-cyan-500/50 active:scale-95 transition-transform">
+                <div className="flex-shrink-0">
+                  {(userScore?.photo || session.user.image) ? (
+                    <img
+                      src={userScore?.photo || session.user.image || ''}
+                      alt={userScore?.name || session.user.name || 'User'}
+                      className="w-7 h-7 rounded-full border-2 border-accent-cyan-400 object-cover"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-accent-cyan-500 to-accent-blue-500 flex items-center justify-center border-2 border-accent-cyan-400">
+                      <span className="text-white font-black text-xs">
+                        {(userScore?.name || session.user.name)?.charAt(0).toUpperCase() || '?'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-0.5">
+                  <span className="text-accent-yellow-400 text-xs">⭐</span>
+                  <span className="text-accent-yellow-400 font-bold text-xs">
+                    {userScore?.totalScore?.toLocaleString() || 0}
                   </span>
                 </div>
-              )}
-            </div>
-
-            {/* User Info */}
-            <div className="flex flex-col">
-              <p className="text-white font-bold text-sm uppercase tracking-wider leading-tight truncate max-w-[150px]">
-                {userScore?.name || session.user.name || 'Skater'}
-              </p>
-              <div className="flex items-center gap-1">
-                <span className="text-accent-yellow-400 text-xs font-black">⭐</span>
-                <span className="text-accent-yellow-400 font-bold text-xs">
-                  {userScore?.totalScore?.toLocaleString() || 0} PTS
-                </span>
               </div>
-            </div>
-          </div>
+
+              {/* Desktop (fuera de dashboard): card avatar + nombre + score */}
+              <div className="hidden md:flex items-center gap-2 md:gap-3 bg-neutral-800/80 px-3 py-2 rounded-lg border-2 border-accent-cyan-500/50 hover:border-accent-cyan-400 hover:shadow-lg hover:shadow-accent-cyan-500/30 transition-all cursor-pointer hover:scale-105">
+                <div className="flex-shrink-0">
+                  {(userScore?.photo || session.user.image) ? (
+                    <img
+                      src={userScore?.photo || session.user.image || ''}
+                      alt={userScore?.name || session.user.name || 'User'}
+                      className="w-10 h-10 rounded-full border-2 border-accent-cyan-400 object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-accent-cyan-500 to-accent-blue-500 flex items-center justify-center border-2 border-accent-cyan-400">
+                      <span className="text-white font-black text-lg">
+                        {(userScore?.name || session.user.name)?.charAt(0).toUpperCase() || '?'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <p className="text-white font-bold text-sm uppercase tracking-wider leading-tight truncate max-w-[150px]">
+                    {userScore?.name || session.user.name || 'Skater'}
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <span className="text-accent-yellow-400 text-xs font-black">⭐</span>
+                    <span className="text-accent-yellow-400 font-bold text-xs">
+                      {userScore?.totalScore?.toLocaleString() || 0} PTS
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </Link>
       )}
 

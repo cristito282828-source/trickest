@@ -5,7 +5,9 @@ import { useTranslations } from 'next-intl';
 import { OrbitalEngine, OrbitalState, type OrbitalProduct } from './orbital-engine';
 import { preloadAll, getCachedImage } from './product-images';
 import { useCart } from '@/components/providers/CartProvider';
-import { MdClose, MdOpenInNew, MdCheck, MdShoppingCart, MdCheckCircle } from 'react-icons/md';
+import type { Variation, ProductAttribute } from '@/lib/woocommerce/types';
+import { formatSizeOption } from '@/lib/woocommerce/size-format';
+import { MdClose, MdCheck, MdShoppingCart, MdCheckCircle } from 'react-icons/md';
 
 interface OrbitalCanvasProps {
   products: OrbitalProduct[];
@@ -15,7 +17,18 @@ const CANVAS_BG = '#0a0a0f'; // Casi negro con tinte morado muy sutil
 
 export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
   const t = useTranslations('supplsPage');
-  const { addItem, isInCart, getQuantity } = useCart();
+  const { addItem, isInCart, getQuantity, items } = useCart();
+
+  // Helper: cantidad en carrito de un productId + variationId específico
+  const getQuantityForCartItem = (productId: string, variationDatabaseId: number) => {
+    return items
+      .filter(
+        (i) =>
+          i.productId === productId &&
+          (i.variation?.databaseId ?? null) === variationDatabaseId
+      )
+      .reduce((sum, i) => sum + i.quantity, 0);
+  };
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<OrbitalEngine | null>(null);
@@ -25,6 +38,29 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
   const [anchored, setAnchored] = useState<OrbitalState | null>(null);
   const [imagesReady, setImagesReady] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+  const [selectedVariationId, setSelectedVariationId] = useState<number | null>(null);
+
+  // Helper defensivo: garantizar que variations sea un array
+  const getVariations = (): Variation[] => {
+    if (!anchored) return [];
+    const v = anchored.product.variations;
+    return Array.isArray(v) ? v : [];
+  };
+
+  // Reset variation selection cuando se ancla un producto nuevo
+  useEffect(() => {
+    if (anchored) {
+      const variations = Array.isArray(anchored.product.variations)
+        ? anchored.product.variations
+        : [];
+      const first = variations.find(
+        (v) => v.stockStatus === 'IN_STOCK' && v.purchasable !== false
+      );
+      setSelectedVariationId(first?.databaseId ?? null);
+    } else {
+      setSelectedVariationId(null);
+    }
+  }, [anchored?.product.id, anchored?.product.variations]);
 
   // Pre-cargar imágenes al montar (o cuando cambien los productos)
   useEffect(() => {
@@ -39,9 +75,21 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
       return;
     }
 
+    // Debug: ver qué URLs estamos intentando cargar
+    console.log('[OrbitalCanvas] Preloading', urls.length, 'images:', urls);
+
     setImagesReady(false);
     preloadAll(urls).then(() => {
-      if (!cancelled) setImagesReady(true);
+      if (!cancelled) {
+        // Debug: confirmar cuáles quedaron cacheadas vs cuáles no
+        const loaded = urls.filter((u) => getCachedImage(u) !== null)
+        const failed = urls.filter((u) => getCachedImage(u) === null)
+        console.log('[OrbitalCanvas] Preload finished. Loaded:', loaded.length, '/', urls.length)
+        if (failed.length > 0) {
+          console.warn('[OrbitalCanvas] Failed images (will show fallback gradient):', failed)
+        }
+        setImagesReady(true);
+      }
     });
 
     return () => {
@@ -358,15 +406,50 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
             {anchored.product.name}
           </h3>
 
-          {anchored.product.price && (
-            <p className="text-accent-yellow-400 font-black text-2xl mb-4">
-              {anchored.product.price}
-            </p>
-          )}
+          {/* Variation selector */}
+          {(() => {
+            const variations = getVariations();
+            return variations.length > 0 ? (
+              <VariationSelector
+                variations={variations}
+                attributes={Array.isArray(anchored.product.attributes) ? anchored.product.attributes : []}
+                selectedId={selectedVariationId}
+                onSelect={setSelectedVariationId}
+              />
+            ) : null;
+          })()}
+
+          {/* Precio (usa el de la variation seleccionada si hay) */}
+          {(() => {
+            const variation = getVariations().find(
+              (v) => v.databaseId === selectedVariationId
+            );
+            const displayPrice = variation?.price ?? anchored.product.price;
+            return displayPrice ? (
+              <p className="text-accent-yellow-400 font-black text-2xl mb-4">
+                {displayPrice}
+              </p>
+            ) : null;
+          })()}
 
           <button
             type="button"
             onClick={() => {
+              const variations = getVariations();
+              const variation = variations.find(
+                (v) => v.databaseId === selectedVariationId
+              );
+
+              // Calcular el label legible del talle (igual que en VariationSelector)
+              let displayLabel: string | undefined;
+              if (variation) {
+                const optionIndex = variations.indexOf(variation);
+                const rawOption =
+                  Array.isArray(anchored.product.attributes) &&
+                  anchored.product.attributes[0]?.options?.[optionIndex];
+                if (rawOption) displayLabel = formatSizeOption(rawOption);
+              }
+
               addItem(
                 {
                   productId: anchored.product.id,
@@ -374,25 +457,44 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
                   productPrice: anchored.product.price ?? '',
                   productImage: anchored.product.imageUrl,
                   productSlug: anchored.product.slug,
+                  variation: variation
+                    ? {
+                        databaseId: variation.databaseId,
+                        name: variation.name,
+                        price: variation.price ?? variation.regularPrice ?? null,
+                        attributes: { nodes: variation.attributes.nodes },
+                        displayLabel,
+                      }
+                    : undefined,
                 },
                 1
               );
               setJustAdded(true);
               setTimeout(() => setJustAdded(false), 2000);
             }}
-            disabled={justAdded}
+            disabled={justAdded || (getVariations().length > 0 && selectedVariationId === null)}
             className={`flex items-center justify-center gap-2 w-full py-3 px-6 rounded-lg border-2 uppercase tracking-wider text-sm shadow-lg transform transition-all font-black ${
-              justAdded || isInCart(anchored.product.id)
+              justAdded ||
+              isInCart(anchored.product.id) ||
+              (selectedVariationId !== null &&
+                getQuantityForCartItem(anchored.product.id, selectedVariationId) > 0)
                 ? 'bg-accent-cyan-500 text-neutral-900 border-white'
                 : 'bg-accent-pink-500 hover:bg-accent-pink-600 text-white border-white hover:scale-105'
             }`}
           >
-            {justAdded || isInCart(anchored.product.id) ? (
+            {justAdded ||
+            isInCart(anchored.product.id) ||
+            (selectedVariationId !== null &&
+              getQuantityForCartItem(anchored.product.id, selectedVariationId) > 0) ? (
               <>
                 <MdCheckCircle />
                 {t('addedToCart')}
-                {getQuantity(anchored.product.id) > 0 &&
-                  ` (${getQuantity(anchored.product.id)})`}
+                {(() => {
+                  const q = selectedVariationId !== null
+                    ? getQuantityForCartItem(anchored.product.id, selectedVariationId)
+                    : getQuantity(anchored.product.id);
+                  return q > 0 ? ` (${q})` : '';
+                })()}
               </>
             ) : (
               <>
@@ -402,22 +504,79 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
             )}
           </button>
 
-          <a
-            href={`https://toryskateshop.com/?product=${anchored.product.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full mt-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold py-2 px-6 rounded-lg border border-neutral-700 uppercase tracking-wider text-xs transition-all"
-          >
-            <MdOpenInNew />
-            {t('viewOnStore')}
-          </a>
-
           <p className="text-neutral-500 text-xs mt-3 text-center flex items-center justify-center gap-1">
             <MdCheck className="text-accent-cyan-400" />
             {t('escapeHint')}
           </p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Sub-componente: VariationSelector
+// ────────────────────────────────────────────────────────────────────
+
+interface VariationSelectorProps {
+  variations: Variation[];
+  attributes: ProductAttribute[];
+  selectedId: number | null;
+  onSelect: (databaseId: number) => void;
+}
+
+function VariationSelector({ variations, attributes, selectedId, onSelect }: VariationSelectorProps) {
+  const t = useTranslations('supplsPage');
+
+  // Filtrar solo disponibles (con stock y purchasable)
+  const available = variations.filter(
+    (v) => v.stockStatus === 'IN_STOCK' && v.purchasable !== false
+  );
+
+  if (available.length === 0) {
+    return (
+      <p className="text-red-400 text-sm font-bold mb-4">{t('outOfStock')}</p>
+    );
+  }
+
+  // Label del grupo de atributos (ej: "tallas")
+  const groupLabel =
+    attributes.find((a) => a.label && a.label !== a.name)?.label ||
+    attributes[0]?.label ||
+    t('variationLabel');
+
+  return (
+    <div className="mb-4">
+      <p className="text-neutral-400 text-xs uppercase font-bold tracking-wider mb-2">
+        {groupLabel}:
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        {available.map((v) => {
+          // El orden de variations coincide con attributes.options[] en WPGQL WC
+          const optionIndex = variations.indexOf(v);
+          const rawOption = attributes[0]?.options?.[optionIndex] ?? v.name;
+          const displayLabel = formatSizeOption(rawOption);
+          const isSelected = selectedId === v.databaseId;
+
+          return (
+            <button
+              key={v.databaseId}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(v.databaseId);
+              }}
+              className={`px-2 py-2 rounded-lg border-2 text-xs font-bold uppercase tracking-wider transition-all ${
+                isSelected
+                  ? 'bg-accent-cyan-500 text-neutral-900 border-white shadow-lg shadow-accent-cyan-500/30'
+                  : 'bg-neutral-800 text-neutral-300 border-neutral-700 hover:border-accent-cyan-400'
+              }`}
+            >
+              {displayLabel}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 interface UploadRequest {
   file: string; // Base64 del archivo
   filename: string;
-  fileType: 'spot-photo' | 'profile' | 'submission';
+  fileType: 'spot-photo' | 'profile' | 'submission' | 'order-shipping';
 }
 
 // POST /api/upload/photo - Subir foto a Supabase Storage

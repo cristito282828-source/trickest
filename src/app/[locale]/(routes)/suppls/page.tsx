@@ -4,8 +4,10 @@ import { FEATURED_PRODUCTS_QUERY } from '@/lib/woocommerce/queries';
 import type { ExternalProduct, ExternalCategory } from '@/lib/woocommerce/types';
 import OrbitalCanvas from '@/components/orbital/OrbitalCanvas';
 import FloatingCart from '@/components/orbital/FloatingCart';
+import SupplsDebugBanner from '@/components/orbital/SupplsDebugBanner';
 
 const CATEGORY_SLUG = process.env.WC_FEATURED_CATEGORY || 'trickest';
+const CATEGORY_IS_NUMERIC = /^\d+$/.test(CATEGORY_SLUG);
 
 export const revalidate = 3600; // Cache de 1 hora
 
@@ -25,13 +27,50 @@ export async function generateMetadata() {
   };
 }
 
-export default async function SupplsPage() {
+export default async function SupplsPage({
+  searchParams,
+}: {
+  searchParams: { nocache?: string; debug?: string };
+}) {
   const t = await getTranslations('supplsPage');
+  const skipCache = searchParams?.nocache === '1';
+  const showDebug = searchParams?.debug === '1' || process.env.NEXT_PUBLIC_DEBUG_SUPPLS === '1';
 
-  // Fetch en paralelo: categoría + productos
-  const [categoryData, productsData] = await Promise.all([
-    graphqlFetch<CategoryResponse>(
-      `query GetCategoryInfo($slug: String!) {
+  // Fetch en paralelo: categoría + productos. Soportamos slug o ID numérico.
+  let categoryData: CategoryResponse | null = null;
+  let productsData: ProductsResponse | null = null;
+
+  if (CATEGORY_IS_NUMERIC) {
+    const categoryId = Number(CATEGORY_SLUG);
+    const categoryQuery = `query GetCategoryById($id: ID!) { productCategory(id: $id, idType: DATABASE_ID) { id name slug description count image { sourceUrl altText } } }`;
+
+    const productsByIdQuery = `query GetFeaturedProductsById($categoryId: Int!, $first: Int = 30) {
+      products(where: { categoryId: $categoryId }, first: $first) {
+        nodes {
+          id
+          databaseId
+          name
+          slug
+          image { sourceUrl altText }
+          ... on SimpleProduct { price regularPrice salePrice }
+          ... on VariableProduct {
+            price
+            attributes { nodes { name label variation visible options } }
+            variations(first: 30) { nodes { id databaseId name slug sku price regularPrice salePrice stockStatus stockQuantity purchasable image { sourceUrl altText } attributes { nodes { name value label } } } }
+          }
+        }
+      }
+    }`;
+
+    [categoryData, productsData] = await Promise.all([
+      graphqlFetch<CategoryResponse>(categoryQuery, { id: categoryId }, skipCache ? 0 : 3600),
+      graphqlFetch<ProductsResponse>(productsByIdQuery, { categoryId, first: 30 }, skipCache ? 0 : 3600),
+    ]);
+  } else {
+    // slug case (existing behavior)
+    [categoryData, productsData] = await Promise.all([
+      graphqlFetch<CategoryResponse>(
+        `query GetCategoryInfo($slug: String!) {
         productCategory(id: $slug, idType: SLUG) {
           id
           name
@@ -40,13 +79,16 @@ export default async function SupplsPage() {
           count
         }
       }`,
-      { slug: CATEGORY_SLUG }
-    ),
-    graphqlFetch<ProductsResponse>(FEATURED_PRODUCTS_QUERY, {
-      category: CATEGORY_SLUG,
-      first: 30,
-    }),
-  ]);
+        { slug: CATEGORY_SLUG },
+        skipCache ? 0 : 3600
+      ),
+      graphqlFetch<ProductsResponse>(
+        FEATURED_PRODUCTS_QUERY,
+        { category: CATEGORY_SLUG, first: 30 },
+        skipCache ? 0 : 3600
+      ),
+    ]);
+  }
 
   const category = categoryData?.productCategory ?? null;
   const products = productsData?.products?.nodes ?? [];
@@ -54,6 +96,9 @@ export default async function SupplsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-accent-purple-900 to-neutral-900 py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
+        {/* Banner debug — solo visible con ?debug=1 o si NEXT_PUBLIC_DEBUG_SUPPLS=1 */}
+        {showDebug && <SupplsDebugBanner productsCount={products.length} />}
+
         {/* Header */}
         <div className="text-center mb-6">
           <span className="inline-block bg-accent-pink-500/20 text-accent-pink-300 border-2 border-accent-pink-500 px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest mb-3">
@@ -91,6 +136,9 @@ export default async function SupplsPage() {
               imageUrl: p.image?.sourceUrl
                 ? `/api/external-image?url=${encodeURIComponent(p.image.sourceUrl)}`
                 : null,
+              // WPGQL WC devuelve variations como { nodes: [...] } (connection wrapper)
+              variations: p.variations?.nodes ?? [],
+              attributes: p.attributes?.nodes ?? [],
             }))}
           />
         )}

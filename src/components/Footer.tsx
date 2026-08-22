@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
+import { FaInstagram, FaFacebook } from 'react-icons/fa';
 
 /**
  * Minimal Arcade-style Footer with legal links
@@ -21,8 +22,29 @@ const Footer = () => {
             © {new Date().getFullYear()} TRICKEST
           </div>
 
-          {/* Legal Links */}
-          <div className="flex gap-4 font-mono">
+          {/* Social + Legal Links */}
+          <div className="flex flex-wrap items-center justify-center gap-3 font-mono">
+            {/* Social icons */}
+            <a
+              href="https://www.instagram.com/thetrickest/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              className="text-neutral-500 hover:text-pink-500 transition-colors"
+            >
+              <FaInstagram size={18} />
+            </a>
+            <a
+              href="https://www.facebook.com/thetrickest/"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+              className="text-neutral-500 hover:text-blue-500 transition-colors"
+            >
+              <FaFacebook size={18} />
+            </a>
+
+            <span className="text-neutral-700">|</span>
             <Link
               href="/privacy"
               className="text-neutral-500 hover:text-accent-cyan-500 transition-colors uppercase tracking-wider text-[10px]"

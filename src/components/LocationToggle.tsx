@@ -38,11 +38,17 @@ export default function LocationToggle() {
       return;
     }
 
-    console.log('[LocationToggle] Toggle clicked:', { hasLocation, showOnMap });
+    const newShowOnMapState = !showOnMap;
+    console.log('[LocationToggle] Toggle clicked:', {
+      hasLocation,
+      showOnMap,
+      newState: newShowOnMapState,
+    });
 
-    // If no saved location, request it first
-    if (!hasLocation && !showOnMap) {
-      console.log('[LocationToggle] No location, requesting GPS...');
+    // Activando (OFF -> ON): siempre refrescar GPS para tomar la posición actual.
+    // Desactivando (ON -> OFF): solo flippear el flag, conservar coordenadas en DB.
+    if (newShowOnMapState) {
+      console.log('[LocationToggle] Activating, requesting fresh GPS...');
       if (!navigator.geolocation) {
         alert('❌ ' + t('noGeolocation'));
         return;
@@ -92,14 +98,10 @@ export default function LocationToggle() {
         }
       );
     } else {
-      // Already has location, just change the toggle
-      console.log('[LocationToggle] Has location, changing toggle...');
+      // Desactivando (ON -> OFF): solo flippear el flag, preservar coordenadas existentes.
+      console.log('[LocationToggle] Deactivating, preserving coordinates...');
       setLoading(true);
       try {
-        const newShowOnMapState = !showOnMap;
-        console.log('[LocationToggle] New state:', newShowOnMapState);
-
-        // Build request body: only send showOnMap, preserve existing coordinates
         const requestBody: any = {
           email: session.user.email,
           showOnMap: newShowOnMapState,
@@ -136,21 +138,19 @@ export default function LocationToggle() {
       onClick={handleToggle}
       disabled={loading}
       title={showOnMap ? t('visibleOnMap') : t('appearOnMap')}
-      className="group relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-105 border-2 disabled:opacity-50 disabled:cursor-not-allowed bg-green-600/80 hover:bg-green-500/90 border-green-300 hover:shadow-green-500/50"
+      className="group relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 text-lime-400 font-bold rounded-lg shadow-lg transition-all transform hover:scale-105 border-2 border-lime-500 disabled:opacity-50 disabled:cursor-not-allowed bg-lime-500/20 hover:bg-lime-500/40 hover:border-lime-300 hover:shadow-lime-500/60"
     >
-      <span className="text-lg md:text-xl transition-transform duration-300">
+      <span className={`text-lg md:text-xl transition-all duration-300 ${showOnMap ? 'text-lime-300 drop-shadow-[0_0_8px_rgba(163,230,53,0.8)] scale-110' : 'text-lime-400/40'}`}>
         {loading ? (
           <span className="animate-spin inline-block">⏳</span>
-        ) : showOnMap ? (
-          <span className="drop-shadow-lg">📍</span>
         ) : (
-          <span className="opacity-70">📍</span>
+          <span>📍</span>
         )}
       </span>
 
       {/* Indicador sutil cuando está activo */}
       {showOnMap && !loading && (
-        <span className="absolute -top-0.5 -right-0.5 bg-green-500/90 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
+        <span className="absolute -top-0.5 -right-0.5 bg-lime-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">
           ON
         </span>
       )}

@@ -130,6 +130,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.toryskateshop.com',
       },
+      // Nuevo WordPress host (Hostinger) usado por el partner de pruebas
+      {
+        protocol: 'https',
+        hostname: 'seagreen-emu-487450.hostingersite.com',
+      },
     ],
   },
 
