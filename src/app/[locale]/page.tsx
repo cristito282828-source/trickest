@@ -10,6 +10,7 @@ import ContactCTAButton from '@/components/ContactCTAButton';
 import ActivityTicker from '@/components/ActivityTicker';
 import FloatingCartOrbit from '@/components/orbital/FloatingCartOrbit';
 import PromoVideoModal from '@/components/PromoVideoModal';
+import MonthlyThreadSection from '@/components/monthly-thread/MonthlyThreadSection';
 import { getTranslations } from 'next-intl/server';
 import AuthRedirect from '@/components/AuthRedirect';
 import { localizedAlternates } from '@/config/site';
@@ -44,6 +45,9 @@ export default async function Home({
 
       {/* Challenges Section */}
       <HomeLevelSection />
+
+      {/* Monthly Thread (Hilo del Mes) — colaborativo */}
+      <MonthlyThreadSection />
 
       {/* <div className='pt-28 text-center'>
         <h1 className='text-neutral-200 my-16 text-2xl md:text-4xl font-bold'>High Scores</h1>

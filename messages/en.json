@@ -296,6 +296,28 @@
     "approved": "APPROVED",
     "rejected": "REJECTED"
   },
+  "monthlyThread": {
+    "badge": "Thread of the Week",
+    "closed": "CLOSED",
+    "endsIn": "Closes in {time}",
+    "threadClosed": "Thread closed",
+    "yourMove": "Propose your idea",
+    "proposePlaceholder": "A trick, spot or idea...",
+    "proposeCta": "Propose",
+    "addedToList": "Added!",
+    "signInToPropose": "Sign in to propose and vote",
+    "noProposalsYet": "No proposals yet — be the first to throw one in!",
+    "vote": "Vote",
+    "errorVoting": "Could not register your vote",
+    "errorProposing": "Could not submit your proposal",
+    "winner": "Winner",
+    "proposalsCount": "{count, plural, =0 {No proposals yet} =1 {# proposal} other {# proposals}}",
+    "commentsCount": "{count, plural, =0 {No comments} =1 {# comment} other {# comments}}",
+    "noCommentsYet": "Be the first to leave a comment.",
+    "commentsHint": "Comments open in the full thread view.",
+    "statsLine": "{proposals} proposals · {votes} votes · {comments} comments",
+    "adminHint": "Admin: close the thread from /api/monthly-thread/:id/close"
+  },
   "homeMapSection": {
     "title": "EXPLORE SPOTS",
     "subtitle": "Find skateparks and skateshops in your city",

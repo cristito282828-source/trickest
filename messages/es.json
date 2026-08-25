@@ -289,6 +289,28 @@
     "approved": "APROBADO",
     "rejected": "RECHAZADO"
   },
+  "monthlyThread": {
+    "badge": "Hilo de la Semana",
+    "closed": "CERRADO",
+    "endsIn": "Cierra en {time}",
+    "threadClosed": "Hilo cerrado",
+    "yourMove": "Proponé tu idea",
+    "proposePlaceholder": "Un truco, spot o idea...",
+    "proposeCta": "Proponer",
+    "addedToList": "¡Listo!",
+    "signInToPropose": "Iniciá sesión para proponer y votar",
+    "noProposalsYet": "Aún no hay propuestas — ¡sé el primero en tirar una!",
+    "vote": "Votar",
+    "errorVoting": "No se pudo registrar tu voto",
+    "errorProposing": "No se pudo enviar tu propuesta",
+    "winner": "Ganador",
+    "proposalsCount": "{count, plural, =0 {Sin propuestas aún} =1 {# propuesta} other {# propuestas}}",
+    "commentsCount": "{count, plural, =0 {Sin comentarios} =1 {# comentario} other {# comentarios}}",
+    "noCommentsYet": "Sé el primero en dejar un comentario.",
+    "commentsHint": "Los comentarios se abren en la vista completa del hilo.",
+    "statsLine": "{proposals} propuestas · {votes} votos · {comments} comentarios",
+    "adminHint": "Admin: cerrá el hilo desde /api/monthly-thread/:id/close"
+  },
   "homeMapSection": {
     "title": "EXPLORAR SPOTS",
     "subtitle": "Encuentra skateparks y tiendas de skate en tu ciudad",
