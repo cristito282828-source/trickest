@@ -54,6 +54,9 @@ model User {
   reelCommentVotes ReelCommentVote[] // Votos en comentarios de reels
   userRewards      UserReward[]
   orders           Order[] // Pedidos que el skater ha hecho
+  monthlyThreads       MonthlyThread[]       @relation("ThreadCreator") // Hilos creados por el admin (solo cuenta el creator)
+  threadProposals      ThreadProposal[] // Propuestas que el usuario creó en hilos
+  threadProposalVotes  ThreadProposalVote[] // Votos del usuario a propuestas de hilos
 }
 
 model SocialMedia {
@@ -445,7 +448,8 @@ model UserReputation {
 
 model SpotComment {
   id              Int      @id @default(autoincrement())
-  spotId          Int
+  spotId          Int?     // Ahora opcional: un comment puede ser de spot O de thread (polimórfico)
+  threadId        Int?     // Nuevo: si está set, es un comentario en un MonthlyThread
   userId          String // Email del usuario
   content         String   @db.Text
   likes           Int      @default(0)
@@ -456,13 +460,15 @@ model SpotComment {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  spot            Spot          @relation(fields: [spotId], references: [id], onDelete: Cascade)
-  user            User          @relation(fields: [userId], references: [email])
-  parentComment   SpotComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
-  replies         SpotComment[] @relation("CommentReplies")
+  spot            Spot?          @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  thread          MonthlyThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [email])
+  parentComment   SpotComment?   @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies         SpotComment[]  @relation("CommentReplies")
   votes           CommentVote[]
 
   @@index([spotId])
+  @@index([threadId]) // Para buscar comentarios de un thread eficientemente
   @@index([userId])
   @@index([parentCommentId]) // Para buscar respuestas eficientemente
   @@index([createdAt])
@@ -652,4 +658,60 @@ enum ChallengeStatus {
   ACTIVE                // Unlocked and accepting submissions
   COMPLETED             // Challenge ended
   EXPIRED               // Time limit reached
+}
+
+// ==================== MONTHLY THREAD (Hilo del Mes / Tema de la Semana) ====================
+
+model MonthlyThread {
+  id               Int      @id @default(autoincrement())
+  slug             String   @unique // ej: "trick-week-2026-w34"
+  question         String // "¿Qué truco quieres aprender esta semana?"
+  description      String?  @db.Text // Contexto opcional para el hilo
+  status           String   @default("active") // "active" | "closed" | "archived"
+  startsAt         DateTime @default(now())
+  endsAt           DateTime // Cierra automáticamente al llegar a esta fecha
+  winnerProposalId Int? // Set cuando el admin cierra el hilo y elige ganador
+  createdById      String // Email del admin que creó el hilo
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  createdBy      User             @relation("ThreadCreator", fields: [createdById], references: [email])
+  winnerProposal ThreadProposal?  @relation("ThreadWinner", fields: [winnerProposalId], references: [id])
+  proposals      ThreadProposal[]
+  comments       SpotComment[] // Reutiliza el modelo de comentarios (polimórfico: threadId !== null)
+
+  @@index([status, endsAt])
+  @@index([createdById])
+}
+
+model ThreadProposal {
+  id        Int      @id @default(autoincrement())
+  threadId  Int
+  userId    String // Email del autor de la propuesta
+  text      String   @db.Text // Texto de la opción propuesta (ej: "Kickflip")
+  voteCount Int      @default(0) // Denormalizado: suma de ThreadProposalVote
+  createdAt DateTime @default(now())
+
+  thread     MonthlyThread        @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user       User                 @relation(fields: [userId], references: [email])
+  votes      ThreadProposalVote[]
+  wonThreads MonthlyThread[]      @relation("ThreadWinner") // Threads donde esta propuesta fue ganadora
+
+  @@unique([threadId, userId, text]) // Un usuario no puede proponer 2 veces el mismo texto en el mismo hilo
+  @@index([threadId, voteCount]) // Para ordenar propuestas por votos
+  @@index([userId])
+}
+
+model ThreadProposalVote {
+  id         Int      @id @default(autoincrement())
+  proposalId Int
+  userId     String // Email del usuario que vota
+  createdAt  DateTime @default(now())
+
+  proposal ThreadProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  user     User           @relation(fields: [userId], references: [email])
+
+  @@unique([proposalId, userId]) // Un voto por usuario por propuesta
+  @@index([proposalId])
+  @@index([userId])
 }

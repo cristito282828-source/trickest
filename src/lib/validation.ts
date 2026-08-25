@@ -1,6 +1,25 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 
+// ==================== MONTHLY THREAD SCHEMAS ====================
+
+export const proposeSchema = z.object({
+  threadId: z.number().int().positive(),
+  text: z
+    .string()
+    .min(2, "Proposal must be at least 2 characters")
+    .max(60, "Proposal is too long (max 60)")
+    .trim()
+    .regex(
+      /^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s\-_!?]+$/,
+      "Only letters, numbers, spaces, and basic punctuation"
+    ),
+});
+
+export const closeThreadSchema = z.object({
+  winnerProposalId: z.number().int().positive(),
+});
+
 // ==================== AUTH SCHEMAS ====================
 
 export const registerSchema = z.object({
