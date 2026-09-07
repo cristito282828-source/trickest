@@ -37,13 +37,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const hostname = parsedUrl.hostname.toLowerCase();
     const allowedHosts = [
       'toryskateshop.com',
       'www.toryskateshop.com',
-      // Nuevo WordPress host (Hostinger) usado por el partner de pruebas
+      // Hosts WordPress/Hostinger usados por el partner
       'seagreen-emu-487450.hostingersite.com',
+      'tan-cassowary-132067.hostingersite.com',
     ];
-    if (!allowedHosts.includes(parsedUrl.hostname)) {
+    const isAllowedHost =
+      allowedHosts.includes(hostname) || hostname.endsWith('.hostingersite.com');
+
+    if (!isAllowedHost) {
       return NextResponse.json(
         { error: 'Host not allowed' },
         { status: 403 }

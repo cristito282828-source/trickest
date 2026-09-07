@@ -34,7 +34,10 @@ export default async function SupplsPage({
 }) {
   const t = await getTranslations('supplsPage');
   const skipCache = searchParams?.nocache === '1';
-  const showDebug = searchParams?.debug === '1' || process.env.NEXT_PUBLIC_DEBUG_SUPPLS === '1';
+  const showDebug =
+    searchParams?.debug === '1' ||
+    process.env.NEXT_PUBLIC_DEBUG_SUPPLS === '1' ||
+    process.env.NODE_ENV === 'production';
 
   // Fetch en paralelo: categoría + productos. Soportamos slug o ID numérico.
   let categoryData: CategoryResponse | null = null;
