@@ -149,10 +149,11 @@ export async function POST(request: NextRequest) {
           productId: string;
           productName: string;
           productPrice: string;
-          productImage?: string;
+          // Accept null coming from client/state
+          productImage?: string | null;
           productSlug: string;
           quantity: number;
-          variation?: unknown;
+          variation?: any;
         }) => ({
           orderId: newOrder.id,
           productId: item.productId,
