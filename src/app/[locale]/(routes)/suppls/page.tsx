@@ -4,7 +4,6 @@ import { FEATURED_PRODUCTS_QUERY } from '@/lib/woocommerce/queries';
 import type { ExternalProduct, ExternalCategory } from '@/lib/woocommerce/types';
 import OrbitalCanvas from '@/components/orbital/OrbitalCanvas';
 import FloatingCart from '@/components/orbital/FloatingCart';
-import SupplsDebugBanner from '@/components/orbital/SupplsDebugBanner';
 
 const CATEGORY_SLUG = process.env.WC_FEATURED_CATEGORY || 'trickest';
 const CATEGORY_IS_NUMERIC = /^\d+$/.test(CATEGORY_SLUG);
@@ -34,10 +33,9 @@ export default async function SupplsPage({
 }) {
   const t = await getTranslations('supplsPage');
   const skipCache = searchParams?.nocache === '1';
+  // Mostrar banner debug solo si se solicita explícitamente
   const showDebug =
-    searchParams?.debug === '1' ||
-    process.env.NEXT_PUBLIC_DEBUG_SUPPLS === '1' ||
-    process.env.NODE_ENV === 'production';
+    searchParams?.debug === '1' || process.env.NEXT_PUBLIC_DEBUG_SUPPLS === '1';
 
   // Fetch en paralelo: categoría + productos. Soportamos slug o ID numérico.
   let categoryData: CategoryResponse | null = null;
@@ -99,8 +97,7 @@ export default async function SupplsPage({
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-900 via-accent-purple-900 to-neutral-900 py-8 md:py-12">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
-        {/* Banner debug — solo visible con ?debug=1 o si NEXT_PUBLIC_DEBUG_SUPPLS=1 */}
-        {showDebug && <SupplsDebugBanner productsCount={products.length} />}
+        {/* Debug banner removed from production UI */}
 
         {/* Header */}
         <div className="text-center mb-6">
