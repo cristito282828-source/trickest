@@ -5,8 +5,8 @@ export const routing = defineRouting({
   // A list of all locales that are supported
   locales: ['en', 'es'],
 
-  // Used when no locale matches
-  defaultLocale: 'en',
+  // Used when no locale matches — cambiar a español por defecto
+  defaultLocale: 'es',
 
   // Prefix the default locale as well (e.g., /en/dashboard instead of /dashboard)
   localePrefix: 'always',
