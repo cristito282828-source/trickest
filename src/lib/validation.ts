@@ -132,7 +132,17 @@ const orderItemSchema = z.object({
   productId: z.string().min(1, "Product ID is required"),
   productName: z.string().min(1, "Product name is required").max(200),
   productPrice: z.string().min(1, "Product price is required").max(50),
-  productImage: z.string().url("Invalid product image URL").optional().or(z.literal("")),
+  // Allow null, undefined, empty string, an absolute URL or a relative path (e.g. /api/external-image?...)
+  productImage: z
+    .string()
+    .refine((val) => {
+      if (val === '' || val === undefined || val === null) return true;
+      // Allow absolute URLs or root-relative paths
+      return /^(https?:\/\/).+/.test(val) || val.startsWith('/');
+    }, { message: 'Invalid product image URL' })
+    .nullable()
+    .optional()
+    .or(z.literal('')),
   productSlug: z.string().min(1, "Product slug is required").max(200),
   quantity: z.number().int("Quantity must be an integer").min(1, "Minimum quantity is 1").max(99, "Maximum quantity is 99"),
   variation: orderVariationSchema,

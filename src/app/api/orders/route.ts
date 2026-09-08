@@ -8,6 +8,7 @@ import {
   validateRequest,
   successResponse,
   errorResponse,
+  handleValidationError,
 } from '@/lib/validation';
 import { rateLimitCheck, rateLimitResponse, RateLimits } from '@/lib/rate-limit';
 
@@ -103,7 +104,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const validatedData = await validateRequest(createOrderSchema, body);
+    let validatedData;
+    try {
+      validatedData = await validateRequest(createOrderSchema, body);
+    } catch (err) {
+      // Return a 400 with validation details when payload is invalid
+      return handleValidationError(err) as NextResponse;
+    }
 
     const {
       customerName,
