@@ -43,9 +43,11 @@ export async function POST(req: Request) {
       return rateLimitResponse(rateLimit);
     }
 
-    const body = await req.json();
-    const validatedData = await validateRequest(submitTrickSchema, body);
+    const rawBody = await req.json();
+    console.log('[submissions] Body recibido:', JSON.stringify(rawBody));
+    const validatedData = await validateRequest(submitTrickSchema, rawBody);
     const { challengeId, videoUrl, muxUploadId } = validatedData;
+    console.log('[submissions] Validado OK:', { challengeId, videoUrl, muxUploadId });
 
     const challengeIdNum = parseInt(challengeId, 10);
 
@@ -76,10 +78,12 @@ export async function POST(req: Request) {
     // MODO 1: Mux (nuevo, recomendado)
     // ═══════════════════════════════════════════════════════════════
     if (muxUploadId) {
+      console.log('[submissions] MODO MUX, uploadId:', muxUploadId);
       // Consultamos a Mux para obtener el asset_id a partir del upload_id
       let assetId: string;
       try {
         const upload = await mux.video.uploads.retrieve(muxUploadId);
+        console.log('[submissions] Mux upload retrieved:', { asset_id: upload.asset_id, status: upload.status });
         if (!upload.asset_id) {
           // El asset aún no se creó (puede pasar si el webhook no ha llegado)
           return NextResponse.json(
@@ -94,9 +98,10 @@ export async function POST(req: Request) {
         assetId = upload.asset_id;
       } catch (muxErr) {
         console.error('[submissions] Error consultando Mux upload:', muxErr);
+        const msg = muxErr instanceof Error ? muxErr.message : String(muxErr);
         return errorResponse(
           'MUX_UPLOAD_NOT_FOUND',
-          'No se encontró el upload en Mux. Vuelve a subir el video.',
+          `No se encontró el upload en Mux: ${msg}. Vuelve a subir el video.`,
           404
         );
       }

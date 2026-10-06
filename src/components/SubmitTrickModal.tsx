@@ -78,10 +78,15 @@ export default function SubmitTrickModal({
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        // El server responde { success: false, error: { code, message, details } }
+        const errorObj = data?.error;
         const message =
+          (typeof errorObj?.message === 'string' && errorObj.message) ||
           (typeof data?.message === 'string' && data.message) ||
           (typeof data?.error === 'string' && data.error) ||
           `Error ${response.status}: ${response.statusText || 'Error submitting'}`;
+        // Log para debug
+        console.error('[submit] Server error:', { status: response.status, code: errorObj?.code, message, details: errorObj?.details });
         throw new Error(message);
       }
 
