@@ -15,48 +15,48 @@ datasource db {
 }
 
 model User {
-  id            Int           @id @default(autoincrement())
-  email         String        @unique
-  username      String?       @unique // Username único para URLs públicas
-  password      String? // Contraseña hasheada (opcional para usuarios de Google)
-  name          String?
-  phone         String? // Campo para el número de celular
-  address       String? // Dirección de envío (texto libre) — auto-completar en checkout
-  photo         String?
-  gender        String? // "male" | "female" | "prefer_not_to_say"
-  estado        String?
-  departamento  String?
-  ciudad        String?
-  latitude      Float? // Latitud para mostrar en el mapa
-  longitude     Float? // Longitud para mostrar en el mapa
-  showOnMap     Boolean       @default(false) // Si el usuario quiere aparecer en el mapa público
-  birthdate     DateTime? // Nuevo campo para la fecha de nacimiento
-  birthskate    DateTime? // Nuevo campo para la fecha de nacimiento
-  profileStatus String        @default("basic") // "basic" (solo Google) | "complete" (perfil completo)
-  role          String        @default("skater") // "skater" | "judge" | "admin"
-  isActive      Boolean       @default(true) // Si el usuario está activo
-  teamId        Int? // ID del equipo al que pertenece
-  createdAt     DateTime      @default(now())
-  socials       SocialMedia[] // Relación con la tabla de redes sociales
-  WishSkate     WishSkate?
-  submissions   Submission[] // Relación con los envíos de trucos
-  evaluations   Submission[] @relation("JudgeEvaluations") // Evaluaciones hechas como juez
-  ownedTeams    Team[]       @relation("TeamOwner") // Equipos que ha creado
-  team          Team?        @relation("TeamMembers", fields: [teamId], references: [id])
-  votes            Vote[]           @relation // Votos realizados por el usuario
-  followers        Follow[]         @relation("UserFollowers") // Usuarios que me siguen
-  following        Follow[]         @relation("UserFollowing") // Usuarios que sigo
-  teamInvitations  TeamInvitation[] @relation("TeamInvitations") // Invitaciones de equipo recibidas
-  notifications    Notification[]   @relation("UserNotifications") // Notificaciones recibidas
-  comments         SpotComment[] // Comentarios del usuario
-  commentVotes     CommentVote[] // Votos en comentarios
-  reelComments     ReelComment[] // Comentarios en reels del usuario
-  reelCommentVotes ReelCommentVote[] // Votos en comentarios de reels
-  userRewards      UserReward[]
-  orders           Order[] // Pedidos que el skater ha hecho
-  monthlyThreads       MonthlyThread[]       @relation("ThreadCreator") // Hilos creados por el admin (solo cuenta el creator)
-  threadProposals      ThreadProposal[] // Propuestas que el usuario creó en hilos
-  threadProposalVotes  ThreadProposalVote[] // Votos del usuario a propuestas de hilos
+  id                  Int                  @id @default(autoincrement())
+  email               String               @unique
+  username            String?              @unique // Username único para URLs públicas
+  password            String? // Contraseña hasheada (opcional para usuarios de Google)
+  name                String?
+  phone               String? // Campo para el número de celular
+  address             String? // Dirección de envío (texto libre) — auto-completar en checkout
+  photo               String?
+  gender              String? // "male" | "female" | "prefer_not_to_say"
+  estado              String?
+  departamento        String?
+  ciudad              String?
+  latitude            Float? // Latitud para mostrar en el mapa
+  longitude           Float? // Longitud para mostrar en el mapa
+  showOnMap           Boolean              @default(false) // Si el usuario quiere aparecer en el mapa público
+  birthdate           DateTime? // Nuevo campo para la fecha de nacimiento
+  birthskate          DateTime? // Nuevo campo para la fecha de nacimiento
+  profileStatus       String               @default("basic") // "basic" (solo Google) | "complete" (perfil completo)
+  role                String               @default("skater") // "skater" | "judge" | "admin"
+  isActive            Boolean              @default(true) // Si el usuario está activo
+  teamId              Int? // ID del equipo al que pertenece
+  createdAt           DateTime             @default(now())
+  socials             SocialMedia[] // Relación con la tabla de redes sociales
+  WishSkate           WishSkate?
+  submissions         Submission[] // Relación con los envíos de trucos
+  evaluations         Submission[]         @relation("JudgeEvaluations") // Evaluaciones hechas como juez
+  ownedTeams          Team[]               @relation("TeamOwner") // Equipos que ha creado
+  team                Team?                @relation("TeamMembers", fields: [teamId], references: [id])
+  votes               Vote[]               @relation // Votos realizados por el usuario
+  followers           Follow[]             @relation("UserFollowers") // Usuarios que me siguen
+  following           Follow[]             @relation("UserFollowing") // Usuarios que sigo
+  teamInvitations     TeamInvitation[]     @relation("TeamInvitations") // Invitaciones de equipo recibidas
+  notifications       Notification[]       @relation("UserNotifications") // Notificaciones recibidas
+  comments            SpotComment[] // Comentarios del usuario
+  commentVotes        CommentVote[] // Votos en comentarios
+  reelComments        ReelComment[] // Comentarios en reels del usuario
+  reelCommentVotes    ReelCommentVote[] // Votos en comentarios de reels
+  userRewards         UserReward[]
+  orders              Order[] // Pedidos que el skater ha hecho
+  monthlyThreads      MonthlyThread[]      @relation("ThreadCreator") // Hilos creados por el admin (solo cuenta el creator)
+  threadProposals     ThreadProposal[] // Propuestas que el usuario creó en hilos
+  threadProposalVotes ThreadProposalVote[] // Votos del usuario a propuestas de hilos
 }
 
 model SocialMedia {
@@ -83,44 +83,51 @@ model WishSkate {
 }
 
 model Challenge {
-  id          Int          @id @default(autoincrement())
-  level       Int // Nivel del reto (1-10, 0 para bonus)
-  name        String // Nombre del truco (ej: "Ollie", "Kickflip")
-  description String // Descripción del truco
+  id           Int          @id @default(autoincrement())
+  level        Int // Nivel del reto (1-10, 0 para bonus)
+  name         String // Nombre del truco (ej: "Ollie", "Kickflip")
+  description  String // Descripción del truco
   demoVideoUrl String // URL del video demo (YouTube)
-  isBonus     Boolean      @default(false) // Si es un nivel bonus
-  difficulty  String // "easy", "medium", "hard", "expert"
-  points      Int          @default(100) // Puntos que otorga el truco
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  submissions Submission[] // Relación con los envíos de usuarios
+  isBonus      Boolean      @default(false) // Si es un nivel bonus
+  difficulty   String // "easy", "medium", "hard", "expert"
+  points       Int          @default(100) // Puntos que otorga el truco
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  submissions  Submission[] // Relación con los envíos de usuarios
 
   @@unique([level, isBonus]) // Solo puede haber un challenge por nivel (o un bonus)
 }
 
 model Submission {
-  id           Int      @id @default(autoincrement())
-  userId       String // Email del usuario
-  challengeId  Int // ID del reto
-  videoUrl     String // URL del video de YouTube del usuario
-  status       String   @default("pending") // "pending", "approved", "rejected"
-  score        Int? // Puntuación otorgada por el equipo (0-100)
-  feedback     String? // Comentarios del equipo evaluador
-  submittedAt  DateTime @default(now())
-  evaluatedAt  DateTime? // Fecha de evaluación
-  evaluatedBy  String? // Email del juez que evaluó
+  id          Int       @id @default(autoincrement())
+  userId      String // Email del usuario
+  challengeId Int // ID del reto
+  videoUrl    String // URL del video (YouTube legacy o Mux playback URL firmada)
+  videoSource String    @default("youtube") // "youtube" | "mux" — de dónde viene el video
+  status      String    @default("pending") // "pending", "approved", "rejected"
+  score       Int? // Puntuación otorgada por el equipo (0-100)
+  feedback    String? // Comentarios del equipo evaluador
+  submittedAt DateTime  @default(now())
+  evaluatedAt DateTime? // Fecha de evaluación
+  evaluatedBy String? // Email del juez que evaluó
+
+  // ─── Mux fields (nuevo: video hosting nativo) ───
+  muxAssetId    String? @unique // ID del asset en Mux
+  muxUploadId   String? @unique // ID del direct upload
+  muxPlaybackId String? @unique // ID para el player (necesario para signed URLs)
+  videoStatus   String  @default("processing") // "processing" | "ready" | "errored"
 
   // Campos de votación comunitaria
-  upvotes          Int      @default(0) // Total de votos positivos
-  downvotes        Int      @default(0) // Total de votos negativos
-  voteCount        Int      @default(0) // Total de votos (upvotes + downvotes)
-  communityApproved Boolean @default(false) // Si fue aprobado por la comunidad
-  autoApprovedAt   DateTime? // Fecha de auto-aprobación por comunidad
+  upvotes           Int       @default(0) // Total de votos positivos
+  downvotes         Int       @default(0) // Total de votos negativos
+  voteCount         Int       @default(0) // Total de votos (upvotes + downvotes)
+  communityApproved Boolean   @default(false) // Si fue aprobado por la comunidad
+  autoApprovedAt    DateTime? // Fecha de auto-aprobación por comunidad
 
-  user      User      @relation(fields: [userId], references: [email])
-  challenge Challenge @relation(fields: [challengeId], references: [id])
-  judge     User?     @relation("JudgeEvaluations", fields: [evaluatedBy], references: [email])
-  votes     Vote[] // Relación con los votos
+  user         User          @relation(fields: [userId], references: [email])
+  challenge    Challenge     @relation(fields: [challengeId], references: [id])
+  judge        User?         @relation("JudgeEvaluations", fields: [evaluatedBy], references: [email])
+  votes        Vote[] // Relación con los votos
   reelComments ReelComment[] // Comentarios en este reel
 
   @@index([userId, challengeId])
@@ -128,6 +135,8 @@ model Submission {
   @@index([evaluatedBy])
   @@index([communityApproved])
   @@index([voteCount])
+  @@index([videoSource])
+  @@index([videoStatus])
 }
 
 model Team {
@@ -195,10 +204,10 @@ model ReelComment {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  submission    Submission     @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  user          User           @relation(fields: [userId], references: [email])
-  parentComment ReelComment?  @relation("ReelCommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
-  replies       ReelComment[] @relation("ReelCommentReplies")
+  submission    Submission        @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  user          User              @relation(fields: [userId], references: [email])
+  parentComment ReelComment?      @relation("ReelCommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies       ReelComment[]     @relation("ReelCommentReplies")
   votes         ReelCommentVote[]
 
   @@index([submissionId])
@@ -244,15 +253,15 @@ model InterestedUser {
 }
 
 model Notification {
-  id          Int      @id @default(autoincrement())
-  userId      String // Email del usuario que recibe la notificación
-  type        String // "submission_evaluated", "team_invitation", "ranking_update", "new_follower", "vote_received", "comment_reply", "comment_like", etc.
-  title       String // Título corto de la notificación
-  message     String // Mensaje descriptivo
-  link        String? // URL a donde debe redirigir (opcional)
-  isRead      Boolean  @default(false) // Si la notificación fue leída
-  metadata    Json? // Datos adicionales en formato JSON (score, judgeEmail, commentId, etc.)
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  userId    String // Email del usuario que recibe la notificación
+  type      String // "submission_evaluated", "team_invitation", "ranking_update", "new_follower", "vote_received", "comment_reply", "comment_like", etc.
+  title     String // Título corto de la notificación
+  message   String // Mensaje descriptivo
+  link      String? // URL a donde debe redirigir (opcional)
+  isRead    Boolean  @default(false) // Si la notificación fue leída
+  metadata  Json? // Datos adicionales en formato JSON (score, judgeEmail, commentId, etc.)
+  createdAt DateTime @default(now())
 
   user User @relation("UserNotifications", fields: [userId], references: [email], onDelete: Cascade)
 
@@ -263,28 +272,28 @@ model Notification {
 }
 
 model AppSettings {
-  id               Int      @id @default(autoincrement())
-  key              String   @unique // Clave única del setting (ej: "total_levels")
-  value            String // Valor del setting
-  description      String? // Descripción del setting
-  updatedAt        DateTime @updatedAt
-  updatedBy        String? // Email del admin que actualizó
+  id          Int      @id @default(autoincrement())
+  key         String   @unique // Clave única del setting (ej: "total_levels")
+  value       String // Valor del setting
+  description String? // Descripción del setting
+  updatedAt   DateTime @updatedAt
+  updatedBy   String? // Email del admin que actualizó
 
   @@index([key])
 }
 
 model Spot {
-  id              Int      @id @default(autoincrement())
-  uuid            String?  @unique @default(uuid()) // Opcional para migrar datos existentes
-  name            String // Nombre del spot
-  type            String // "skatepark", "skateshop", "spot"
-  description     String? // Descripción del lugar
-  address         String? // Dirección completa
-  city            String? // Ciudad
-  state           String? // Estado/Departamento
-  country         String   @default("Colombia")
-  latitude        Float // Latitud para el mapa
-  longitude       Float // Longitud para el mapa
+  id          Int     @id @default(autoincrement())
+  uuid        String? @unique @default(uuid()) // Opcional para migrar datos existentes
+  name        String // Nombre del spot
+  type        String // "skatepark", "skateshop", "spot"
+  description String? // Descripción del lugar
+  address     String? // Dirección completa
+  city        String? // Ciudad
+  state       String? // Estado/Departamento
+  country     String  @default("Colombia")
+  latitude    Float // Latitud para el mapa
+  longitude   Float // Longitud para el mapa
 
   // VECTOR DE CONFIANZA - Sistema de Validación Social
   confidenceScore Int      @default(0) // 0-200+
@@ -292,36 +301,36 @@ model Spot {
   lastVerifiedAt  DateTime @default(now())
 
   // Historial para decaimiento temporal
-  statusHistory   Json     @default("[]") // [{action, weight, userId, timestamp}]
+  statusHistory Json @default("[]") // [{action, weight, userId, timestamp}]
 
   // Spot "hot" = mucha actividad reciente
-  isHot           Boolean  @default(false)
-  hotUntil        DateTime? // Hasta cuándo mantiene el status "hot"
+  isHot    Boolean   @default(false)
+  hotUntil DateTime? // Hasta cuándo mantiene el status "hot"
 
   // Información de contacto
-  phone           String?
-  website         String?
-  instagram       String? // Usuario de Instagram (sin @)
-  photos          String[] @default([]) // URLs de fotos del spot
-  features        String[] @default([]) // Features: "street", "bowl", "mini-ramp", "vert", etc.
-  rating          Float?   @default(0) // Rating promedio (0-5)
-  reviewCount     Int      @default(0) // Número de reviews
-  createdBy       String // Email del usuario que lo creó
+  phone       String?
+  website     String?
+  instagram   String? // Usuario de Instagram (sin @)
+  photos      String[] @default([]) // URLs de fotos del spot
+  features    String[] @default([]) // Features: "street", "bowl", "mini-ramp", "vert", etc.
+  rating      Float?   @default(0) // Rating promedio (0-5)
+  reviewCount Int      @default(0) // Número de reviews
+  createdBy   String // Email del usuario que lo creó
 
   // Metadata para decaimiento
-  lastActivityAt  DateTime @default(now())
-  staleAt         DateTime? // Cuando empieza a decaer
-  deadAt          DateTime? // Cuándo se considera "muerto"
+  lastActivityAt DateTime  @default(now())
+  staleAt        DateTime? // Cuando empieza a decaer
+  deadAt         DateTime? // Cuándo se considera "muerto"
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relaciones del sistema de validación
-  validations     SpotValidation[]
-  checkIns        SpotCheckIn[]
-  photos_records  SpotPhoto[] @relation("SpotPhotos")
-  reports         SpotReport[]
-  comments        SpotComment[]
+  validations    SpotValidation[]
+  checkIns       SpotCheckIn[]
+  photos_records SpotPhoto[]      @relation("SpotPhotos")
+  reports        SpotReport[]
+  comments       SpotComment[]
 
   @@index([type])
   @@index([city])
@@ -333,24 +342,24 @@ model Spot {
 // ==================== SPOT VALIDATION SYSTEM ====================
 
 model SpotValidation {
-  id                Int      @id @default(autoincrement())
-  spotId            Int
-  userId            String // Email del usuario
-  userWeight        Int      @default(1) // Peso según reputación (1-5)
-  method            String // "GPS_PROXIMITY", "PHOTO_UPLOAD", "LIVE_PHOTO", "CHECK_IN", "CROWD_REPORT"
+  id         Int    @id @default(autoincrement())
+  spotId     Int
+  userId     String // Email del usuario
+  userWeight Int    @default(1) // Peso según reputación (1-5)
+  method     String // "GPS_PROXIMITY", "PHOTO_UPLOAD", "LIVE_PHOTO", "CHECK_IN", "CROWD_REPORT"
 
   // Anti-spam: Detección de patrones sospechosos
   ipAddress         String?
   deviceFingerprint String?
 
   // Datos GPS exactos en la validación
-  validatedLat      Float?
-  validatedLng      Float?
-  accuracy          Float? // Precisión del GPS en metros
+  validatedLat Float?
+  validatedLng Float?
+  accuracy     Float? // Precisión del GPS en metros
 
-  createdAt         DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  spot              Spot     @relation(fields: [spotId], references: [id])
+  spot Spot @relation(fields: [spotId], references: [id])
 
   @@unique([spotId, userId, method]) // Solo 1 validación por usuario/método
   @@index([spotId])
@@ -358,62 +367,62 @@ model SpotValidation {
 }
 
 model SpotCheckIn {
-  id          Int      @id @default(autoincrement())
-  spotId      Int
-  userId      String // Email del usuario
-  latitude    Float
-  longitude   Float
-  accuracy    Float? // Precisión GPS
+  id        Int    @id @default(autoincrement())
+  spotId    Int
+  userId    String // Email del usuario
+  latitude  Float
+  longitude Float
+  accuracy  Float? // Precisión GPS
 
   // Contexto del check-in
-  crowdLevel  String? // "EMPTY", "LOW", "MODERATE", "BUSY", "CROWDED"
-  isOpen      Boolean? // Para skateshops (¿está abierto?)
+  crowdLevel String? // "EMPTY", "LOW", "MODERATE", "BUSY", "CROWDED"
+  isOpen     Boolean? // Para skateshops (¿está abierto?)
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  spot        Spot     @relation(fields: [spotId], references: [id])
+  spot Spot @relation(fields: [spotId], references: [id])
 
   @@index([spotId, createdAt])
   @@index([userId, createdAt]) // Para detectar patrones
 }
 
 model SpotPhoto {
-  id        Int      @id @default(autoincrement())
-  spotId    Int
-  userId    String // Email del usuario
-  url       String
+  id     Int    @id @default(autoincrement())
+  spotId Int
+  userId String // Email del usuario
+  url    String
 
   // Metadata EXIF para validar autenticidad
-  isLive    Boolean  @default(false) // Foto tomada en tiempo real
-  hasExif   Boolean  @default(false) // Tiene metadata GPS
-  exifLat   Float? // Latitud del EXIF
-  exifLng   Float? // Longitud del EXIF
-  takenAt   DateTime? // Fecha en que se tomó la foto
+  isLive  Boolean   @default(false) // Foto tomada en tiempo real
+  hasExif Boolean   @default(false) // Tiene metadata GPS
+  exifLat Float? // Latitud del EXIF
+  exifLng Float? // Longitud del EXIF
+  takenAt DateTime? // Fecha en que se tomó la foto
 
   createdAt DateTime @default(now())
 
-  spot      Spot     @relation("SpotPhotos", fields: [spotId], references: [id])
+  spot Spot @relation("SpotPhotos", fields: [spotId], references: [id])
 
   @@index([spotId])
 }
 
 model SpotReport {
-  id            Int      @id @default(autoincrement())
-  spotId        Int
-  userId        String // Email del usuario
-  reason        String // "CLOSED", "FAKE", "DUPLICATE", "INCORRECT_LOCATION", "NO_LONGER_EXISTS", "INACCURATE_INFO"
-  details       String?
-  status        String   @default("PENDING") // "PENDING", "REVIEWED", "ACCEPTED", "REJECTED", "AUTO_VERIFIED"
+  id      Int     @id @default(autoincrement())
+  spotId  Int
+  userId  String // Email del usuario
+  reason  String // "CLOSED", "FAKE", "DUPLICATE", "INCORRECT_LOCATION", "NO_LONGER_EXISTS", "INACCURATE_INFO"
+  details String?
+  status  String  @default("PENDING") // "PENDING", "REVIEWED", "ACCEPTED", "REJECTED", "AUTO_VERIFIED"
 
   // Contexto del reporte
   reporterLat   Float?
   reporterLng   Float?
   wasOnLocation Boolean? // ¿El reportero estaba físicamente ahí?
 
-  createdAt     DateTime @default(now())
-  reviewedAt    DateTime?
+  createdAt  DateTime  @default(now())
+  reviewedAt DateTime?
 
-  spot          Spot     @relation(fields: [spotId], references: [id])
+  spot Spot @relation(fields: [spotId], references: [id])
 
   @@index([spotId, status])
 }
@@ -421,24 +430,24 @@ model SpotReport {
 // ==================== USER REPUTATION FOR VALIDATION ====================
 
 model UserReputation {
-  id                Int      @id @default(autoincrement())
-  userId            String   @unique // Email del usuario
-  reputationScore   Int      @default(0) // Puntos de reputación total
-  level             String   @default("NEW") // "NEW", "TRUSTED", "VETERAN", "MASTER"
-  validationWeight  Int      @default(1) // Peso de validación (1-5)
+  id               Int    @id @default(autoincrement())
+  userId           String @unique // Email del usuario
+  reputationScore  Int    @default(0) // Puntos de reputación total
+  level            String @default("NEW") // "NEW", "TRUSTED", "VETERAN", "MASTER"
+  validationWeight Int    @default(1) // Peso de validación (1-5)
 
   // Estadísticas
-  validationsGiven  Int      @default(0) // Validaciones realizadas
-  spotsVerified     Int      @default(0) // Spots que ayudó a verificar
-  reportsAccepted   Int      @default(0) // Reportes aceptados
-  reportsRejected   Int      @default(0) // Reportes rechazados
-  blindTestAccuracy Float    @default(0) // Precisión en pruebas ciegas (0-1)
+  validationsGiven  Int   @default(0) // Validaciones realizadas
+  spotsVerified     Int   @default(0) // Spots que ayudó a verificar
+  reportsAccepted   Int   @default(0) // Reportes aceptados
+  reportsRejected   Int   @default(0) // Reportes rechazados
+  blindTestAccuracy Float @default(0) // Precisión en pruebas ciegas (0-1)
 
   // Badges (JSON array de strings)
-  badges            String[] @default([]) // ["Explorer", "Validator", "Guardian", "Legend"]
+  badges String[] @default([]) // ["Explorer", "Validator", "Guardian", "Legend"]
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([level])
   @@index([reputationScore])
@@ -448,24 +457,24 @@ model UserReputation {
 
 model SpotComment {
   id              Int      @id @default(autoincrement())
-  spotId          Int?     // Ahora opcional: un comment puede ser de spot O de thread (polimórfico)
-  threadId        Int?     // Nuevo: si está set, es un comentario en un MonthlyThread
+  spotId          Int? // Ahora opcional: un comment puede ser de spot O de thread (polimórfico)
+  threadId        Int? // Nuevo: si está set, es un comentario en un MonthlyThread
   userId          String // Email del usuario
   content         String   @db.Text
   likes           Int      @default(0)
   dislikes        Int      @default(0)
   isPinned        Boolean  @default(false) // Comentario fijado por admin
   isHidden        Boolean  @default(false) // Oculto por baja puntuación o moderación
-  parentCommentId Int?     // ID del comentario padre (null = comentario principal)
+  parentCommentId Int? // ID del comentario padre (null = comentario principal)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  spot            Spot?          @relation(fields: [spotId], references: [id], onDelete: Cascade)
-  thread          MonthlyThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  user            User           @relation(fields: [userId], references: [email])
-  parentComment   SpotComment?   @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
-  replies         SpotComment[]  @relation("CommentReplies")
-  votes           CommentVote[]
+  spot          Spot?          @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  thread        MonthlyThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [email])
+  parentComment SpotComment?   @relation("CommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies       SpotComment[]  @relation("CommentReplies")
+  votes         CommentVote[]
 
   @@index([spotId])
   @@index([threadId]) // Para buscar comentarios de un thread eficientemente
@@ -476,14 +485,14 @@ model SpotComment {
 }
 
 model CommentVote {
-  id          Int      @id @default(autoincrement())
-  commentId   Int
-  userId      String // Email del usuario
-  voteType    String // 'like' | 'dislike'
-  createdAt   DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  commentId Int
+  userId    String // Email del usuario
+  voteType  String // 'like' | 'dislike'
+  createdAt DateTime @default(now())
 
-  comment     SpotComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [email])
+  comment SpotComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [email])
 
   @@unique([commentId, userId]) // Un voto por usuario por comentario
   @@index([commentId])
@@ -494,36 +503,36 @@ model CommentVote {
 // ==================== DYNAMIC CHALLENGES SYSTEM ====================
 
 model DynamicChallenge {
-  id              String            @id @default(cuid())
-  name            String
-  description     String
-  type            ChallengeType
+  id          String        @id @default(cuid())
+  name        String
+  description String
+  type        ChallengeType
 
   // Trigger configuration
-  triggerType     TriggerType
-  triggerValue    Int
+  triggerType  TriggerType
+  triggerValue Int
 
   // Progress tracking
-  currentCount    Int               @default(0)
-  targetCount     Int
+  currentCount Int @default(0)
+  targetCount  Int
 
   // Timestamps
-  startDate       DateTime?
-  endDate         DateTime?
-  unlockedAt      DateTime?
+  startDate  DateTime?
+  endDate    DateTime?
+  unlockedAt DateTime?
 
   // Rewards
-  points          Int               @default(0)
-  badgeId         String?
+  points  Int     @default(0)
+  badgeId String?
 
   // Status
-  status          ChallengeStatus   @default(PENDING)
+  status ChallengeStatus @default(PENDING)
 
   // Relations
-  rewards         UserReward[]
+  rewards UserReward[]
 
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status])
   @@index([type])
@@ -531,19 +540,19 @@ model DynamicChallenge {
 }
 
 model UserReward {
-  id              String            @id @default(cuid())
-  userEmail       String // Email del usuario (para relacionar con User)
-  user            User              @relation(fields: [userEmail], references: [email], onDelete: Cascade)
+  id        String @id @default(cuid())
+  userEmail String // Email del usuario (para relacionar con User)
+  user      User   @relation(fields: [userEmail], references: [email], onDelete: Cascade)
 
-  challengeId     String
-  challenge       DynamicChallenge  @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  challengeId String
+  challenge   DynamicChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
 
-  pointsEarned    Int
-  badgeEarned     Boolean           @default(false)
+  pointsEarned Int
+  badgeEarned  Boolean @default(false)
 
-  claimedAt       DateTime          @default(now())
+  claimedAt DateTime @default(now())
 
-  createdAt       DateTime          @default(now())
+  createdAt DateTime @default(now())
 
   @@unique([userEmail, challengeId])
   @@index([userEmail])
@@ -553,32 +562,32 @@ model UserReward {
 // ==================== ORDERS SYSTEM (Tory Skateshop supplies) ====================
 
 model Order {
-  id              Int      @id @default(autoincrement())
-  userId          String?  // Email del skater (opcional, permite guest checkout)
+  id     Int     @id @default(autoincrement())
+  userId String? // Email del skater (opcional, permite guest checkout)
 
   // Datos del cliente
-  customerName    String
-  customerEmail   String
-  customerPhone   String
+  customerName  String
+  customerEmail String
+  customerPhone String
 
   // Envío (texto libre)
-  shippingAddress String
-  shippingCity    String
-  shippingNotes   String?
+  shippingAddress  String
+  shippingCity     String
+  shippingNotes    String?
   shippingGuideUrl String?
 
   // Estado: pending → confirmed → shipped → delivered
   //          ↘ cancelled
-  status          String   @default("pending")
+  status String @default("pending")
 
   // Metadata
-  totalItems      Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  totalItems Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relación
-  user            User?         @relation(fields: [userId], references: [email], onDelete: SetNull)
-  items           OrderItem[]
+  user  User?       @relation(fields: [userId], references: [email], onDelete: SetNull)
+  items OrderItem[]
 
   @@index([userId])
   @@index([status])
@@ -586,17 +595,17 @@ model Order {
 }
 
 model OrderItem {
-  id            Int      @id @default(autoincrement())
-  orderId       Int
-  productId     String   // ID de Tory Skateshop
-  productName   String
-  productPrice  String   // "190.000" como string
-  productImage  String?
-  productSlug   String
-  variation     Json?    // { databaseId, name, price, attributes } cuando es un VariableProduct
-  quantity      Int      @default(1)
+  id           Int     @id @default(autoincrement())
+  orderId      Int
+  productId    String // ID de Tory Skateshop
+  productName  String
+  productPrice String // "190.000" como string
+  productImage String?
+  productSlug  String
+  variation    Json? // { databaseId, name, price, attributes } cuando es un VariableProduct
+  quantity     Int     @default(1)
 
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
 }
@@ -607,23 +616,23 @@ model OrderItem {
 // device con un fingerprint local.
 
 model RoadEvent {
-  id           String   @id @default(cuid())
+  id String @id @default(cuid())
 
-  deviceId     String
-  latitude     Float?
-  longitude    Float?
-  accuracy     Float?
-  magnitude    Float
-  eventType    String   @default("POTHOLE")
-  confidence   Float?
-  speed        Float?
-  bearing      Float?
-  appVersion   String
-  osVersion    String
-  deviceModel  String
-  detectedAt   DateTime
-  createdAt    DateTime @default(now())
-  receivedAt   DateTime @default(now())
+  deviceId    String
+  latitude    Float?
+  longitude   Float?
+  accuracy    Float?
+  magnitude   Float
+  eventType   String   @default("POTHOLE")
+  confidence  Float?
+  speed       Float?
+  bearing     Float?
+  appVersion  String
+  osVersion   String
+  deviceModel String
+  detectedAt  DateTime
+  createdAt   DateTime @default(now())
+  receivedAt  DateTime @default(now())
 
   @@index([latitude, longitude])
   @@index([createdAt])
@@ -634,30 +643,30 @@ model RoadEvent {
 
 // Enums for Dynamic Challenges
 enum ChallengeType {
-  COMMUNITY_MILESTONE    // Auto-unlock at threshold
-  COMMUNITY_GOAL         // Collective target
-  HEAD_TO_HEAD          // 1v1 battles
-  CHAIN                 // Nomination chain
-  SEASONAL              // Time-limited events
-  LIVE_EVENT            // Stream-based
-  COLLABORATION         // Team challenges
-  LOCATION              // Geo-specific
-  PROGRESSIVE           // Multi-stage
+  COMMUNITY_MILESTONE // Auto-unlock at threshold
+  COMMUNITY_GOAL // Collective target
+  HEAD_TO_HEAD // 1v1 battles
+  CHAIN // Nomination chain
+  SEASONAL // Time-limited events
+  LIVE_EVENT // Stream-based
+  COLLABORATION // Team challenges
+  LOCATION // Geo-specific
+  PROGRESSIVE // Multi-stage
 }
 
 enum TriggerType {
-  USER_COUNT            // Number of registered users
-  VIDEO_COUNT           // Number of video submissions
-  EVALUATION_COUNT      // Number of evaluations
-  MANUAL                // Admin triggered
-  SCHEDULED             // Time-based
+  USER_COUNT // Number of registered users
+  VIDEO_COUNT // Number of video submissions
+  EVALUATION_COUNT // Number of evaluations
+  MANUAL // Admin triggered
+  SCHEDULED // Time-based
 }
 
 enum ChallengeStatus {
-  PENDING               // Not yet unlocked
-  ACTIVE                // Unlocked and accepting submissions
-  COMPLETED             // Challenge ended
-  EXPIRED               // Time limit reached
+  PENDING // Not yet unlocked
+  ACTIVE // Unlocked and accepting submissions
+  COMPLETED // Challenge ended
+  EXPIRED // Time limit reached
 }
 
 // ==================== MONTHLY THREAD (Hilo del Mes / Tema de la Semana) ====================

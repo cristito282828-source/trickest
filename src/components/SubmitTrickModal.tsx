@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { validateYouTubeUrl } from '@/lib/youtube';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/atoms';
+import MuxVideoUploader from '@/components/MuxUploader';
 
 interface Challenge {
   id: number;
@@ -26,8 +26,9 @@ export default function SubmitTrickModal({
   challenge,
   onSubmitSuccess,
 }: SubmitTrickModalProps) {
-  const [videoUrl, setVideoUrl] = useState('');
-  const [isValidUrl, setIsValidUrl] = useState<boolean | null>(null);
+  // Datos del upload a Mux (los llenamos cuando el upload termina)
+  const [uploadData, setUploadData] = useState<{ uploadId: string } | null>(null);
+  const [uploaderError, setUploaderError] = useState<string>('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -36,35 +37,28 @@ export default function SubmitTrickModal({
   // Reset state cuando se abre/cierra el modal
   useEffect(() => {
     if (!isOpen) {
-      setVideoUrl('');
-      setIsValidUrl(null);
+      setUploadData(null);
+      setUploaderError('');
       setError('');
       setLoading(false);
       setSuccess(false);
     }
   }, [isOpen]);
 
-  // Validar URL en tiempo real
-  useEffect(() => {
-    if (videoUrl.trim()) {
-      const isValid = validateYouTubeUrl(videoUrl);
-      setIsValidUrl(isValid);
-      if (!isValid) {
-        setError(t('errorInvalidYouTube'));
-      } else {
-        setError('');
-      }
-    } else {
-      setIsValidUrl(null);
-      setError('');
-    }
-  }, [videoUrl, t]);
+  const handleUploaded = ({ uploadId }: { uploadId: string }) => {
+    setUploadData({ uploadId });
+    setUploaderError('');
+  };
+
+  const handleUploaderError = (msg: string) => {
+    setUploaderError(msg);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isValidUrl || !challenge) {
-      setError(t('errorInvalidUrl'));
+    if (!uploadData || !challenge) {
+      setError('Primero sube un video antes de enviar.');
       return;
     }
 
@@ -77,7 +71,7 @@ export default function SubmitTrickModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           challengeId: String(challenge.id),
-          videoUrl: videoUrl.trim(),
+          muxUploadId: uploadData.uploadId,
         }),
       });
 
@@ -97,7 +91,6 @@ export default function SubmitTrickModal({
       setTimeout(() => {
         onClose();
       }, 2500);
-
     } catch (error: any) {
       console.error('Error:', error);
       const message =
@@ -176,31 +169,15 @@ export default function SubmitTrickModal({
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
                 <label className="block text-accent-cyan-400 font-bold mb-2 uppercase text-sm">
-                  {t('youtubeUrl')}
+                  🎥 Tu video
                 </label>
-                <input
-                  type="text"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  placeholder={t('urlPlaceholder')}
-                  className={`w-full bg-neutral-800 border-4 rounded-lg py-3 px-4 text-white focus:outline-none ${
-                    isValidUrl === true
-                      ? 'border-green-500'
-                      : isValidUrl === false
-                      ? 'border-red-500'
-                      : 'border-neutral-600 focus:border-accent-cyan-500'
-                  }`}
-                  disabled={loading}
+                <MuxVideoUploader
+                  onUploaded={handleUploaded}
+                  onError={handleUploaderError}
                 />
-                {isValidUrl === true && (
-                  <p className="text-green-400 text-sm mt-2 font-bold">{t('validUrl')}</p>
+                {uploaderError && (
+                  <p className="text-red-400 text-sm mt-2 font-bold">{uploaderError}</p>
                 )}
-                {isValidUrl === false && (
-                  <p className="text-red-400 text-sm mt-2 font-bold">{t('invalidUrl')}</p>
-                )}
-                <p className="text-neutral-500 text-xs mt-2">
-                  {t('urlExample')}
-                </p>
               </div>
 
               {/* Error Message */}
@@ -222,7 +199,7 @@ export default function SubmitTrickModal({
                 </button>
                 <Button
                   type="submit"
-                  disabled={!isValidUrl || loading || success}
+                  disabled={!uploadData || loading || success}
                   variant="warning"
                   size="lg"
                   className="flex-1"

@@ -1,12 +1,20 @@
 "use client";
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { getEmbedUrl } from '@/lib/youtube';
 import { useTranslations } from 'next-intl';
+
+// MuxPlayer solo funciona en el browser; lo cargamos dinámicamente sin SSR
+const MuxVideoPlayer = dynamic(() => import('@/components/MuxVideoPlayer'), { ssr: false });
 
 interface Submission {
   id: number;
   videoUrl: string;
+  videoSource: string; // "youtube" | "mux"
+  muxPlaybackId: string | null;
+  muxSignedUrl?: string | null; // opcional: el server puede pasarla ya firmada
+  videoStatus: string; // "processing" | "ready" | "errored"
   status: string;
   score: number | null;
   feedback: string | null;
@@ -166,15 +174,40 @@ export default function SubmissionHistoryCard({ submission }: SubmissionHistoryC
 
           {expanded && (
             <div className="mt-4 aspect-video bg-black rounded-lg overflow-hidden border-4 border-neutral-700">
-              <iframe
-                width="100%"
-                height="100%"
-                src={getEmbedUrl(submission.videoUrl)}
-                title="Submission video"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
+              {submission.videoSource === 'mux' && submission.muxPlaybackId ? (
+                submission.videoStatus === 'ready' ? (
+                  <MuxVideoPlayer
+                    playbackId={submission.muxPlaybackId}
+                    signedUrl={submission.muxSignedUrl || undefined}
+                  />
+                ) : submission.videoStatus === 'errored' ? (
+                  <div className="flex items-center justify-center h-full text-center p-4">
+                    <div>
+                      <p className="text-red-400 font-bold uppercase text-sm">❌ Error procesando video</p>
+                      <p className="text-neutral-500 text-xs mt-2">Contacta a soporte</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-center p-4">
+                    <div>
+                      <div className="text-4xl mb-2 animate-pulse">⏳</div>
+                      <p className="text-accent-cyan-400 font-bold uppercase text-sm">Procesando video...</p>
+                      <p className="text-neutral-500 text-xs mt-2">Esto puede tardar unos segundos</p>
+                    </div>
+                  </div>
+                )
+              ) : (
+                // YouTube legacy
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={getEmbedUrl(submission.videoUrl)}
+                  title="Submission video"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              )}
             </div>
           )}
         </div>

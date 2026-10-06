@@ -10,6 +10,10 @@ import { Button } from '@/components/atoms';
 interface Submission {
   id: number;
   videoUrl: string;
+  videoSource: string;
+  muxPlaybackId: string | null;
+  muxSignedUrl?: string | null;
+  videoStatus: string;
   status: string;
   score: number | null;
   feedback: string | null;
