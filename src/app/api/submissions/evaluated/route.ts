@@ -2,6 +2,7 @@ import prisma from '@/app/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
+import { getSignedPlaybackUrl } from '@/lib/mux';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,6 +64,22 @@ export async function GET(req: Request) {
 
     console.log(`✅ Encontradas ${submissions.length} submissions evaluadas`);
 
+    // Adjuntar signed playback URL a las que son de Mux
+    const enrichedSubmissions = submissions.map((s) => {
+      if (s.videoSource === 'mux' && s.muxPlaybackId) {
+        try {
+          return {
+            ...s,
+            muxSignedUrl: getSignedPlaybackUrl(s.muxPlaybackId, '2h'),
+          };
+        } catch (e) {
+          console.warn('[evaluated] No pude firmar URL:', e);
+          return s;
+        }
+      }
+      return s;
+    });
+
     // Calcular estadísticas
     const stats = {
       total: submissions.length,
@@ -80,9 +97,9 @@ export async function GET(req: Request) {
     console.log('📊 Stats:', stats);
 
     return NextResponse.json({
-      submissions,
+      submissions: enrichedSubmissions,
       stats,
-      count: submissions.length,
+      count: enrichedSubmissions.length,
     });
   } catch (error: any) {
     console.error('❌ Error obteniendo submissions evaluadas:', error);

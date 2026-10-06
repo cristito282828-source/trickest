@@ -1,16 +1,24 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useSession } from "next-auth/react";
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/atoms';
+
+// Carga diferida del player (no SSR)
+const MuxVideoPlayer = dynamic(() => import('@/components/MuxVideoPlayer'), { ssr: false });
 
 interface Submission {
   id: number;
   userId: string;
   challengeId: number;
   videoUrl: string;
+  videoSource: string; // "youtube" | "mux"
+  muxPlaybackId: string | null;
+  muxSignedUrl?: string | null; // server-signed URL para signed playback policy
+  videoStatus: string; // "processing" | "ready" | "errored"
   status: string;
   submittedAt: string;
   evaluatedAt?: string;
@@ -266,15 +274,40 @@ export default function JudgeEvaluatePage() {
                   <div className="mb-4">
                     <p className="text-accent-yellow-400 font-bold text-sm mb-2">{t('video')}</p>
                     <div className="aspect-video bg-black rounded-lg overflow-hidden border-4 border-neutral-700">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        src={submission.videoUrl.replace('watch?v=', 'embed/')}
-                        title="Submission video"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
+                      {submission.videoSource === 'mux' && submission.muxPlaybackId ? (
+                        submission.videoStatus === 'errored' ? (
+                          <div className="flex items-center justify-center h-full text-center p-4">
+                            <div>
+                              <p className="text-red-400 font-bold uppercase text-sm">❌ Error procesando video</p>
+                              <p className="text-neutral-500 text-xs mt-2">Contacta a soporte</p>
+                            </div>
+                          </div>
+                        ) : submission.videoStatus === 'processing' ? (
+                          <div className="flex items-center justify-center h-full text-center p-4">
+                            <div>
+                              <div className="text-4xl mb-2 animate-pulse">⏳</div>
+                              <p className="text-accent-cyan-400 font-bold uppercase text-sm">Procesando video...</p>
+                              <p className="text-neutral-500 text-xs mt-2">Espera unos segundos y recarga</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <MuxVideoPlayer
+                            playbackId={submission.muxPlaybackId}
+                            signedUrl={submission.muxSignedUrl || undefined}
+                          />
+                        )
+                      ) : (
+                        // YouTube legacy
+                        <iframe
+                          width="100%"
+                          height="100%"
+                          src={submission.videoUrl?.replace('watch?v=', 'embed/') || ''}
+                          title="Submission video"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        ></iframe>
+                      )}
                     </div>
                   </div>
 

@@ -8,9 +8,32 @@ import Mux from '@mux/mux-node';
 
 const tokenId = process.env.MUX_TOKEN_ID;
 const tokenSecret = process.env.MUX_TOKEN_SECRET;
-// En Mux SDK 15.x, esto es la "signing key" (HMAC secret o PEM private key)
-// desde dashboard.mux.com → Settings → Signing Keys
-const signingKey = process.env.MUX_SIGNING_KEY || process.env.MUX_SIGNING_KEY_PRIVATE;
+
+// Resolver la signing key desde .env o desde un archivo .pem.
+// Preferimos el archivo porque es más limpio y seguro (no requiere escapar \n).
+function resolveSigningKey(): string {
+  // 1) Inline en .env (mismo formato PEM, sin escapes)
+  const inline = process.env.MUX_SIGNING_KEY || process.env.MUX_SIGNING_KEY_PRIVATE;
+  if (inline && inline.trim().length > 0) return inline.trim();
+
+  // 2) Path a un archivo .pem
+  const filePath = process.env.MUX_SIGNING_KEY_FILE;
+  if (filePath && filePath.trim().length > 0) {
+    try {
+      const fs = require('fs') as typeof import('fs');
+      const path = require('path') as typeof import('path');
+      const abs = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
+      const content = fs.readFileSync(abs, 'utf8');
+      return content.trim();
+    } catch (e) {
+      console.warn(`[mux] No pude leer ${filePath}:`, e instanceof Error ? e.message : e);
+    }
+  }
+
+  return '';
+}
+
+const signingKey = resolveSigningKey();
 
 if (!tokenId || !tokenSecret) {
   // En development solo logueamos; en producción lanzamos.

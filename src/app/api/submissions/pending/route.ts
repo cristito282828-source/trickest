@@ -2,6 +2,7 @@ import prisma from '@/app/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
+import { mux, getSignedPlaybackUrl } from '@/lib/mux';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,9 +61,25 @@ export async function GET(req: Request) {
 
     console.log(`✅ Encontradas ${submissions.length} submissions pendientes`);
 
+    // Adjuntar signed playback URL a las que son de Mux
+    const enrichedSubmissions = submissions.map((s) => {
+      if (s.videoSource === 'mux' && s.muxPlaybackId) {
+        try {
+          return {
+            ...s,
+            muxSignedUrl: getSignedPlaybackUrl(s.muxPlaybackId, '2h'),
+          };
+        } catch (e) {
+          console.warn(`[pending] No pude firmar playbackId ${s.muxPlaybackId}:`, e);
+          return s;
+        }
+      }
+      return s;
+    });
+
     return NextResponse.json({
-      submissions,
-      count: submissions.length,
+      submissions: enrichedSubmissions,
+      count: enrichedSubmissions.length,
     });
   } catch (error: any) {
     console.error('❌ Error obteniendo submissions pendientes:', error);
