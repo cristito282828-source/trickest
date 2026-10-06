@@ -75,23 +75,23 @@ export const submitTrickSchema = z.object({
     .min(1, "Challenge ID is required")
     .regex(/^\d+$/, "Challenge ID must be a number"),
   // Acepta CUALQUIERA de los dos: videoUrl (legacy YouTube) o muxUploadId (nuevo Mux).
-  // El endpoint valida que venga al menos uno y que sea coherente con el modo.
+  // El endpoint prefiere muxUploadId si ambos vienen (por si hay cache mixto).
   videoUrl: z.string().optional(),
   muxUploadId: z.string().optional(),
 }).refine(
   (data) => {
-    // Debe venir exactamente uno de los dos
+    // Al menos uno de los dos debe estar presente y no vacío
     const hasVideoUrl = !!data.videoUrl && data.videoUrl.trim().length > 0;
     const hasMux = !!data.muxUploadId && data.muxUploadId.trim().length > 0;
-    return hasVideoUrl !== hasMux; // XOR: exactamente uno
+    return hasVideoUrl || hasMux;
   },
   {
-    message: "Provide either videoUrl (YouTube) or muxUploadId (Mux), not both.",
+    message: "Provide either videoUrl (YouTube) or muxUploadId (Mux).",
   }
 ).refine(
   (data) => {
     // Si viene videoUrl, debe ser de YouTube
-    if (data.videoUrl) {
+    if (data.videoUrl && data.videoUrl.trim().length > 0) {
       return data.videoUrl.includes('youtube.com') || data.videoUrl.includes('youtu.be');
     }
     return true;

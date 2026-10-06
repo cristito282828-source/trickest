@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/atoms';
 import MuxVideoUploader from '@/components/MuxUploader';
@@ -45,14 +45,14 @@ export default function SubmitTrickModal({
     }
   }, [isOpen]);
 
-  const handleUploaded = ({ uploadId }: { uploadId: string }) => {
+  const handleUploaded = useCallback(({ uploadId }: { uploadId: string }) => {
     setUploadData({ uploadId });
     setUploaderError('');
-  };
+  }, []);
 
-  const handleUploaderError = (msg: string) => {
+  const handleUploaderError = useCallback((msg: string) => {
     setUploaderError(msg);
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

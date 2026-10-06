@@ -29,11 +29,13 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
   const [endpoint, setEndpoint] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [phase, setPhase] = useState<'preparing' | 'ready' | 'uploading' | 'completed' | 'error'>('preparing');
+  // Blob URL para preview local del archivo que el usuario acaba de subir
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
   // ────────────────────────────────────────────────────────────────
-  // Pedimos el direct upload URL al montar. Esto ANTES de que el
-  // usuario seleccione archivo (sino MuxUploader falla con
-  // "No se especificó URL o endpoint").
+  // Pedimos el direct upload URL al montar. Solo UNA VEZ al montar.
+  // Si ponemos `onError` en las deps y el padre pasa una función nueva
+  // cada render, este efecto se vuelve a correr → remount → input resetea.
   // ────────────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +57,6 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
         if (!cancelled) {
           setErrorMsg(msg);
           setPhase('error');
-          onError?.(msg);
         }
       }
     };
@@ -65,11 +66,27 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
     return () => {
       cancelled = true;
     };
-  }, [onError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSuccess = (event: any) => {
     // muxUploader emite el upload_id en el detalle del evento
     const uploadId: string = event.detail?.upload_id || event.detail?.uploadId || '';
+
+    // Crear un preview local con el File subido, así el usuario ve lo que mandó
+    try {
+      const uploaderEl = document.querySelector('mux-uploader') as any;
+      // Buscar el input file dentro del uploader para sacar el File object
+      const fileInput = uploaderEl?.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = fileInput?.files?.[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+      }
+    } catch (e) {
+      console.warn('[uploader] No pude crear preview:', e);
+    }
+
     setPhase('completed');
     if (uploadId) {
       onUploaded({ uploadId });
@@ -177,8 +194,23 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
       </MuxUploader>
 
       {phase === 'completed' && (
-        <div className="bg-green-500/20 border-4 border-green-500 rounded-lg p-3">
-          <p className="text-green-400 font-bold text-sm">✅ Video subido. Click "Enviar" para terminar.</p>
+        <div className="space-y-3">
+          {/* Preview del video que se acaba de subir */}
+          {previewUrl && (
+            <div className="rounded-lg overflow-hidden border-4 border-green-500 bg-black">
+              <video
+                src={previewUrl}
+                controls
+                playsInline
+                className="w-full max-h-96"
+              />
+            </div>
+          )}
+          <div className="bg-green-500/20 border-4 border-green-500 rounded-lg p-3">
+            <p className="text-green-400 font-bold text-sm">
+              ✅ Video subido. Confirma que es el correcto y dale "Enviar".
+            </p>
+          </div>
         </div>
       )}
     </div>
