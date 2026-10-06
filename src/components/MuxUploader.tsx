@@ -3,14 +3,16 @@
 /**
  * Componente de upload de video a Mux con estilo arcade.
  *
- * Flujo correcto:
- *  1. Al montar el componente, pedimos al server un "direct upload" (URL firmada)
- *  2. Pasamos la URL al <MuxUploader endpoint={url} />
- *  3. El browser sube directo a Mux (no pasa por nuestro server)
- *  4. Al terminar, llamamos onUploaded(uploadId) para que el padre
- *     haga el POST /api/submissions con ese ID.
+ * Flujo híbrido (preview antes de subir):
+ *  1. Al montar, pedimos un "direct upload" URL firmado a Mux
+ *  2. Usuario selecciona archivo → mostramos preview LOCAL (blob URL)
+ *  3. Usuario confirma con "Subir a Trickest" → iniciamos el upload
+ *  4. Upload termina → llamamos onUploaded(uploadId)
+ *
+ * Esto evita gastar bandwidth si el usuario se equivoca de archivo.
+ * El preview es 100% local (blob URL) → no le cuesta nada a tu server ni a Mux.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import MuxUploader, {
   MuxUploaderDrop,
   MuxUploaderFileSelect,
@@ -25,19 +27,29 @@ interface MuxUploaderProps {
   onError?: (message: string) => void;
 }
 
+type Phase =
+  | 'preparing'      // fetching upload URL
+  | 'ready'          // URL ready, waiting for file selection
+  | 'selected'       // file selected, preview shown, waiting for "Subir" click
+  | 'uploading'      // uploading to Mux
+  | 'completed'      // done, ready to submit
+  | 'error';
+
 export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderProps) {
-  const [endpoint, setEndpoint] = useState<string>('');
-  // uploadId lo creamos en el server (POST /api/uploads). Lo tenemos desde el inicio.
+  const [signedUploadUrl, setSignedUploadUrl] = useState<string>(''); // URL de Mux para el PUT
   const [uploadId, setUploadId] = useState<string>('');
+  // `activeEndpoint` es lo que pasamos al MuxUploader. Solo lo seteamos cuando el usuario confirma.
+  // Mientras está vacío, MuxUploader no puede subir aunque tenga un archivo seleccionado.
+  const [activeEndpoint, setActiveEndpoint] = useState<string>('');
+  const [phase, setPhase] = useState<Phase>('preparing');
   const [errorMsg, setErrorMsg] = useState<string>('');
-  const [phase, setPhase] = useState<'preparing' | 'ready' | 'uploading' | 'completed' | 'error'>('preparing');
-  // Blob URL para preview local del archivo que el usuario acaba de subir
+  // Blob URL para preview local (FREE — no cuesta bandwidth de Mux)
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [fileName, setFileName] = useState<string>('');
+  const uploaderRef = useRef<any>(null);
 
   // ────────────────────────────────────────────────────────────────
-  // Pedimos el direct upload URL al montar. Solo UNA VEZ al montar.
-  // Si ponemos `onError` en las deps y el padre pasa una función nueva
-  // cada render, este efecto se vuelve a correr → remount → input resetea.
+  // Fetch upload URL al montar (solo una vez)
   // ────────────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -51,7 +63,7 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
         }
         const { uploadUrl, uploadId } = await res.json();
         if (!cancelled) {
-          setEndpoint(uploadUrl);
+          setSignedUploadUrl(uploadUrl);
           setUploadId(uploadId);
           setPhase('ready');
         }
@@ -68,33 +80,70 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
 
     return () => {
       cancelled = true;
+      // Liberar blob URL si existe
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSuccess = () => {
-    // El upload_id lo obtuvimos al crear el direct upload en /api/uploads.
-    // El evento success de MuxUploader no incluye el upload_id (es undefined).
-    // Usamos el que guardamos en state.
+  // Adjuntamos el listener al elemento nativo cuando el ref cambia
+  useEffect(() => {
+    const el = uploaderRef.current;
+    if (!el) return;
 
-    // Crear un preview local con el File subido, así el usuario ve lo que mandó
-    try {
-      const uploaderEl = document.querySelector('mux-uploader') as any;
-      const fileInput = uploaderEl?.querySelector('input[type="file"]') as HTMLInputElement;
-      const file = fileInput?.files?.[0];
-      if (file) {
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
+    const onFileReady = (event: any) => {
+      try {
+        const file: File | undefined = event.detail;
+        if (file) {
+          handleFile(file);
+          return;
+        }
+        // fallback — sacar del input del elemento
+        const fileInput = el.querySelector('input[type="file"]') as HTMLInputElement;
+        const f = fileInput?.files?.[0];
+        if (f) handleFile(f);
+      } catch (e) {
+        console.warn('[uploader] Error en file-ready:', e);
       }
-    } catch (e) {
-      console.warn('[uploader] No pude crear preview:', e);
-    }
+    };
 
+    el.addEventListener('file-ready', onFileReady as EventListener);
+    return () => {
+      el.removeEventListener('file-ready', onFileReady as EventListener);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
+  // ────────────────────────────────────────────────────────────────
+  // Cuando el usuario selecciona un archivo, mostramos preview.
+  // NO iniciamos upload — esperamos a que confirme con "Subir".
+  // ────────────────────────────────────────────────────────────────
+  const handleFile = (file: File) => {
+    // Liberar preview previo
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    // Crear nuevo blob URL (gratis, es local)
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    setFileName(file.name);
+    setPhase('selected');
+  };
+
+  // ────────────────────────────────────────────────────────────────
+  // El usuario confirma → iniciamos el upload seteando el endpoint
+  // ────────────────────────────────────────────────────────────────
+  const handleStartUpload = () => {
+    setActiveEndpoint(signedUploadUrl);
+    setPhase('uploading');
+  };
+
+  // ────────────────────────────────────────────────────────────────
+  // Upload terminó OK
+  // ────────────────────────────────────────────────────────────────
+  const handleSuccess = () => {
     setPhase('completed');
     if (uploadId) {
       onUploaded({ uploadId });
     } else {
-      // Caso raro: no tenemos uploadId (el fetch inicial falló pero la UI se ve OK)
       console.error('[uploader] No tenemos uploadId a pesar de success event.');
       onError?.('Error: no se pudo obtener el ID del upload. Vuelve a intentar.');
     }
@@ -104,7 +153,25 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
     setPhase('uploading');
   };
 
-  // Mientras preparamos el endpoint, mostramos loading
+  // ────────────────────────────────────────────────────────────────
+  // Cambiar de archivo (reset al estado "ready")
+  // ────────────────────────────────────────────────────────────────
+  const handleChangeFile = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl('');
+    setFileName('');
+    setActiveEndpoint('');
+    setPhase('ready');
+    // Resetear el input file del web component
+    const uploaderEl = uploaderRef.current;
+    const fileInput = uploaderEl?.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+
+  // ────────────────────────────────────────────────────────────────
+  // Renders por estado
+  // ────────────────────────────────────────────────────────────────
+
   if (phase === 'preparing') {
     return (
       <div className="border-4 border-dashed border-neutral-700 bg-neutral-800/60 rounded-lg p-8 md:p-10 text-center">
@@ -134,80 +201,117 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
 
   return (
     <div className="space-y-3">
-      <MuxUploader
-        endpoint={endpoint}
-        type="bar"
-        noDrop={false}
-        onUploadStart={handleUploadStart}
-        onSuccess={handleSuccess}
-        className="block w-full"
-      >
-        {/* Zona donde el usuario suelta el archivo */}
-        <MuxUploaderDrop
-          muxUploader="bar"
-          className="
-            group
-            border-4 border-dashed border-neutral-700
-            hover:border-accent-cyan-500
-            bg-neutral-800/60 hover:bg-neutral-800
-            transition-all duration-200
-            rounded-lg
-            p-8 md:p-10
-            text-center
-            cursor-pointer
-          "
+      {/* MuxUploader siempre montado (necesario para su state interno), pero oculto en selected/completed */}
+      {(phase === 'ready' || phase === 'uploading') && (
+        <MuxUploader
+          ref={uploaderRef}
+          endpoint={activeEndpoint}
+          type="bar"
+          noDrop={false}
+          onUploadStart={handleUploadStart}
+          onSuccess={handleSuccess}
+          className="block w-full"
         >
-          <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🎬</div>
-          <p className="text-white font-bold uppercase tracking-wider text-sm md:text-base">
-            Suelta tu video aquí
-          </p>
-          <p className="text-neutral-400 text-xs mt-2">
-            o haz click para seleccionar · máximo 360 sec
-          </p>
-        </MuxUploaderDrop>
+          <MuxUploaderDrop
+            muxUploader="bar"
+            className="
+              group
+              border-4 border-dashed border-neutral-700
+              hover:border-accent-cyan-500
+              bg-neutral-800/60 hover:bg-neutral-800
+              transition-all duration-200
+              rounded-lg
+              p-8 md:p-10
+              text-center
+              cursor-pointer
+            "
+          >
+            <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">🎬</div>
+            <p className="text-white font-bold uppercase tracking-wider text-sm md:text-base">
+              Suelta tu video aquí
+            </p>
+            <p className="text-neutral-400 text-xs mt-2">
+              o haz click para seleccionar · máximo 360 sec
+            </p>
+          </MuxUploaderDrop>
 
-        {/* Input nativo de selección (oculto visualmente, lo activa MuxUploaderDrop) */}
-        <MuxUploaderFileSelect muxUploader="bar" className="hidden">
-          <button type="button">Select file</button>
-        </MuxUploaderFileSelect>
+          <MuxUploaderFileSelect muxUploader="bar" className="hidden">
+            <button type="button">Select file</button>
+          </MuxUploaderFileSelect>
 
-        {/* Barra de progreso (solo visible durante upload) */}
-        <MuxUploaderProgress
-          muxUploader="bar"
-          className="
-            block
-            text-sm
-            bg-neutral-900
-            border-4 border-accent-cyan-500
-            rounded-lg
-            mt-3
-            h-3
-            [&::part(bar)]:bg-gradient-to-r
-            [&::part(bar)]:from-accent-cyan-500
-            [&::part(bar)]:to-accent-purple-500
-          "
-        />
-
-        {/* Status (errores, etc.) */}
-        <MuxUploaderStatus
-          muxUploader="bar"
-          className="block text-xs text-neutral-400 mt-2"
-        />
-      </MuxUploader>
-
-      {phase === 'completed' && (
-        <div className="space-y-3">
-          {/* Preview del video que se acaba de subir */}
-          {previewUrl && (
-            <div className="rounded-lg overflow-hidden border-4 border-green-500 bg-black">
-              <video
-                src={previewUrl}
-                controls
-                playsInline
-                className="w-full max-h-96"
+          {phase === 'uploading' && (
+            <>
+              <MuxUploaderProgress
+                muxUploader="bar"
+                className="
+                  block text-sm bg-neutral-900 border-4 border-accent-cyan-500
+                  rounded-lg mt-3 h-3
+                  [&::part(bar)]:bg-gradient-to-r
+                  [&::part(bar)]:from-accent-cyan-500
+                  [&::part(bar)]:to-accent-purple-500
+                "
               />
-            </div>
+              <MuxUploaderStatus muxUploader="bar" className="block text-xs text-neutral-400 mt-2" />
+            </>
           )}
+        </MuxUploader>
+      )}
+
+      {/* ── FASE: selected — preview + botón "Subir" ── */}
+      {phase === 'selected' && previewUrl && (
+        <div className="space-y-3">
+          <div className="rounded-lg overflow-hidden border-4 border-accent-cyan-500 bg-black">
+            <video
+              src={previewUrl}
+              controls
+              playsInline
+              className="w-full max-h-96"
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-2 bg-neutral-800 border-2 border-neutral-700 rounded-lg px-3 py-2">
+            <p className="text-xs text-neutral-300 truncate flex-1">
+              📁 <span className="font-bold">{fileName}</span>
+            </p>
+            <button
+              type="button"
+              onClick={handleChangeFile}
+              className="text-xs text-neutral-400 hover:text-red-400 uppercase font-bold whitespace-nowrap"
+            >
+              ✕ Cambiar
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleStartUpload}
+            className="
+              w-full bg-accent-cyan-500 hover:bg-accent-cyan-600
+              text-black font-bold py-3 px-6
+              rounded-lg uppercase tracking-wider transition-all
+              border-4 border-white/20 shadow-lg shadow-accent-cyan-500/50
+            "
+          >
+            🚀 Subir a Trickest
+          </button>
+
+          <p className="text-xs text-neutral-500 text-center">
+            El video se subirá a Mux y se procesará. Esto puede tardar unos segundos.
+          </p>
+        </div>
+      )}
+
+      {/* ── FASE: completed — preview + confirmación ── */}
+      {phase === 'completed' && previewUrl && (
+        <div className="space-y-3">
+          <div className="rounded-lg overflow-hidden border-4 border-green-500 bg-black">
+            <video
+              src={previewUrl}
+              controls
+              playsInline
+              className="w-full max-h-96"
+            />
+          </div>
           <div className="bg-green-500/20 border-4 border-green-500 rounded-lg p-3">
             <p className="text-green-400 font-bold text-sm">
               ✅ Video subido. Confirma que es el correcto y dale "Enviar".
