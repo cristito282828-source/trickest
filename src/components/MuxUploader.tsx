@@ -27,6 +27,8 @@ interface MuxUploaderProps {
 
 export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderProps) {
   const [endpoint, setEndpoint] = useState<string>('');
+  // uploadId lo creamos en el server (POST /api/uploads). Lo tenemos desde el inicio.
+  const [uploadId, setUploadId] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [phase, setPhase] = useState<'preparing' | 'ready' | 'uploading' | 'completed' | 'error'>('preparing');
   // Blob URL para preview local del archivo que el usuario acaba de subir
@@ -47,9 +49,10 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
           const err = await res.json().catch(() => ({ error: 'Error creando upload' }));
           throw new Error(err.error || 'Error creando upload');
         }
-        const { uploadUrl } = await res.json();
+        const { uploadUrl, uploadId } = await res.json();
         if (!cancelled) {
           setEndpoint(uploadUrl);
+          setUploadId(uploadId);
           setPhase('ready');
         }
       } catch (err) {
@@ -69,14 +72,14 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSuccess = (event: any) => {
-    // muxUploader emite el upload_id en el detalle del evento
-    const uploadId: string = event.detail?.upload_id || event.detail?.uploadId || '';
+  const handleSuccess = () => {
+    // El upload_id lo obtuvimos al crear el direct upload en /api/uploads.
+    // El evento success de MuxUploader no incluye el upload_id (es undefined).
+    // Usamos el que guardamos en state.
 
     // Crear un preview local con el File subido, así el usuario ve lo que mandó
     try {
       const uploaderEl = document.querySelector('mux-uploader') as any;
-      // Buscar el input file dentro del uploader para sacar el File object
       const fileInput = uploaderEl?.querySelector('input[type="file"]') as HTMLInputElement;
       const file = fileInput?.files?.[0];
       if (file) {
@@ -91,10 +94,9 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
     if (uploadId) {
       onUploaded({ uploadId });
     } else {
-      // En algunas versiones, el upload_id viene en el input hidden
-      const input = document.querySelector('mux-uploader') as any;
-      const fallbackId = input?.upload_id || '';
-      onUploaded({ uploadId: fallbackId });
+      // Caso raro: no tenemos uploadId (el fetch inicial falló pero la UI se ve OK)
+      console.error('[uploader] No tenemos uploadId a pesar de success event.');
+      onError?.('Error: no se pudo obtener el ID del upload. Vuelve a intentar.');
     }
   };
 
