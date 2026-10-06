@@ -3,80 +3,120 @@
 /**
  * Componente de upload de video a Mux con estilo arcade.
  *
- * Flujo:
- *  1. Usuario selecciona/suelta un archivo
- *  2. Pedimos al server un "direct upload" (URL firmada)
+ * Flujo correcto:
+ *  1. Al montar el componente, pedimos al server un "direct upload" (URL firmada)
+ *  2. Pasamos la URL al <MuxUploader endpoint={url} />
  *  3. El browser sube directo a Mux (no pasa por nuestro server)
- *  4. Al terminar, llamamos onUploaded(uploadId, assetId) para que el padre
- *     haga el POST /api/submissions con esos IDs.
- *
- * Wraps @mux/mux-uploader-react con nuestro tema (gradientes, bordes 4px, etc.)
+ *  4. Al terminar, llamamos onUploaded(uploadId) para que el padre
+ *     haga el POST /api/submissions con ese ID.
  */
-import { useState, useRef } from 'react';
-import MuxUploader, { MuxUploaderDrop, MuxUploaderFileSelect, MuxUploaderProgress, MuxUploaderStatus } from '@mux/mux-uploader-react';
+import { useState, useEffect } from 'react';
+import MuxUploader, {
+  MuxUploaderDrop,
+  MuxUploaderFileSelect,
+  MuxUploaderProgress,
+  MuxUploaderStatus,
+} from '@mux/mux-uploader-react';
 
 interface MuxUploaderProps {
-  /** Callback cuando el upload termina OK. El padre usa estos IDs para crear la Submission. */
-  onUploaded: (data: { uploadId: string; assetId?: string }) => void;
+  /** Callback cuando el upload termina OK. */
+  onUploaded: (data: { uploadId: string }) => void;
   /** Callback si falla el upload */
   onError?: (message: string) => void;
 }
 
 export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderProps) {
-  const [status, setStatus] = useState<'idle' | 'preparing' | 'uploading' | 'completed' | 'error'>('idle');
+  const [endpoint, setEndpoint] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
-  const uploadUrlRef = useRef<string>('');
+  const [phase, setPhase] = useState<'preparing' | 'ready' | 'uploading' | 'completed' | 'error'>('preparing');
 
-  /**
-   * Se ejecuta cuando el usuario selecciona un archivo. Antes de subir,
-   * pedimos al server un "direct upload" (URL firmada de Mux).
-   */
-  const handleUploadStart = async () => {
-    try {
-      setStatus('preparing');
-      setErrorMsg('');
+  // ────────────────────────────────────────────────────────────────
+  // Pedimos el direct upload URL al montar. Esto ANTES de que el
+  // usuario seleccione archivo (sino MuxUploader falla con
+  // "No se especificó URL o endpoint").
+  // ────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
 
-      const res = await fetch('/api/uploads', { method: 'POST' });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Error creando upload' }));
-        throw new Error(err.error || 'Error creando upload');
+    const fetchUploadUrl = async () => {
+      try {
+        const res = await fetch('/api/uploads', { method: 'POST' });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: 'Error creando upload' }));
+          throw new Error(err.error || 'Error creando upload');
+        }
+        const { uploadUrl } = await res.json();
+        if (!cancelled) {
+          setEndpoint(uploadUrl);
+          setPhase('ready');
+        }
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Error desconocido';
+        if (!cancelled) {
+          setErrorMsg(msg);
+          setPhase('error');
+          onError?.(msg);
+        }
       }
+    };
 
-      const { uploadId, uploadUrl } = await res.json();
-      uploadUrlRef.current = uploadUrl;
+    fetchUploadUrl();
 
-      // El endpoint del MuxUploader se setea por atributo `endpoint`
-      // MuxUploader lee esta URL y sube directo a Mux desde el browser.
-      const uploaderEl = document.querySelector('mux-uploader') as any;
-      if (uploaderEl) {
-        uploaderEl.endpoint = uploadUrl;
-      }
+    return () => {
+      cancelled = true;
+    };
+  }, [onError]);
 
-      setStatus('uploading');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Error desconocido';
-      setErrorMsg(msg);
-      setStatus('error');
-      onError?.(msg);
+  const handleSuccess = (event: any) => {
+    // muxUploader emite el upload_id en el detalle del evento
+    const uploadId: string = event.detail?.upload_id || event.detail?.uploadId || '';
+    setPhase('completed');
+    if (uploadId) {
+      onUploaded({ uploadId });
+    } else {
+      // En algunas versiones, el upload_id viene en el input hidden
+      const input = document.querySelector('mux-uploader') as any;
+      const fallbackId = input?.upload_id || '';
+      onUploaded({ uploadId: fallbackId });
     }
   };
 
-  /**
-   * Se ejecuta cuando el upload a Mux termina OK.
-   * El "uploadId" lo podemos extraer del atributo data o del input hidden.
-   */
-  const handleSuccess = (event: any) => {
-    setStatus('completed');
-    // muxUploader emite el upload_id en el detalle del evento
-    const uploadId = event.detail?.upload_id || '';
-    onUploaded({ uploadId });
+  const handleUploadStart = () => {
+    setPhase('uploading');
   };
+
+  // Mientras preparamos el endpoint, mostramos loading
+  if (phase === 'preparing') {
+    return (
+      <div className="border-4 border-dashed border-neutral-700 bg-neutral-800/60 rounded-lg p-8 md:p-10 text-center">
+        <div className="text-5xl mb-3 animate-pulse">⏳</div>
+        <p className="text-white font-bold uppercase tracking-wider text-sm md:text-base">
+          Preparando uploader...
+        </p>
+      </div>
+    );
+  }
+
+  if (phase === 'error' && errorMsg) {
+    return (
+      <div className="space-y-3">
+        <div className="bg-red-500/20 border-4 border-red-500 rounded-lg p-3">
+          <p className="text-red-400 font-bold text-sm">❌ {errorMsg}</p>
+        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="w-full bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-2 px-4 rounded-lg uppercase text-xs"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
-      {/* Contenedor con estilo arcade (bordes 4px, darkBg, gradiente en hover) */}
       <MuxUploader
-        endpoint=""
+        endpoint={endpoint}
         type="bar"
         noDrop={false}
         onUploadStart={handleUploadStart}
@@ -136,15 +176,7 @@ export default function MuxVideoUploader({ onUploaded, onError }: MuxUploaderPro
         />
       </MuxUploader>
 
-      {/* Error message */}
-      {status === 'error' && errorMsg && (
-        <div className="bg-red-500/20 border-4 border-red-500 rounded-lg p-3">
-          <p className="text-red-400 font-bold text-sm">❌ {errorMsg}</p>
-        </div>
-      )}
-
-      {/* Success hint */}
-      {status === 'completed' && (
+      {phase === 'completed' && (
         <div className="bg-green-500/20 border-4 border-green-500 rounded-lg p-3">
           <p className="text-green-400 font-bold text-sm">✅ Video subido. Click "Enviar" para terminar.</p>
         </div>
