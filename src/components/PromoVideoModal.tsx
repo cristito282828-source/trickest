@@ -7,32 +7,62 @@ import { X } from 'lucide-react';
 import RegisterEmailForm from './RegisterEmailForm';
 
 const VIDEO_URL = '/2026-06-27%2000_16_48.MP4';
+const STORAGE_KEY = 'trickest:promo_dismissed';
+const SHOW_DELAY_MS = 2000; // 2 segundos antes de mostrar
 
 export default function PromoVideoModal() {
   const { status } = useSession();
   const t = useTranslations('promoModal');
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false); // ← empieza cerrado (sin flash)
   const [showRegister, setShowRegister] = useState(false);
 
-  // Handlers memoizados (referencias estables para que RegisterEmailForm no se re-monte).
-  const handleClose = useCallback(() => setIsOpen(false), []);
+  // Mostrar el modal SOLO si:
+  // - El usuario NO está autenticado
+  // - NO lo descartó en esta sesión del browser
+  // - Pasaron 2s desde que cargó la home
+  useEffect(() => {
+    // Si está autenticado (o todavía cargando), nunca mostrar
+    if (status === 'authenticated' || status === 'loading') return;
+
+    // Si ya lo descartó en esta sesión, no mostrar de nuevo
+    if (typeof window !== 'undefined' && sessionStorage.getItem(STORAGE_KEY)) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setIsOpen(true);
+    }, SHOW_DELAY_MS);
+
+    return () => clearTimeout(timer);
+  }, [status]);
+
+  // Handlers memoizados
+  const handleClose = useCallback(() => {
+    setIsOpen(false);
+    // Marcar como descartado para esta sesión
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(STORAGE_KEY, '1');
+    }
+  }, []);
+
   const handleOpenRegister = useCallback(() => {
     setShowRegister(true);
-    setIsOpen(false); // Cerrar el modal del video (después de esto solo se ve el form).
+    setIsOpen(false);
   }, []);
+
   const handleSuccess = useCallback(() => {
     setShowRegister(false);
     window.location.reload();
   }, []);
+
   const handleSwitchToLogin = useCallback(() => {
     setShowRegister(false);
     setIsOpen(false);
     window.dispatchEvent(new CustomEvent('trickest:open-signin'));
   }, []);
 
-  // Body scroll lock + ESC handler (activo mientras el video O el register estén abiertos).
+  // Body scroll lock + ESC
   useEffect(() => {
-    // No aplicar scroll lock si el usuario ya está autenticado y no hay register abierto.
     if (status === 'authenticated' && !showRegister) return;
     if (!isOpen && !showRegister) return;
     const previousOverflow = document.body.style.overflow;
@@ -41,7 +71,7 @@ export default function PromoVideoModal() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (showRegister) setShowRegister(false);
-        else setIsOpen(false);
+        else handleClose();
       }
     };
     document.addEventListener('keydown', onKey);
@@ -50,9 +80,9 @@ export default function PromoVideoModal() {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', onKey);
     };
-  }, [isOpen, showRegister, status]);
+  }, [isOpen, showRegister, status, handleClose]);
 
-  // Early returns DESPUÉS de todos los hooks.
+  // No mostrar si está autenticado (defensa en profundidad)
   if (status === 'authenticated' && !showRegister) return null;
   if (!isOpen && !showRegister) return null;
 
@@ -101,7 +131,7 @@ export default function PromoVideoModal() {
         </div>
       )}
 
-      {/* Modal de registro (renderizado dentro de su propio backdrop via ModalPortal) */}
+      {/* Modal de registro */}
       {showRegister && (
         <RegisterEmailForm
           isOpen={true}

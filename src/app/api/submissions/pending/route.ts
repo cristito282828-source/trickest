@@ -61,21 +61,52 @@ export async function GET(req: Request) {
 
     console.log(`✅ Encontradas ${submissions.length} submissions pendientes`);
 
-    // Adjuntar signed playback URL a las que son de Mux
-    const enrichedSubmissions = submissions.map((s) => {
-      if (s.videoSource === 'mux' && s.muxPlaybackId) {
-        try {
-          return {
-            ...s,
-            muxSignedUrl: getSignedPlaybackUrl(s.muxPlaybackId, '2h'),
-          };
-        } catch (e) {
-          console.warn(`[pending] No pude firmar playbackId ${s.muxPlaybackId}:`, e);
+    // Adjuntar signed playback URL a las que son de Mux.
+    // Si el playbackId falta (webhook no llegó), consultamos Mux en vivo
+    // y actualizamos la BD. Esto hace al sistema auto-curativo.
+    const enrichedSubmissions = await Promise.all(
+      submissions.map(async (s) => {
+        if (s.videoSource !== 'mux' || !s.muxAssetId) {
           return s;
         }
-      }
-      return s;
-    });
+
+        let playbackId = s.muxPlaybackId;
+
+        // Si falta el playbackId, consultar Mux directamente
+        if (!playbackId) {
+          try {
+            const asset = await mux.video.assets.retrieve(s.muxAssetId);
+            playbackId = asset.playback_ids?.[0]?.id || null;
+
+            // Si lo encontramos, actualizar la BD para futuras requests
+            if (playbackId && asset.status === 'ready') {
+              await prisma.submission.update({
+                where: { id: s.id },
+                data: {
+                  muxPlaybackId: playbackId,
+                  videoStatus: 'ready',
+                },
+              });
+              console.log(`[pending] Self-healed submission ${s.id}: playbackId=${playbackId}`);
+            }
+          } catch (e) {
+            console.warn(`[pending] No pude resolver playbackId de asset ${s.muxAssetId}:`, e);
+          }
+        }
+
+        if (!playbackId) {
+          return s;
+        }
+
+        try {
+          const muxSignedUrl = getSignedPlaybackUrl(playbackId, '2h');
+          return { ...s, muxPlaybackId: playbackId, muxSignedUrl };
+        } catch (e) {
+          console.warn(`[pending] No pude firmar playbackId ${playbackId}:`, e);
+          return { ...s, muxPlaybackId: playbackId };
+        }
+      })
+    );
 
     return NextResponse.json({
       submissions: enrichedSubmissions,

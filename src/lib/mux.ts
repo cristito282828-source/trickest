@@ -9,10 +9,23 @@ import Mux from '@mux/mux-node';
 const tokenId = process.env.MUX_TOKEN_ID;
 const tokenSecret = process.env.MUX_TOKEN_SECRET;
 
-// Resolver la signing key desde .env o desde un archivo .pem.
-// Preferimos el archivo porque es más limpio y seguro (no requiere escapar \n).
-function resolveSigningKey(): string {
-  // 1) Inline en .env (mismo formato PEM, sin escapes)
+// Mux SDK v15 espera DOS cosas distintas para JWT signing:
+// 1) jwtSigningKey = el KEY ID (string como "01zyE7..."). Va al header "kid" del JWT.
+// 2) jwtPrivateKey = el PEM completo. Se usa para firmar.
+// Si pones el PEM en jwtSigningKey, Mux lo usa como "kid" y falla la verificación.
+
+const keyId =
+  process.env.MUX_SIGNING_KEY_ID ||
+  // Fallback: extraer del nombre del archivo "mux-signing-key-XXXX.pem"
+  (() => {
+    const file = process.env.MUX_SIGNING_KEY_FILE;
+    if (!file) return undefined;
+    const m = file.match(/mux-signing-key-([A-Za-z0-9_-]+)\.pem$/);
+    return m ? m[1] : undefined;
+  })();
+
+function resolvePrivateKey(): string {
+  // 1) Inline en .env (PEM completo, con \n o saltos de línea reales)
   const inline = process.env.MUX_SIGNING_KEY || process.env.MUX_SIGNING_KEY_PRIVATE;
   if (inline && inline.trim().length > 0) return inline.trim();
 
@@ -33,7 +46,10 @@ function resolveSigningKey(): string {
   return '';
 }
 
-const signingKey = resolveSigningKey();
+const privateKey = resolvePrivateKey();
+
+// Buffer para evitar leer el PEM en cada signed URL
+const privateKeyBuffer = privateKey ? (Buffer.from(privateKey) as any) : null;
 
 if (!tokenId || !tokenSecret) {
   // En development solo logueamos; en producción lanzamos.
@@ -57,9 +73,11 @@ export const mux: Mux =
   new Mux({
     tokenId: tokenId ?? '',
     tokenSecret: tokenSecret ?? '',
-    // Signing key opcional: solo necesaria si quieres signed playback URLs.
-    // Si no la pones, usa playback_policy: ['public'] en los uploads.
-    jwtSigningKey: signingKey,
+    // Estos dos son independientes y AMBOS necesarios para signed playback:
+    // - jwtSigningKey: el KEY ID (string como "01zyE7...")
+    // - jwtPrivateKey: el PEM completo del archivo
+    jwtSigningKey: keyId,
+    jwtPrivateKey: privateKey,
   });
 
 if (process.env.NODE_ENV !== 'production') {
@@ -77,7 +95,7 @@ if (process.env.NODE_ENV !== 'production') {
  * En ese caso, considera cambiar a playback_policy: ['public'] en /api/uploads.
  */
 export function getSignedPlaybackUrl(playbackId: string, expiration = '1h'): string {
-  if (!signingKey) {
+  if (!privateKey || !keyId) {
     throw new Error(
       'MUX_SIGNING_KEY no configurado. ' +
         'Para signed playback URLs configura la signing key en dashboard.mux.com ' +
@@ -85,15 +103,40 @@ export function getSignedPlaybackUrl(playbackId: string, expiration = '1h'): str
     );
   }
 
-  // keySecret = tu private key (PEM) o HMAC secret, keyId = el ID que Mux te da.
-  // Si el SDK detecta el keyId automáticamente desde el PEM, keyId es opcional.
-  const token = mux.jwt.signPlaybackId(playbackId, {
-    keySecret: signingKey,
-    expiration,
-    type: 'video',
-  });
+  // ⚠️ Workaround: el SDK de Mux v15.x tiene un bug donde pone el `kid` en el
+  // PAYLOAD del JWT en lugar del header. Mux API requiere kid en el header (RFC 7519).
+  // Por eso firmamos manualmente con jsonwebtoken (que pone kid en el header).
+  const jwt = require('jsonwebtoken') as typeof import('jsonwebtoken');
+
+  const expirationSeconds = expirationToSeconds(expiration);
+  const token = jwt.sign(
+    {
+      sub: playbackId,
+      aud: 'v',
+      exp: Math.floor(Date.now() / 1000) + expirationSeconds,
+    },
+    privateKey,
+    {
+      algorithm: 'RS256',
+      keyid: keyId,  // ← va al header (lo que Mux espera)
+      noTimestamp: true,
+    }
+  );
 
   return `https://stream.mux.com/${playbackId}.m3u8?token=${token}`;
+}
+
+function expirationToSeconds(exp: string): number {
+  const match = exp.match(/^(\d+)([smhd])$/);
+  if (!match) return 3600; // default 1h
+  const value = parseInt(match[1], 10);
+  switch (match[2]) {
+    case 's': return value;
+    case 'm': return value * 60;
+    case 'h': return value * 3600;
+    case 'd': return value * 86400;
+    default: return 3600;
+  }
 }
 
 /**

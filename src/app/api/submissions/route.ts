@@ -60,19 +60,41 @@ export async function POST(req: Request) {
     }
 
     // Verificar duplicado
-    const existingSubmission = await prisma.submission.findFirst({
+    // Regla: 1 intento + 1 retry en caso de rechazo (max 2 attempts)
+    const existingSubs = await prisma.submission.findMany({
       where: {
         userId: session.user.email,
         challengeId: challengeIdNum,
       },
+      select: { id: true, status: true },
     });
-    if (existingSubmission) {
+
+    const hasApproved = existingSubs.some(s => s.status === 'approved');
+    const hasPending = existingSubs.some(s => s.status === 'pending');
+    const rejectedCount = existingSubs.filter(s => s.status === 'rejected').length;
+
+    if (hasApproved) {
       return errorResponse(
-        'DUPLICATE_SUBMISSION',
-        `You already submitted for the challenge "${challenge.name}". Status: ${existingSubmission.status}`,
+        'CHALLENGE_ALREADY_COMPLETED',
+        `Ya completaste este challenge con éxito. No puedes enviar más intentos.`,
         409
       );
     }
+    if (hasPending) {
+      return errorResponse(
+        'SUBMISSION_PENDING',
+        `Ya tienes un intento pendiente de evaluación. Espera el resultado.`,
+        409
+      );
+    }
+    if (rejectedCount >= 2) {
+      return errorResponse(
+        'MAX_ATTEMPTS_REACHED',
+        `Ya usaste tus 2 oportunidades en este challenge.`,
+        409
+      );
+    }
+    const attemptNumber = rejectedCount + 1; // 1 = primer intento, 2 = retry
 
     // ═══════════════════════════════════════════════════════════════
     // MODO 1: Mux (nuevo, recomendado)
@@ -136,8 +158,12 @@ export async function POST(req: Request) {
 
       return successResponse(
         {
-          message: 'Submission created. Video processing started.',
+          message:
+            attemptNumber === 1
+              ? 'Submission creada. Pendiente de evaluación.'
+              : `Intento #${attemptNumber} (retry) enviado. Pendiente de evaluación.`,
           submission,
+          attemptNumber,
         },
         201
       );

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/atoms';
-import MuxVideoUploader from '@/components/MuxUploader';
+import MuxVideoUploader, { type MuxUploaderHandle } from '@/components/MuxUploader';
 
 interface Challenge {
   id: number;
@@ -32,6 +32,10 @@ export default function SubmitTrickModal({
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [hasFile, setHasFile] = useState(false); // true cuando el usuario seleccionó un archivo
+  const uploaderRef = useRef<MuxUploaderHandle>(null);
+  // Ref espejo de uploadData para evitar stale closure en handleSubmit
+  const uploadDataRef = useRef<{ uploadId: string } | null>(null);
   const t = useTranslations('submitTrickModal');
 
   // Reset state cuando se abre/cierra el modal
@@ -46,8 +50,15 @@ export default function SubmitTrickModal({
   }, [isOpen]);
 
   const handleUploaded = useCallback(({ uploadId }: { uploadId: string }) => {
-    setUploadData({ uploadId });
+    const data = { uploadId };
+    setUploadData(data);
+    uploadDataRef.current = data;
     setUploaderError('');
+  }, []);
+
+  // Marca que el usuario seleccionó archivo (habilita el botón "Enviar")
+  const handleFileSelected = useCallback(() => {
+    setHasFile(true);
   }, []);
 
   const handleUploaderError = useCallback((msg: string) => {
@@ -57,8 +68,11 @@ export default function SubmitTrickModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!uploadData || !challenge) {
-      setError('Primero sube un video antes de enviar.');
+    if (!challenge) return;
+
+    // Verificar que hay un archivo seleccionado
+    if (!uploaderRef.current?.hasFileSelected()) {
+      setError('Selecciona un video primero.');
       return;
     }
 
@@ -66,12 +80,32 @@ export default function SubmitTrickModal({
       setLoading(true);
       setError('');
 
+      console.log('[modal] handleSubmit - disparando upload');
+      // 1) Disparar el upload a Mux (si no está ya subiendo)
+      uploaderRef.current?.startUpload();
+
+      // 2) Esperar a que termine el upload. El `onUploaded` callback setea uploadDataRef.
+      // Hacemos polling al ref (no al state) para evitar stale closure.
+      const startTime = Date.now();
+      while (!uploadDataRef.current && Date.now() - startTime < 300000) {
+        await new Promise(r => setTimeout(r, 500));
+        if (!uploadDataRef.current && Date.now() - startTime > 5000) {
+          console.log('[modal] Aún esperando upload... elapsed:', Math.floor((Date.now() - startTime) / 1000), 's');
+        }
+      }
+
+      if (!uploadDataRef.current) {
+        throw new Error('El upload está tardando demasiado. Vuelve a intentar.');
+      }
+      console.log('[modal] Upload completo, creando submission');
+
+      // 3) Crear la submission en la BD
       const response = await fetch('/api/submissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           challengeId: String(challenge.id),
-          muxUploadId: uploadData.uploadId,
+          muxUploadId: uploadDataRef.current.uploadId,
         }),
       });
 
@@ -122,13 +156,13 @@ export default function SubmitTrickModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-70">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-black bg-opacity-70">
       {/* Modal Container */}
-      <div className="w-full max-w-2xl">
-        <div className="relative bg-gradient-to-r from-accent-yellow-500 to-accent-orange-500 p-1 rounded-lg shadow-2xl">
+      <div className="w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="relative bg-gradient-to-r from-accent-yellow-500 to-accent-orange-500 p-1 rounded-lg shadow-2xl flex-1 flex flex-col min-h-0">
           {/* Subtle glow animation */}
-          <div className="absolute inset-0 bg-gradient-to-r from-accent-yellow-500 to-accent-orange-500 rounded-lg blur-sm animate-pulse opacity-50"></div>
-          <div className="relative bg-neutral-900 rounded-lg p-6 md:p-8">
+          <div className="absolute inset-0 bg-gradient-to-r from-accent-yellow-500 to-accent-orange-500 rounded-lg blur-sm animate-pulse opacity-50 pointer-events-none"></div>
+          <div className="relative bg-neutral-900 rounded-lg p-4 md:p-8 flex-1 overflow-y-auto min-h-0">
             {/* Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
@@ -177,7 +211,9 @@ export default function SubmitTrickModal({
                   🎥 Tu video
                 </label>
                 <MuxVideoUploader
+                  ref={uploaderRef}
                   onUploaded={handleUploaded}
+                  onFileSelected={handleFileSelected}
                   onError={handleUploaderError}
                 />
                 {uploaderError && (
@@ -192,25 +228,27 @@ export default function SubmitTrickModal({
                 </div>
               )}
 
-              {/* Buttons */}
-              <div className="flex flex-col md:flex-row gap-4">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider transition-all"
-                  disabled={loading}
-                >
-                  {t('cancel')}
+              {/* Buttons — sticky al fondo */}
+              <div className="sticky bottom-0 -mx-4 md:-mx-8 -mb-4 md:-mb-8 mt-6 bg-neutral-900 pt-4 pb-4 md:pt-6 md:pb-6 px-4 md:px-8 border-t-2 border-neutral-800">
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="flex-1 bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-3 px-4 md:px-6 rounded-lg uppercase tracking-wider transition-all text-sm md:text-base"
+                    disabled={loading}
+                  >
+                    {t('cancel')}
                 </button>
                 <Button
                   type="submit"
-                  disabled={!uploadData || loading || success}
+                  disabled={!hasFile || loading || success}
                   variant="warning"
                   size="lg"
                   className="flex-1"
                 >
-                  {loading ? t('submitting') : t('submitVideo')}
+                  {loading ? 'Enviando...' : '🚀 Enviar a Trickest'}
                 </Button>
+                </div>
               </div>
             </form>
             )}

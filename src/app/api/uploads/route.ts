@@ -35,14 +35,12 @@ export async function POST(req: Request) {
     // 3) Crear direct upload en Mux
     //
     // playback_policy 'signed' = necesitas signed URLs para verlo.
-    // Más seguro pero requiere signing keys configuradas.
-    // Usa 'public' si quieres que cualquiera con el playbackId lo vea
-    // (más simple para empezar; lo puedes cambiar luego).
+    // Mux auto-selecciona la signing key (la única que tienes).
     const upload = await mux.video.uploads.create({
       cors_origin: process.env.NEXTAUTH_URL || '*',
       new_asset_settings: {
         playback_policy: ['signed'],
-        encoding_tier: 'baseline', // 'smart' = mejor calidad, más caro
+        encoding_tier: 'baseline',
       },
     });
 
