@@ -1159,6 +1159,7 @@
     "editChallenge": "EDIT CHALLENGE",
     "createNewChallenge": "CREATE NEW CHALLENGE",
     "challengeName": "Challenge Name",
+    "levelLabel": "LEVEL {level}",
     "challengeNamePlaceholder": "E.g.: Perfect Ollie",
     "description": "Description",
     "descriptionPlaceholder": "Describe the challenge in detail...",

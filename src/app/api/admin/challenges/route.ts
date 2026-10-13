@@ -27,13 +27,13 @@ export async function GET() {
 
       return {
         id: challenge.id,
+        level: challenge.level,
         name: challenge.name,
         description: challenge.description,
         difficulty: challenge.difficulty,
         points: challenge.points,
         demoVideoUrl: challenge.demoVideoUrl,
         isBonus: challenge.isBonus,
-        level: challenge.level,
         createdAt: challenge.createdAt,
         totalSubmissions: challenge.submissions.length,
         approvedSubmissions: approved.length,
@@ -133,13 +133,13 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const { challengeId } = await request.json();
+    const { challengeId: rawChallengeId } = await request.json();
+    const challengeId = Number(rawChallengeId);
 
-    if (!challengeId) {
+    if (!Number.isInteger(challengeId) || challengeId <= 0) {
       return NextResponse.json({ error: 'Challenge ID is required' }, { status: 400 });
     }
 
-    // Check if challenge has submissions
     const submissionCount = await prisma.submission.count({
       where: { challengeId },
     });

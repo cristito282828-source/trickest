@@ -1152,6 +1152,7 @@
     "editChallenge": "EDITAR DESAFÍO",
     "createNewChallenge": "CREAR NUEVO DESAFÍO",
     "challengeName": "Nombre del Desafío",
+    "levelLabel": "NIVEL {level}",
     "challengeNamePlaceholder": "Ej: Ollie Perfecto",
     "description": "Descripción",
     "descriptionPlaceholder": "Describe el desafío en detalle...",

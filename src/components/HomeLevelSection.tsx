@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { MdLock, MdRocketLaunch, MdEmojiEvents } from 'react-icons/md';
+import { MdLock } from 'react-icons/md';
 
 export default function HomeLevelSection() {
   const t = useTranslations('homeLevelSection');
@@ -93,20 +93,6 @@ export default function HomeLevelSection() {
                 {percent}%
               </div>
             </div>
-          </div>
-
-          {/* Mensaje de expectativa */}
-          <div className="max-w-2xl mx-auto space-y-4">
-            <div className="flex items-center justify-center gap-2 text-yellow-400">
-              <MdRocketLaunch size={24} />
-              <MdEmojiEvents size={24} />
-            </div>
-            <p className="text-white text-lg md:text-2xl font-black uppercase tracking-wider">
-              {t('milestoneTitle')}
-            </p>
-            <p className="text-neutral-300 text-sm md:text-base">
-              {t('milestoneDescription')}
-            </p>
           </div>
 
           {/* CTA removed */}

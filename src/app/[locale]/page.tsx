@@ -1,11 +1,10 @@
 import HowWin from '@/components/howToWin';
 import Introduction from '@/components/introduction';
-import Partners from '@/components/partners/partners';
 import TransitionPage from '@/components/transition-page';
-import HomeLevelSection from '@/components/HomeLevelSection';
+import HomeChallenges from '@/components/HomeChallenges';
 import HomeMapSection from '@/components/HomeMapSection';
-// import HomeRanking from '@/components/HomeRanking';
-// import TopReels from '@/components/TopReels';
+import HomeRanking from '@/components/HomeRanking';
+import TopReels from '@/components/TopReels';
 import ContactCTAButton from '@/components/ContactCTAButton';
 import ActivityTicker from '@/components/ActivityTicker';
 import FloatingCartOrbit from '@/components/orbital/FloatingCartOrbit';
@@ -43,8 +42,8 @@ export default async function Home({
       {/* Activity Ticker - Shows recent user activity */}
       <ActivityTicker />
 
-      {/* Challenges Section */}
-      <HomeLevelSection />
+      {/* Challenges Section - banner principal */}
+      <HomeChallenges />
 
       {/* Monthly Thread (Hilo del Mes) — colaborativo */}
       <MonthlyThreadSection />
@@ -54,8 +53,11 @@ export default async function Home({
         <HighScore />
       </div> */}
 
-      {/* Ranking Section - hidden */}
-      {/* Top Reels Section - hidden */}
+      {/* Ranking Section */}
+      <HomeRanking />
+
+      {/* Top Reels Section — mejores submissions */}
+      <TopReels />
 
       {/* How to Win Section */}
       <HowWin />
@@ -77,11 +79,6 @@ export default async function Home({
 
       {/* Map Section */}
       <HomeMapSection />
-
-      {/* Partners Section */}
-      <div>
-        <Partners />
-      </div>
 
       {/* Contact CTA Section */}
       <ContactCTAButton />

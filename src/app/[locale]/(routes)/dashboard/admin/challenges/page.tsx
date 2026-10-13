@@ -12,6 +12,7 @@ import { Button, IconButton } from '@/components/atoms';
 
 interface Challenge {
   id: number;
+  level: number;
   name: string;
   description: string;
   difficulty: string;
@@ -121,7 +122,7 @@ export default function AdminChallengesPage() {
     setSaving(false);
   };
 
-  const handleDelete = async (challengeId: number) => {
+  const handleDelete = async (challenge: Challenge) => {
     if (!confirm(t('confirmDelete'))) {
       return;
     }
@@ -130,7 +131,7 @@ export default function AdminChallengesPage() {
       const response = await fetch('/api/admin/challenges', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ challengeId }),
+        body: JSON.stringify({ challengeId: challenge.id }),
       });
 
       if (response.ok) {
@@ -201,6 +202,9 @@ export default function AdminChallengesPage() {
                   <div className="flex items-start gap-3 flex-1 min-w-0">
                     <MdSportsKabaddi size={24} className="text-cyan-400 flex-shrink-0 mt-1" />
                     <div className="flex-1 min-w-0">
+                      <p className="text-accent-cyan-400 text-xs font-black uppercase tracking-wider mb-1">
+                        {t('levelLabel', { level: challenge.level })}
+                      </p>
                       <h3 className="text-white font-black text-lg uppercase tracking-wider mb-2 break-words">
                         {challenge.name}
                       </h3>
@@ -224,7 +228,7 @@ export default function AdminChallengesPage() {
                     <IconButton
                       variant="delete"
                       size="sm"
-                      onClick={() => handleDelete(challenge.id)}
+                      onClick={() => handleDelete(challenge)}
                       icon={<MdDelete size={16} />}
                     />
                   </div>
