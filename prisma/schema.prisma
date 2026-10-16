@@ -57,6 +57,7 @@ model User {
   monthlyThreads      MonthlyThread[]      @relation("ThreadCreator") // Hilos creados por el admin (solo cuenta el creator)
   threadProposals     ThreadProposal[] // Propuestas que el usuario creó en hilos
   threadProposalVotes ThreadProposalVote[] // Votos del usuario a propuestas de hilos
+  wallReactions       WallReaction[]
 }
 
 model SocialMedia {
@@ -269,6 +270,32 @@ model Notification {
   @@index([isRead])
   @@index([type])
   @@index([createdAt])
+}
+
+model WallActivity {
+  id         Int               @id @default(autoincrement())
+  type       WallActivityType
+  sourceId   Int
+  createdAt  DateTime          @default(now())
+  reactions  WallReaction[]
+
+  @@unique([type, sourceId])
+  @@index([createdAt])
+}
+
+model WallReaction {
+  id         Int               @id @default(autoincrement())
+  activityId Int
+  userId     String
+  type       WallReactionType
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  activity WallActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [email], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([activityId, type])
 }
 
 model AppSettings {
@@ -667,6 +694,22 @@ enum ChallengeStatus {
   ACTIVE // Unlocked and accepting submissions
   COMPLETED // Challenge ended
   EXPIRED // Time limit reached
+}
+
+enum WallActivityType {
+  USER_JOINED
+  TEAM_CREATED
+  CHALLENGE_CREATED
+  SUBMISSION_APPROVED
+  SPOT_ADDED
+}
+
+enum WallReactionType {
+  LIKE
+  LOVE
+  LAUGH
+  WOW
+  ANGRY
 }
 
 // ==================== MONTHLY THREAD (Hilo del Mes / Tema de la Semana) ====================

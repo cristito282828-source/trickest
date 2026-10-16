@@ -22,8 +22,16 @@ type ActivityType =
   | 'submission_approved'
   | 'spot_added';
 
+type ReactionType = 'LIKE' | 'LOVE' | 'LAUGH' | 'WOW' | 'ANGRY';
+
+interface ReactionState {
+  reactionCounts: Record<ReactionType, number>;
+  userReaction: ReactionType | null;
+}
+
 interface Activity {
   id: string;
+  wallActivityId: number | undefined;
   type: ActivityType;
   createdAt: string;
   actor: { name: string; photo: string | null; username: string | null };
@@ -34,6 +42,8 @@ interface Activity {
   videoUrl?: string;
   city?: string | null;
   country?: string;
+  reactionCounts: Record<ReactionType, number>;
+  userReaction: ReactionType | null;
 }
 
 interface CommunityWallProps {
@@ -50,6 +60,19 @@ const activityStyles: Record<ActivityType, { icon: typeof MdCampaign; color: str
   challenge_created: { icon: MdEmojiEvents, color: 'bg-amber-100 text-amber-700' },
   submission_approved: { icon: MdOutlinePlayCircle, color: 'bg-emerald-100 text-emerald-700' },
   spot_added: { icon: MdLocationOn, color: 'bg-rose-100 text-rose-700' },
+};
+
+const reactionOptions: { type: ReactionType; emoji: string; label: `reaction${string}` }[] = [
+  { type: 'LIKE', emoji: '👍', label: 'reactionLike' },
+  { type: 'LOVE', emoji: '❤️', label: 'reactionLove' },
+  { type: 'LAUGH', emoji: '😂', label: 'reactionLaugh' },
+  { type: 'WOW', emoji: '😮', label: 'reactionWow' },
+  { type: 'ANGRY', emoji: '😡', label: 'reactionAngry' },
+];
+
+const emptyReactionState: ReactionState = {
+  reactionCounts: { LIKE: 0, LOVE: 0, LAUGH: 0, WOW: 0, ANGRY: 0 },
+  userReaction: null,
 };
 
 function Avatar({ photo, name, size = 44 }: { photo: string | null; name: string; size?: number }) {
@@ -78,6 +101,19 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
   const t = useTranslations('communityWall');
   const locale = useLocale();
   const [filter, setFilter] = useState<Filter>('all');
+  const [reactionStates, setReactionStates] = useState<Record<number, ReactionState>>(
+    () => activities.reduce<Record<number, ReactionState>>((states, activity) => {
+      if (activity.wallActivityId !== undefined) {
+        states[activity.wallActivityId] = {
+          reactionCounts: activity.reactionCounts,
+          userReaction: activity.userReaction,
+        };
+      }
+      return states;
+    }, {})
+  );
+  const [savingReactionId, setSavingReactionId] = useState<number | null>(null);
+  const [reactionErrorId, setReactionErrorId] = useState<number | null>(null);
 
   const visibleActivities = useMemo(() => activities.filter((activity) => {
     if (filter === 'all') return true;
@@ -120,6 +156,47 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
   };
 
   const actorHref = (username: string | null) => username ? `/profile/${username}` : null;
+
+  const handleReaction = async (activity: Activity, reaction: ReactionType) => {
+    const activityId = activity.wallActivityId;
+    if (activityId === undefined || savingReactionId !== null) return;
+
+    setSavingReactionId(activityId);
+    setReactionErrorId(null);
+    try {
+      const currentReaction = reactionStates[activityId]
+        ? reactionStates[activityId].userReaction
+        : activity.userReaction;
+      const response = await fetch(`/api/wall/${activityId}/reaction`, {
+        method: currentReaction === reaction ? 'DELETE' : 'POST',
+        ...(currentReaction === reaction
+          ? {}
+          : {
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reaction }),
+            }),
+      });
+      const result: unknown = await response.json();
+
+      if (!response.ok || !isReactionResponse(result)) {
+        throw new Error(isReactionResponse(result) ? result.error?.message : 'Unable to save reaction');
+      }
+      const savedReactionState = result.data;
+      if (!isReactionState(savedReactionState)) {
+        throw new Error('Invalid reaction response');
+      }
+
+      setReactionStates((current) => ({
+        ...current,
+        [activityId]: savedReactionState,
+      }));
+    } catch (error) {
+      console.error('Error saving wall reaction:', error);
+      setReactionErrorId(activityId);
+    } finally {
+      setSavingReactionId(null);
+    }
+  };
 
   return (
     <main className="min-h-[calc(100vh-80px)] bg-[#f0f2f5] px-4 py-6 pb-28 lg:px-8 lg:pb-8">
@@ -181,6 +258,12 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                   const style = activityStyles[activity.type];
                   const Icon = style.icon;
                   const href = actorHref(activity.actor.username);
+                  const reactionState = activity.wallActivityId !== undefined
+                    ? reactionStates[activity.wallActivityId] ?? {
+                        reactionCounts: activity.reactionCounts,
+                        userReaction: activity.userReaction,
+                      }
+                    : emptyReactionState;
 
                   return (
                     <article key={activity.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
@@ -195,7 +278,13 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-x-1 text-sm text-neutral-800">
-                              <span className="font-extrabold">{activity.actor.name}</span>
+                              {href ? (
+                                <Link href={href} className="font-extrabold hover:text-cyan-700 hover:underline">
+                                  {activity.actor.name}
+                                </Link>
+                              ) : (
+                                <span className="font-extrabold">{activity.actor.name}</span>
+                              )}
                               <span>{activityTitle(activity)}</span>
                             </div>
                             <time dateTime={activity.createdAt} className="text-xs text-neutral-500">
@@ -282,6 +371,40 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                             </div>
                           </div>
                         )}
+
+                        <div className="mt-4 border-t border-neutral-100 pt-3">
+                          <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('reactions')}>
+                            {reactionOptions.map((option) => {
+                              const count = reactionState.reactionCounts[option.type];
+                              const selected = reactionState.userReaction === option.type;
+
+                              return (
+                                <button
+                                  key={option.type}
+                                  type="button"
+                                  title={t(option.label)}
+                                  aria-label={`${t(option.label)} (${count})`}
+                                  aria-pressed={selected}
+                                  disabled={activity.wallActivityId === undefined || savingReactionId !== null}
+                                  onClick={() => handleReaction(activity, option.type)}
+                                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                                    selected
+                                      ? 'border-cyan-300 bg-cyan-50 font-bold text-cyan-800'
+                                      : 'border-neutral-200 bg-white text-neutral-700 hover:border-cyan-200 hover:bg-neutral-50'
+                                  }`}
+                                >
+                                  <span aria-hidden="true">{option.emoji}</span>
+                                  <span>{count > 0 ? count : t(option.label)}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                          {reactionErrorId === activity.wallActivityId && (
+                            <p role="alert" className="mt-2 text-xs font-medium text-red-600">
+                              {t('reactionError')}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </article>
                   );
@@ -313,6 +436,29 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
       </div>
     </main>
   );
+}
+
+function isReactionState(value: unknown): value is ReactionState {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as { reactionCounts?: unknown; userReaction?: unknown };
+  const counts = candidate.reactionCounts;
+  const validReaction = (reaction: unknown): reaction is ReactionType =>
+    reactionOptions.some((option) => option.type === reaction);
+
+  if (!counts || typeof counts !== 'object') return false;
+  const countValues = counts as Record<string, unknown>;
+  return Boolean(
+      reactionOptions.every(({ type }) => typeof countValues[type] === 'number') &&
+      (candidate.userReaction === null || validReaction(candidate.userReaction))
+  );
+}
+
+function isReactionResponse(value: unknown): value is {
+  success: boolean;
+  data?: unknown;
+  error?: { message?: string };
+} {
+  return Boolean(value && typeof value === 'object' && 'success' in value);
 }
 
 function Stat({ icon, label }: { icon: React.ReactNode; label: string }) {
