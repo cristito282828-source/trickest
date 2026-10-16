@@ -243,7 +243,7 @@ const Appbar = () => {
       {/* User Block: badge compacto (solo score) en dashboard, card completo (avatar + nombre + score) fuera */}
       {session?.user && (
         <Link
-          href="/dashboard/skaters/profile"
+          href="/dashboard/muro"
           className="ml-2 md:ml-4 flex"
         >
           {/* Dashboard: badge compacto solo score */}

@@ -29,7 +29,7 @@ export async function generateMetadata() {
 export default async function SupplsPage({
   searchParams,
 }: {
-  searchParams: { nocache?: string; debug?: string };
+  searchParams: { nocache?: string; debug?: string; product?: string };
 }) {
   const t = await getTranslations('supplsPage');
   const skipCache = searchParams?.nocache === '1';
@@ -127,6 +127,7 @@ export default async function SupplsPage({
         {/* Canvas orbital con los productos */}
         {products.length > 0 && (
           <OrbitalCanvas
+            selectedProductSlug={searchParams?.product ?? null}
             products={products.map((p) => ({
               id: p.id,
               name: p.name,
@@ -156,4 +157,3 @@ export default async function SupplsPage({
     </div>
   );
 }
-

@@ -11,11 +11,12 @@ import { MdClose, MdCheck, MdShoppingCart, MdCheckCircle } from 'react-icons/md'
 
 interface OrbitalCanvasProps {
   products: OrbitalProduct[];
+  selectedProductSlug?: string | null;
 }
 
 const CANVAS_BG = '#0a0a0f'; // Casi negro con tinte morado muy sutil
 
-export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
+export default function OrbitalCanvas({ products, selectedProductSlug = null }: OrbitalCanvasProps) {
   const t = useTranslations('supplsPage');
   const { addItem, isInCart, getQuantity, items } = useCart();
 
@@ -37,6 +38,7 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
 
   const [anchored, setAnchored] = useState<OrbitalState | null>(null);
   const [imagesReady, setImagesReady] = useState(false);
+  const [selectionNotFound, setSelectionNotFound] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const [selectedVariationId, setSelectedVariationId] = useState<number | null>(null);
 
@@ -139,6 +141,14 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
         radius: 40,
       });
       engineRef.current = engine;
+      if (selectedProductSlug) {
+        const selectedProduct = engine.anchorProductBySlug(selectedProductSlug);
+        setAnchored(selectedProduct);
+        setSelectionNotFound(!selectedProduct);
+      } else {
+        setAnchored(null);
+        setSelectionNotFound(false);
+      }
 
       // Iniciar loop
       const animate = (timestamp: number) => {
@@ -188,7 +198,7 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
       resizeObserver.disconnect();
       engineRef.current = null;
     };
-  }, [products]);
+  }, [products, selectedProductSlug]);
 
   // Render del canvas con imágenes reales (Fase 2)
   const render = (
@@ -229,6 +239,19 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
         : isHovered
           ? baseRadius * 1.1
           : baseRadius;
+
+      if (isAnchored) {
+        const pulse = 3 + (Math.sin(Date.now() / 220) + 1) * 5;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, radius + pulse, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 62, 181, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = '#ff3eb5';
+        ctx.shadowBlur = 18;
+        ctx.stroke();
+        ctx.restore();
+      }
 
       // Glow si está hovered o anclado
       if (isHovered || isAnchored) {
@@ -366,6 +389,16 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
         ref={containerRef}
         className="absolute inset-0 overflow-hidden rounded-2xl border-2 border-accent-cyan-500/30"
       >
+        {selectedProductSlug && (
+          <div className="absolute left-1/2 top-4 z-10 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 rounded-xl border border-accent-pink-400/70 bg-neutral-950/90 px-4 py-3 text-center shadow-lg shadow-accent-pink-500/20 backdrop-blur-sm">
+            <p className="text-xs font-black uppercase tracking-wider text-accent-pink-300">
+              {selectionNotFound ? t('selectedProductNotFound') : t('productSelectedFromWall')}
+            </p>
+            {!selectionNotFound && (
+              <p className="mt-1 text-sm font-semibold text-white">{t('productSelectedPrompt')}</p>
+            )}
+          </div>
+        )}
         <canvas
           ref={canvasRef}
           onMouseMove={handleMouseMove}
@@ -389,7 +422,7 @@ export default function OrbitalCanvas({ products }: OrbitalCanvasProps) {
 
       {/* Panel de detalle cuando hay un producto anclado */}
       {anchored && (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-32 z-10 bg-neutral-900/95 backdrop-blur-md border-2 border-accent-pink-500 rounded-2xl p-6 w-[90vw] max-w-md shadow-2xl">
+        <div className="absolute bottom-4 left-1/2 z-10 max-h-[55%] w-[90vw] max-w-md -translate-x-1/2 overflow-y-auto rounded-2xl border-2 border-accent-pink-500 bg-neutral-900/95 p-5 shadow-2xl backdrop-blur-md md:p-6">
           <button
             type="button"
             onClick={() => {

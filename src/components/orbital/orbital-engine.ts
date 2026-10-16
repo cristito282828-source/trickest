@@ -212,6 +212,20 @@ export class OrbitalEngine {
     return target
   }
 
+  anchorProductBySlug(slug: string): OrbitalState | null {
+    const target = this.products.find((product) => product.product.slug === slug)
+    if (!target) return null
+
+    this.releaseAnchored()
+    target.anchored = true
+    target.x = this.width / 2
+    target.y = this.height / 2
+    target.vx = 0
+    target.vy = 0
+    this.anchoredId = target.id
+    return target
+  }
+
   /**
    * Maneja movimiento del mouse
    * Marca el producto bajo el cursor como hovered

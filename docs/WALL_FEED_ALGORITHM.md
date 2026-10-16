@@ -44,7 +44,7 @@ La fórmula no se implementa en esta etapa. Primero hay que decidir y medir la v
 - Desafíos: mostrar cuando existan y estén disponibles para la comunidad; no incluir borradores si se añade ese estado.
 - Envíos: mostrar únicamente aprobados y con video reproducible.
 - Spots: mostrar solo cuando el creador esté activo y tenga `showOnMap` habilitado; no exponer coordenadas exactas en la tarjeta.
-- Productos: anunciar como novedad solo productos publicados en los últimos 30 días de la categoría configurada para la tienda; enlazar directamente a la ficha externa y no anunciar como nuevos los productos antiguos del catálogo.
+- Productos: obtener la categoría configurada para la tienda, reservar hasta dos espacios entre las 24 actividades para que los productos sean visibles y enlazar directamente a la ficha externa. Los publicados en los últimos 30 días se marcan como nuevos; los anteriores aparecen como destacados, sin presentarlos como novedades.
 - Ocultar o excluir una actividad si su contenido de origen deja de ser visible.
 - Las reacciones del muro son distintas de los votos que evalúan envíos.
 

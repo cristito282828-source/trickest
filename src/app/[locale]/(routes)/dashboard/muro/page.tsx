@@ -14,6 +14,7 @@ import type { ExternalProduct } from '@/lib/woocommerce/types';
 export const dynamic = 'force-dynamic';
 
 const PRODUCT_ACTIVITY_WINDOW_DAYS = 30;
+const MAX_WALL_PRODUCT_ACTIVITIES = 2;
 const FEATURED_CATEGORY = process.env.WC_FEATURED_CATEGORY || 'trickest';
 const FEATURED_CATEGORY_IS_NUMERIC = /^\d+$/.test(FEATURED_CATEGORY);
 
@@ -119,18 +120,18 @@ export default async function CommunityWallPage() {
     (spot) => creatorsByEmail.get(spot.createdBy)?.showOnMap
   );
   const productCutoff = Date.now() - PRODUCT_ACTIVITY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
-  const recentProducts = (productsData?.products?.nodes ?? []).flatMap((product) => {
+  const productActivities = (productsData?.products?.nodes ?? []).flatMap((product) => {
     if (!Number.isInteger(product.databaseId) || product.databaseId <= 0 || !product.date) return [];
     const publishedAt = new Date(product.date);
-    if (
-      !Number.isFinite(publishedAt.getTime()) ||
-      publishedAt.getTime() < productCutoff ||
-      publishedAt.getTime() > Date.now()
-    ) return [];
-    return [{ product, createdAt: publishedAt.toISOString() }];
+    if (!Number.isFinite(publishedAt.getTime()) || publishedAt.getTime() > Date.now()) return [];
+    return [{
+      product,
+      createdAt: publishedAt.toISOString(),
+      isNew: publishedAt.getTime() >= productCutoff,
+    }];
   });
 
-  const activities = [
+  const allActivities = [
     ...recentUsers.map((user) => ({
       id: `user-${user.id}`,
       sourceType: WallActivityType.USER_JOINED,
@@ -170,16 +171,17 @@ export default async function CommunityWallPage() {
       level: challenge.level,
       points: challenge.points,
     })),
-    ...recentProducts.map(({ product, createdAt }) => ({
+    ...productActivities.map(({ product, createdAt, isNew }) => ({
       id: `product-${product.databaseId}`,
       sourceType: WallActivityType.PRODUCT_ADDED,
       sourceId: product.databaseId,
       type: 'product_added' as const,
       createdAt,
+      productIsNew: isNew,
       actor: { name: 'Trickest', photo: '/logo-icon.png', username: null, isOfficial: true },
       titleName: product.name,
       image: product.image?.sourceUrl || null,
-      productUrl: `https://toryskateshop.com/?product=${encodeURIComponent(product.slug)}`,
+      productSlug: product.slug,
     })),
     ...recentSubmissions
       .filter((submission) => submission.user)
@@ -217,8 +219,15 @@ export default async function CommunityWallPage() {
       };
     }),
   ]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 24);
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const prioritizedProductActivities = allActivities
+    .filter((activity) => activity.type === 'product_added')
+    .slice(0, MAX_WALL_PRODUCT_ACTIVITIES);
+  const otherActivities = allActivities.filter((activity) => activity.type !== 'product_added');
+  const activities = [
+    ...otherActivities.slice(0, 24 - prioritizedProductActivities.length),
+    ...prioritizedProductActivities,
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   await prisma.wallActivity.createMany({
     data: activities.map(({ sourceType, sourceId, createdAt }) => ({

@@ -48,7 +48,8 @@ interface Activity {
   level?: number;
   points?: number;
   videoUrl?: string;
-  productUrl?: string;
+  productSlug?: string;
+  productIsNew?: boolean;
   city?: string | null;
   country?: string;
   reactionCounts: Record<ReactionType, number>;
@@ -182,7 +183,9 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
       case 'spot_added':
         return t('spotAdded', { name: activity.actor.name });
       case 'product_added':
-        return t('productAdded', { name: activity.titleName });
+        return activity.productIsNew
+          ? t('productAdded', { name: activity.titleName })
+          : t('productFeatured', { name: activity.titleName });
     }
   };
 
@@ -393,25 +396,31 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                   className="object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                                <span className="absolute left-3 top-3 rounded-md bg-fuchsia-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                                  {activity.productIsNew ? t('newProduct') : t('featuredProductBadge')}
+                                </span>
                                 <div className="absolute inset-x-0 bottom-0 p-4">
                                   <p className="text-lg font-black text-white drop-shadow">{activity.titleName}</p>
                                 </div>
                               </div>
                             ) : (
                               <div className="p-4">
+                                <span className="mb-2 inline-block rounded-md bg-fuchsia-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                                  {activity.productIsNew ? t('newProduct') : t('featuredProductBadge')}
+                                </span>
                                 <p className="font-black text-neutral-900">{activity.titleName}</p>
                               </div>
                             )}
                             <div className="flex justify-end border-t border-fuchsia-100 bg-white p-3">
-                              <a
-                                href={activity.productUrl || '/suppls'}
-                                target={activity.productUrl ? '_blank' : undefined}
-                                rel={activity.productUrl ? 'noopener noreferrer' : undefined}
+                              <Link
+                                href={activity.productSlug
+                                  ? `/suppls?product=${encodeURIComponent(activity.productSlug)}`
+                                  : '/suppls'}
                                 className="inline-flex items-center gap-2 rounded-lg bg-fuchsia-700 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-fuchsia-800"
                               >
                                 <MdShoppingBag className="text-lg" />
                                 {t('viewProduct')}
-                              </a>
+                              </Link>
                             </div>
                           </div>
                         )}
