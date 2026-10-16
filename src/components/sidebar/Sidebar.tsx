@@ -1,14 +1,12 @@
 'use client'
 import React, { useMemo } from 'react'
 import { SidebarMenuItem } from './SidebarMenuItem';
-import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdSettings, MdShoppingCart } from "react-icons/md";
+import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdSettings, MdShoppingCart, MdDynamicFeed } from "react-icons/md";
 import { GiSkateboard } from "react-icons/gi";
 import { GiTrophy } from "react-icons/gi";
 import { FaVideo } from "react-icons/fa";
 import { useSession, signOut } from 'next-auth/react';
-import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
-import { Button } from '@/components/atoms';
 
 
 export const Sidebar = () => {
@@ -17,6 +15,12 @@ export const Sidebar = () => {
 
   // Menu items with translation keys
   const skaterMenuItems = useMemo(() => [
+    {
+      path: '/dashboard/muro',
+      icon: <MdDynamicFeed size={28} />,
+      title: t('menu.wall'),
+      subTitle: t('menu.communityActivity')
+    },
     {
       path: '/dashboard/skaters/profile',
       icon: <MdOutlineSkateboarding size={28} />,
@@ -63,6 +67,12 @@ export const Sidebar = () => {
 
   const judgeMenuItems = useMemo(() => [
     {
+      path: '/dashboard/muro',
+      icon: <MdDynamicFeed size={28} />,
+      title: t('menu.wall'),
+      subTitle: t('menu.communityActivity')
+    },
+    {
       path: '/dashboard/judges/evaluate',
       icon: <MdGavel size={28} />,
       title: t('menu.evaluate'),
@@ -95,6 +105,12 @@ export const Sidebar = () => {
   ], [t]);
 
   const adminMenuItems = useMemo(() => [
+    {
+      path: '/dashboard/muro',
+      icon: <MdDynamicFeed size={28} />,
+      title: t('menu.wall'),
+      subTitle: t('menu.communityActivity')
+    },
     {
       path: '/dashboard/skaters/profile',
       icon: <MdOutlineSkateboarding size={28} />,
@@ -161,15 +177,15 @@ export const Sidebar = () => {
   return (
     <div
       id="menu"
-      className="bg-neutral-900 h-full z-10 text-neutral-300 w-full lg:w-72 left-0 border-r-4 border-neutral-800 flex flex-col overflow-hidden"
+      className="relative z-10 flex h-full w-full flex-col overflow-hidden bg-[#f0f2f5] text-neutral-800 lg:w-72 lg:border-r lg:border-neutral-200"
     >
       <div className="overflow-y-auto flex-1">
         {/* Navigation menu */}
-        <div className="px-4 pb-4">
-          <p className="text-neutral-500 text-xs uppercase font-bold tracking-wider mb-3 px-2">
+        <div className="px-4 py-5">
+          <p className="mb-3 px-2 text-xs font-bold uppercase tracking-wider text-neutral-500">
             {t('sidebar.navigation')}
           </p>
-          <div className="space-y-2">
+          <div className="space-y-1">
             {menuItems.map(item => (
               <SidebarMenuItem key={item.path} {...item} />
             ))}
@@ -178,16 +194,14 @@ export const Sidebar = () => {
       </div>
 
       {/* Logout button - sticky at bottom */}
-      <div className="px-4 pb-6 pt-4 border-t-4 border-neutral-800 bg-neutral-900 shrink-0">
-        <Button
+      <div className="shrink-0 border-t border-neutral-200 bg-[#f0f2f5] px-4 py-4">
+        <button
           onClick={() => signOut({ callbackUrl: '/' })}
-          variant="danger"
-          size="md"
-          fullWidth
-          leftIcon={<MdLogout size={24} />}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-bold text-neutral-700 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
         >
+          <MdLogout size={20} />
           {t('auth.signOut')}
-        </Button>
+        </button>
       </div>
     </div>
   )

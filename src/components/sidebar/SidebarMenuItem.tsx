@@ -18,25 +18,21 @@ export const SidebarMenuItem = ({ path, icon, title, subTitle }: Props) => {
     return (
         <Link
             href={path}
-            className={`block rounded-lg transition-all duration-200 ${
+            className={`group block rounded-xl border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 ${
                 isActive
-                    ? 'bg-gradient-to-r from-accent-cyan-500 to-accent-purple-600 p-[2px] shadow-lg shadow-accent-cyan-500/30'
-                    : 'hover:bg-neutral-800'
+                    ? 'border-cyan-200 bg-cyan-50'
+                    : 'border-transparent hover:border-neutral-200 hover:bg-white'
             }`}
         >
             <div
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg ${
-                    isActive
-                        ? 'bg-neutral-900'
-                        : ''
-                }`}
+                className="flex items-center gap-3 rounded-xl px-3 py-3"
             >
                 {/* Icono */}
                 <div
-                    className={`${
+                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${
                         isActive
-                            ? 'text-accent-cyan-400'
-                            : 'text-neutral-500 group-hover:text-accent-cyan-400'
+                            ? 'bg-cyan-600 text-white'
+                            : 'bg-neutral-100 text-neutral-500 group-hover:bg-cyan-50 group-hover:text-cyan-700'
                     }`}
                 >
                     {icon}
@@ -45,10 +41,10 @@ export const SidebarMenuItem = ({ path, icon, title, subTitle }: Props) => {
                 {/* Texto */}
                 <div className="flex flex-col">
                     <span
-                        className={`text-sm font-black uppercase tracking-wide ${
+                        className={`text-sm font-bold ${
                             isActive
-                                ? 'text-transparent bg-clip-text bg-gradient-to-r from-accent-cyan-400 to-accent-purple-400'
-                                : 'text-neutral-300'
+                                ? 'text-cyan-900'
+                                : 'text-neutral-800'
                         }`}
                     >
                         {title}
@@ -56,7 +52,7 @@ export const SidebarMenuItem = ({ path, icon, title, subTitle }: Props) => {
                     <span
                         className={`text-xs ${
                             isActive
-                                ? 'text-accent-cyan-300'
+                                ? 'text-cyan-700'
                                 : 'text-neutral-500'
                         } hidden md:block`}
                     >

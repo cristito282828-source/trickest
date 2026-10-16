@@ -109,7 +109,7 @@ const SigninButton = () => {
           action: () => {
             handleMenu();
             isProfileComplete
-              ? (window.location.href = '/dashboard/skaters/profile')
+              ? (window.location.href = '/dashboard/muro')
               : handleModal();
           },
         },

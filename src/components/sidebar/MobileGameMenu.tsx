@@ -1,6 +1,6 @@
 'use client'
 import React, { useMemo, useState } from 'react'
-import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdShoppingCart } from "react-icons/md";
+import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdShoppingCart, MdDynamicFeed } from "react-icons/md";
 import { GiSkateboard } from "react-icons/gi";
 import { GiTrophy } from "react-icons/gi";
 import { FaVideo } from "react-icons/fa";
@@ -25,9 +25,9 @@ export const MobileGameMenu = () => {
   // Main navigation items (show 4 primary on bottom bar)
   const skaterMenuItems: MenuItem[] = useMemo(() => [
     {
-      path: '/dashboard/skaters/profile',
-      icon: <MdOutlineSkateboarding size={24} />,
-      title: t('menu.profile')
+      path: '/dashboard/muro',
+      icon: <MdDynamicFeed size={24} />,
+      title: t('menu.wall')
     },
     {
       path: '/dashboard/skaters/tricks',
@@ -48,6 +48,11 @@ export const MobileGameMenu = () => {
 
   const judgeMenuItems: MenuItem[] = useMemo(() => [
     {
+      path: '/dashboard/muro',
+      icon: <MdDynamicFeed size={24} />,
+      title: t('menu.wall')
+    },
+    {
       path: '/dashboard/judges/evaluate',
       icon: <MdGavel size={24} />,
       title: t('menu.evaluate')
@@ -58,11 +63,6 @@ export const MobileGameMenu = () => {
       title: t('menu.profile')
     },
     {
-      path: '/dashboard/skaters/tricks',
-      icon: <GiSkateboard size={24} />,
-      title: t('menu.tricks')
-    },
-    {
       path: '/dashboard/leaderboard',
       icon: <MdLeaderboard size={24} />,
       title: t('menu.ranking')
@@ -71,14 +71,14 @@ export const MobileGameMenu = () => {
 
   const adminMenuItems: MenuItem[] = useMemo(() => [
     {
+      path: '/dashboard/muro',
+      icon: <MdDynamicFeed size={24} />,
+      title: t('menu.wall')
+    },
+    {
       path: '/dashboard/admin/users',
       icon: <MdAdminPanelSettings size={24} />,
       title: t('menu.users')
-    },
-    {
-      path: '/dashboard/admin/challenges',
-      icon: <GiSkateboard size={24} />,
-      title: t('menu.challenges')
     },
     {
       path: '/dashboard/judges/evaluate',
@@ -99,6 +99,16 @@ export const MobileGameMenu = () => {
     if (userRole === 'admin') {
       return [
         {
+          path: '/dashboard/skaters/profile',
+          icon: <MdOutlineSkateboarding size={24} />,
+          title: t('menu.profile')
+        },
+        {
+          path: '/dashboard/admin/challenges',
+          icon: <GiSkateboard size={24} />,
+          title: t('menu.challenges')
+        },
+        {
           path: '/dashboard/admin/orders',
           icon: <MdShoppingCart size={24} />,
           title: t('menu.orders')
@@ -117,6 +127,16 @@ export const MobileGameMenu = () => {
     } else if (userRole === 'judge') {
       return [
         {
+          path: '/dashboard/skaters/tricks',
+          icon: <GiSkateboard size={24} />,
+          title: t('menu.tricks')
+        },
+        {
+          path: '/dashboard/skaters/profile',
+          icon: <MdOutlineSkateboarding size={24} />,
+          title: t('menu.profile')
+        },
+        {
           path: '/dashboard/teams',
           icon: <MdGroups size={24} />,
           title: t('menu.teams')
@@ -124,6 +144,11 @@ export const MobileGameMenu = () => {
       ];
     } else {
       return [
+        {
+          path: '/dashboard/skaters/profile',
+          icon: <MdOutlineSkateboarding size={24} />,
+          title: t('menu.profile')
+        },
         {
           path: '/dashboard/skaters/orders',
           icon: <MdShoppingCart size={24} />,
