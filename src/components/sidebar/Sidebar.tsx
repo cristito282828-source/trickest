@@ -1,7 +1,7 @@
 'use client'
 import React, { useMemo } from 'react'
 import { SidebarMenuItem } from './SidebarMenuItem';
-import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdSettings, MdShoppingCart, MdDynamicFeed } from "react-icons/md";
+import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdSettings, MdShoppingCart, MdDynamicFeed, MdSportsScore } from "react-icons/md";
 import { GiSkateboard } from "react-icons/gi";
 import { GiTrophy } from "react-icons/gi";
 import { FaVideo } from "react-icons/fa";
@@ -32,6 +32,12 @@ export const Sidebar = () => {
       icon: <GiSkateboard size={28} />,
       title: t('menu.tricks'),
       subTitle: t('menu.inProgress')
+    },
+    {
+      path: '/dashboard/skate-games',
+      icon: <MdSportsScore size={28} />,
+      title: t('menu.skateGames'),
+      subTitle: t('menu.skateGamesSubtitle')
     },
     {
       path: '/dashboard/skaters/submissions',
@@ -91,6 +97,12 @@ export const Sidebar = () => {
       subTitle: t('menu.asSkater')
     },
     {
+      path: '/dashboard/skate-games',
+      icon: <MdSportsScore size={28} />,
+      title: t('menu.skateGames'),
+      subTitle: t('menu.skateGamesSubtitle')
+    },
+    {
       path: '/dashboard/leaderboard',
       icon: <MdLeaderboard size={28} />,
       title: t('menu.ranking'),
@@ -128,6 +140,12 @@ export const Sidebar = () => {
       icon: <GiSkateboard size={28} />,
       title: t('menu.challenges'),
       subTitle: t('menu.manage')
+    },
+    {
+      path: '/dashboard/skate-games',
+      icon: <MdSportsScore size={28} />,
+      title: t('menu.skateGames'),
+      subTitle: t('menu.skateGamesSubtitle')
     },
     {
       path: '/dashboard/admin/orders',

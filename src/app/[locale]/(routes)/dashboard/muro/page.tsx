@@ -4,8 +4,18 @@ import { WallActivityType } from '@prisma/client';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/app/lib/prisma';
 import CommunityWall from '@/components/CommunityWall';
+import { graphqlFetch } from '@/lib/woocommerce/graphql-client';
+import {
+  RECENT_PRODUCTS_BY_CATEGORY_ID_QUERY,
+  RECENT_PRODUCTS_QUERY,
+} from '@/lib/woocommerce/queries';
+import type { ExternalProduct } from '@/lib/woocommerce/types';
 
 export const dynamic = 'force-dynamic';
+
+const PRODUCT_ACTIVITY_WINDOW_DAYS = 30;
+const FEATURED_CATEGORY = process.env.WC_FEATURED_CATEGORY || 'trickest';
+const FEATURED_CATEGORY_IS_NUMERIC = /^\d+$/.test(FEATURED_CATEGORY);
 
 export default async function CommunityWallPage() {
   const session = await getServerSession(authOptions);
@@ -22,6 +32,7 @@ export default async function CommunityWallPage() {
     recentChallenges,
     recentSubmissions,
     recentSpots,
+    productsData,
     memberCount,
     teamCount,
     challengeCount,
@@ -51,7 +62,7 @@ export default async function CommunityWallPage() {
     prisma.challenge.findMany({
       orderBy: { createdAt: 'desc' },
       take: 8,
-      select: { id: true, name: true, level: true, points: true, createdAt: true },
+      select: { id: true, name: true, imageUrl: true, level: true, points: true, createdAt: true },
     }),
     prisma.submission.findMany({
       where: {
@@ -83,6 +94,17 @@ export default async function CommunityWallPage() {
         createdBy: true,
       },
     }),
+    FEATURED_CATEGORY_IS_NUMERIC
+      ? graphqlFetch<{ products: { nodes: ExternalProduct[] } }>(
+          RECENT_PRODUCTS_BY_CATEGORY_ID_QUERY,
+          { categoryId: Number(FEATURED_CATEGORY), first: 20 },
+          3600
+        )
+      : graphqlFetch<{ products: { nodes: ExternalProduct[] } }>(
+          RECENT_PRODUCTS_QUERY,
+          { category: FEATURED_CATEGORY, first: 20 },
+          3600
+        ),
     prisma.user.count({ where: { isActive: true } }),
     prisma.team.count({ where: { isActive: true } }),
     prisma.challenge.count(),
@@ -96,6 +118,17 @@ export default async function CommunityWallPage() {
   const visibleSpots = recentSpots.filter(
     (spot) => creatorsByEmail.get(spot.createdBy)?.showOnMap
   );
+  const productCutoff = Date.now() - PRODUCT_ACTIVITY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+  const recentProducts = (productsData?.products?.nodes ?? []).flatMap((product) => {
+    if (!Number.isInteger(product.databaseId) || product.databaseId <= 0 || !product.date) return [];
+    const publishedAt = new Date(product.date);
+    if (
+      !Number.isFinite(publishedAt.getTime()) ||
+      publishedAt.getTime() < productCutoff ||
+      publishedAt.getTime() > Date.now()
+    ) return [];
+    return [{ product, createdAt: publishedAt.toISOString() }];
+  });
 
   const activities = [
     ...recentUsers.map((user) => ({
@@ -131,10 +164,22 @@ export default async function CommunityWallPage() {
       sourceId: challenge.id,
       type: 'challenge_created' as const,
       createdAt: challenge.createdAt.toISOString(),
-      actor: { name: 'Trickest', photo: null, username: null },
+      actor: { name: 'Trickest', photo: '/logo-icon.png', username: null, isOfficial: true },
       titleName: challenge.name,
+      image: challenge.imageUrl,
       level: challenge.level,
       points: challenge.points,
+    })),
+    ...recentProducts.map(({ product, createdAt }) => ({
+      id: `product-${product.databaseId}`,
+      sourceType: WallActivityType.PRODUCT_ADDED,
+      sourceId: product.databaseId,
+      type: 'product_added' as const,
+      createdAt,
+      actor: { name: 'Trickest', photo: '/logo-icon.png', username: null, isOfficial: true },
+      titleName: product.name,
+      image: product.image?.sourceUrl || null,
+      productUrl: `https://toryskateshop.com/?product=${encodeURIComponent(product.slug)}`,
     })),
     ...recentSubmissions
       .filter((submission) => submission.user)
@@ -194,7 +239,7 @@ export default async function CommunityWallPage() {
     select: { id: true, type: true, sourceId: true },
   });
   const activityIds = wallActivities.map((activity) => activity.id);
-  const [reactionGroups, userReactions] = activityIds.length
+  const [reactionGroups, userReactions, commentGroups] = activityIds.length
     ? await Promise.all([
         prisma.wallReaction.groupBy({
           by: ['activityId', 'type'],
@@ -205,8 +250,13 @@ export default async function CommunityWallPage() {
           where: { activityId: { in: activityIds }, userId: email },
           select: { activityId: true, type: true },
         }),
+        prisma.wallComment.groupBy({
+          by: ['activityId'],
+          where: { activityId: { in: activityIds } },
+          _count: { _all: true },
+        }),
       ])
-    : [[], []];
+    : [[], [], []];
 
   const wallActivityIdsBySource = new Map(
     wallActivities.map((activity) => [`${activity.type}:${activity.sourceId}`, activity.id])
@@ -222,6 +272,9 @@ export default async function CommunityWallPage() {
   const userReactionByActivity = new Map(
     userReactions.map((reaction) => [reaction.activityId, reaction.type])
   );
+  const commentCountsByActivity = new Map(
+    commentGroups.map((group) => [group.activityId, group._count._all])
+  );
 
   const activitiesWithReactions = activities.map((activity) => {
     const key = `${activity.sourceType}:${activity.sourceId}`;
@@ -231,6 +284,7 @@ export default async function CommunityWallPage() {
     return {
       ...activity,
       wallActivityId,
+      commentCount: wallActivityId ? commentCountsByActivity.get(wallActivityId) ?? 0 : 0,
       reactionCounts: {
         LIKE: counts.LIKE ?? 0,
         LOVE: counts.LOVE ?? 0,

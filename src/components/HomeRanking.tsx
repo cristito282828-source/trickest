@@ -20,6 +20,8 @@ interface RankingUser {
   } | null;
   totalScore: number;
   challengesCompleted: number;
+  skateGamesWon: number;
+  skateGamesLost: number;
 }
 
 interface RankingTeam {
@@ -258,6 +260,9 @@ export default function HomeRanking() {
                         </span>
                       )}
                     </div>
+                    <p className="mt-1 text-[10px] font-bold text-cyan-200">
+                      {t('skateGameRecord', { wins: user.skateGamesWon, losses: user.skateGamesLost })}
+                    </p>
                   </div>
 
                   {/* Score - Más pequeño */}

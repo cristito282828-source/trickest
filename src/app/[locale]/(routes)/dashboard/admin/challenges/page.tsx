@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { Card, CardBody, CardHeader } from '@nextui-org/react';
+import Image from 'next/image';
 import { Input } from '@nextui-org/react';
 import { Textarea } from '@nextui-org/react';
 import { Select, SelectItem } from '@nextui-org/react';
@@ -15,6 +16,7 @@ interface Challenge {
   level: number;
   name: string;
   description: string;
+  imageUrl: string | null;
   difficulty: string;
   points: number;
   demoVideoUrl: string;
@@ -32,11 +34,15 @@ export default function AdminChallengesPage() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState('');
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [editingChallenge, setEditingChallenge] = useState<Challenge | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    imageUrl: '',
     difficulty: 'easy',
     points: 100,
     demoVideoUrl: '',
@@ -63,9 +69,11 @@ export default function AdminChallengesPage() {
 
   const openCreateModal = () => {
     setEditingChallenge(null);
+    setImageError('');
     setFormData({
       name: '',
       description: '',
+      imageUrl: '',
       difficulty: 'easy',
       points: 100,
       demoVideoUrl: '',
@@ -76,9 +84,11 @@ export default function AdminChallengesPage() {
 
   const openEditModal = (challenge: Challenge) => {
     setEditingChallenge(challenge);
+    setImageError('');
     setFormData({
       name: challenge.name,
       description: challenge.description,
+      imageUrl: challenge.imageUrl || '',
       difficulty: challenge.difficulty,
       points: challenge.points,
       demoVideoUrl: challenge.demoVideoUrl,
@@ -87,7 +97,52 @@ export default function AdminChallengesPage() {
     onOpen();
   };
 
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setImageError(t('imageTypeError'));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError(t('imageSizeError'));
+      return;
+    }
+
+    setUploadingImage(true);
+    setImageError('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/upload/challenge-image', {
+        method: 'POST',
+        body: formData,
+      });
+      const result: unknown = await response.json();
+      if (!response.ok || !isImageUploadResponse(result)) {
+        throw new Error(
+          isImageUploadResponse(result) && result.error
+            ? result.error
+            : t('imageUploadError')
+        );
+      }
+      setFormData((previous) => ({ ...previous, imageUrl: result.url }));
+    } catch (error) {
+      console.error('Error uploading challenge image:', error);
+      setImageError(error instanceof Error ? error.message : t('imageUploadError'));
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleSubmit = async () => {
+    if (uploadingImage) return;
+    if (!editingChallenge && !formData.imageUrl) {
+      setImageError(t('imageRequired'));
+      return;
+    }
     setSaving(true);
     try {
       const url = '/api/admin/challenges';
@@ -348,6 +403,60 @@ export default function AdminChallengesPage() {
                 />
               </div>
 
+              <div>
+                <label className="mb-3 block text-sm font-bold uppercase tracking-wider text-neutral-300">
+                  {t('challengeImage')}
+                </label>
+                {formData.imageUrl ? (
+                  <div className="relative mb-3 aspect-square w-full max-w-md overflow-hidden rounded-xl border-2 border-neutral-600 bg-neutral-800">
+                    <Image
+                      src={formData.imageUrl}
+                      alt={formData.name || t('challengeImage')}
+                      fill
+                      unoptimized
+                      sizes="(max-width: 768px) 100vw, 700px"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="mb-3 flex aspect-square w-full max-w-md items-center justify-center rounded-xl border-2 border-dashed border-neutral-600 bg-neutral-800 px-4 text-center text-sm text-neutral-400">
+                    {t('challengeImageHint')}
+                  </div>
+                )}
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current?.click()}
+                    disabled={uploadingImage}
+                    className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-cyan-700 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {uploadingImage ? t('imageUploading') : t('chooseChallengeImage')}
+                  </button>
+                  {formData.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((previous) => ({ ...previous, imageUrl: '' }));
+                        setImageError('');
+                      }}
+                      disabled={uploadingImage}
+                      className="rounded-lg px-3 py-2 text-sm font-semibold text-neutral-300 hover:bg-neutral-700 disabled:opacity-60"
+                    >
+                      {t('removeChallengeImage')}
+                    </button>
+                  )}
+                  <span className="text-xs text-neutral-400">{t('challengeImageFormats')}</span>
+                </div>
+                {imageError && <p role="alert" className="mt-2 text-sm text-red-400">{imageError}</p>}
+              </div>
+
               {/* Difficulty and Points */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
@@ -441,7 +550,7 @@ export default function AdminChallengesPage() {
             </Button>
             <Button
               onClick={handleSubmit}
-              isLoading={saving}
+              isLoading={saving || uploadingImage}
               variant="primary"
               size="lg"
             >
@@ -452,4 +561,12 @@ export default function AdminChallengesPage() {
       </Modal>
     </div>
   );
+}
+
+function isImageUploadResponse(
+  value: unknown
+): value is { success: true; url: string; error?: string } {
+  if (!value || typeof value !== 'object') return false;
+  const result = value as { success?: unknown; url?: unknown; error?: unknown };
+  return result.success === true && typeof result.url === 'string';
 }

@@ -40,6 +40,7 @@ export interface ExternalProduct {
   databaseId: number;
   name: string;
   slug: string;
+  date?: string | null;
   price: string | null;
   regularPrice?: string | null;
   salePrice?: string | null;

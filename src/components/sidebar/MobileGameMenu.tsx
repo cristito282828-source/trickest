@@ -1,6 +1,6 @@
 'use client'
 import React, { useMemo, useState } from 'react'
-import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdShoppingCart, MdDynamicFeed } from "react-icons/md";
+import { MdOutlineSkateboarding, MdGavel, MdAdminPanelSettings, MdLeaderboard, MdGroups, MdLogout, MdShoppingCart, MdDynamicFeed, MdSportsScore } from "react-icons/md";
 import { GiSkateboard } from "react-icons/gi";
 import { GiTrophy } from "react-icons/gi";
 import { FaVideo } from "react-icons/fa";
@@ -56,6 +56,11 @@ export const MobileGameMenu = () => {
       path: '/dashboard/judges/evaluate',
       icon: <MdGavel size={24} />,
       title: t('menu.evaluate')
+    },
+    {
+      path: '/dashboard/skate-games',
+      icon: <MdSportsScore size={24} />,
+      title: t('menu.skateGames')
     },
     {
       path: '/dashboard/skaters/profile',
@@ -122,6 +127,11 @@ export const MobileGameMenu = () => {
           path: '/dashboard/teams',
           icon: <MdGroups size={24} />,
           title: t('menu.teams')
+        },
+        {
+          path: '/dashboard/skate-games',
+          icon: <MdSportsScore size={24} />,
+          title: t('menu.skateGames')
         }
       ];
     } else if (userRole === 'judge') {
@@ -130,6 +140,11 @@ export const MobileGameMenu = () => {
           path: '/dashboard/skaters/tricks',
           icon: <GiSkateboard size={24} />,
           title: t('menu.tricks')
+        },
+        {
+          path: '/dashboard/skate-games',
+          icon: <MdSportsScore size={24} />,
+          title: t('menu.skateGames')
         },
         {
           path: '/dashboard/skaters/profile',
@@ -144,6 +159,11 @@ export const MobileGameMenu = () => {
       ];
     } else {
       return [
+        {
+          path: '/dashboard/skate-games',
+          icon: <MdSportsScore size={24} />,
+          title: t('menu.skateGames')
+        },
         {
           path: '/dashboard/skaters/profile',
           icon: <MdOutlineSkateboarding size={24} />,

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { createSlug } from '@/lib/utils/slug';
+import WallComments from '@/components/WallComments';
 import {
   MdCampaign,
   MdEmojiEvents,
@@ -12,6 +13,7 @@ import {
   MdLocationOn,
   MdOutlinePlayCircle,
   MdPersonAddAlt1,
+  MdShoppingBag,
   MdSkateboarding,
 } from 'react-icons/md';
 
@@ -20,7 +22,8 @@ type ActivityType =
   | 'team_created'
   | 'challenge_created'
   | 'submission_approved'
-  | 'spot_added';
+  | 'spot_added'
+  | 'product_added';
 
 type ReactionType = 'LIKE' | 'LOVE' | 'LAUGH' | 'WOW' | 'ANGRY';
 
@@ -34,16 +37,23 @@ interface Activity {
   wallActivityId: number | undefined;
   type: ActivityType;
   createdAt: string;
-  actor: { name: string; photo: string | null; username: string | null };
+  actor: {
+    name: string;
+    photo: string | null;
+    username: string | null;
+    isOfficial?: boolean;
+  };
   titleName: string;
   image?: string | null;
   level?: number;
   points?: number;
   videoUrl?: string;
+  productUrl?: string;
   city?: string | null;
   country?: string;
   reactionCounts: Record<ReactionType, number>;
   userReaction: ReactionType | null;
+  commentCount: number;
 }
 
 interface CommunityWallProps {
@@ -52,7 +62,7 @@ interface CommunityWallProps {
   currentUser: { name: string; photo: string | null };
 }
 
-type Filter = 'all' | 'community' | 'challenges' | 'videos';
+type Filter = 'all' | 'community' | 'challenges' | 'videos' | 'products';
 
 const activityStyles: Record<ActivityType, { icon: typeof MdCampaign; color: string }> = {
   user_joined: { icon: MdPersonAddAlt1, color: 'bg-sky-100 text-sky-700' },
@@ -60,6 +70,7 @@ const activityStyles: Record<ActivityType, { icon: typeof MdCampaign; color: str
   challenge_created: { icon: MdEmojiEvents, color: 'bg-amber-100 text-amber-700' },
   submission_approved: { icon: MdOutlinePlayCircle, color: 'bg-emerald-100 text-emerald-700' },
   spot_added: { icon: MdLocationOn, color: 'bg-rose-100 text-rose-700' },
+  product_added: { icon: MdShoppingBag, color: 'bg-fuchsia-100 text-fuchsia-700' },
 };
 
 const reactionOptions: { type: ReactionType; emoji: string; label: `reaction${string}` }[] = [
@@ -75,17 +86,33 @@ const emptyReactionState: ReactionState = {
   userReaction: null,
 };
 
-function Avatar({ photo, name, size = 44 }: { photo: string | null; name: string; size?: number }) {
+function Avatar({
+  photo,
+  name,
+  size = 44,
+  isOfficial = false,
+}: {
+  photo: string | null;
+  name: string;
+  size?: number;
+  isOfficial?: boolean;
+}) {
   return photo ? (
-    <Image
-      src={photo}
-      alt={name}
-      width={size}
-      height={size}
-      unoptimized
-      className="h-11 w-11 rounded-full object-cover"
+    <span
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full ${
+        isOfficial ? 'border-2 border-cyan-600 bg-neutral-900 p-1' : ''
+      }`}
       style={{ width: size, height: size }}
-    />
+    >
+      <Image
+        src={photo}
+        alt={name}
+        width={size}
+        height={size}
+        unoptimized
+        className={`h-full w-full rounded-full ${isOfficial ? 'object-contain' : 'object-cover'}`}
+      />
+    </span>
   ) : (
     <div
       className="flex shrink-0 items-center justify-center rounded-full bg-neutral-200 font-black text-neutral-600"
@@ -119,6 +146,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
     if (filter === 'all') return true;
     if (filter === 'challenges') return activity.type === 'challenge_created';
     if (filter === 'videos') return activity.type === 'submission_approved';
+    if (filter === 'products') return activity.type === 'product_added';
     return activity.type === 'user_joined' || activity.type === 'team_created' || activity.type === 'spot_added';
   }), [activities, filter]);
 
@@ -127,6 +155,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
     { id: 'community', label: t('community') },
     { id: 'challenges', label: t('challenges') },
     { id: 'videos', label: t('videos') },
+    { id: 'products', label: t('products') },
   ];
 
   const formatTime = (date: string) => {
@@ -152,6 +181,8 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
         return t('submissionApproved', { name: activity.actor.name });
       case 'spot_added':
         return t('spotAdded', { name: activity.actor.name });
+      case 'product_added':
+        return t('productAdded', { name: activity.titleName });
     }
   };
 
@@ -271,10 +302,18 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         <div className="flex items-start gap-3">
                           {href ? (
                             <Link href={href} aria-label={t('openProfile')}>
-                              <Avatar photo={activity.actor.photo} name={activity.actor.name} />
+                              <Avatar
+                                photo={activity.actor.photo}
+                                name={activity.actor.name}
+                                isOfficial={activity.actor.isOfficial}
+                              />
                             </Link>
                           ) : (
-                            <Avatar photo={activity.actor.photo} name={activity.actor.name} />
+                            <Avatar
+                              photo={activity.actor.photo}
+                              name={activity.actor.name}
+                              isOfficial={activity.actor.isOfficial}
+                            />
                           )}
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-x-1 text-sm text-neutral-800">
@@ -284,6 +323,11 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                 </Link>
                               ) : (
                                 <span className="font-extrabold">{activity.actor.name}</span>
+                              )}
+                              {activity.actor.isOfficial && (
+                                <span className="rounded-full bg-cyan-100 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-cyan-800">
+                                  {t('official')}
+                                </span>
                               )}
                               <span>{activityTitle(activity)}</span>
                             </div>
@@ -297,11 +341,78 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         </div>
 
                         {activity.type === 'challenge_created' && (
-                          <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 p-4">
-                            <p className="font-black text-neutral-900">{activity.titleName}</p>
-                            <p className="mt-1 text-sm font-semibold text-amber-800">
-                              {t('challengeLevel', { level: activity.level ?? 0, points: activity.points ?? 0 })}
-                            </p>
+                          <div className="mt-4 overflow-hidden rounded-xl border border-amber-100 bg-amber-50">
+                            {activity.image ? (
+                              <div className="relative aspect-square w-full bg-neutral-900">
+                                <Image
+                                  src={activity.image}
+                                  alt={activity.titleName}
+                                  fill
+                                  unoptimized
+                                  sizes="(max-width: 1024px) 100vw, 700px"
+                                  className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                                <div className="absolute inset-x-0 bottom-0 p-4">
+                                  <p className="text-lg font-black text-white drop-shadow">{activity.titleName}</p>
+                                  <p className="mt-1 text-sm font-semibold text-amber-200">
+                                    {t('challengeLevel', { level: activity.level ?? 0, points: activity.points ?? 0 })}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="p-4">
+                                <p className="font-black text-neutral-900">{activity.titleName}</p>
+                                <p className="mt-1 text-sm font-semibold text-amber-800">
+                                  {t('challengeLevel', { level: activity.level ?? 0, points: activity.points ?? 0 })}
+                                </p>
+                              </div>
+                            )}
+                            <div className="flex justify-end border-t border-amber-100 bg-white p-3">
+                              <Link
+                                href={`/dashboard/skaters/tricks/${encodeURIComponent(activity.titleName)}`}
+                                className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-amber-600"
+                              >
+                                <MdSkateboarding className="text-lg" />
+                                {t('playChallenge')}
+                              </Link>
+                            </div>
+                          </div>
+                        )}
+
+                        {activity.type === 'product_added' && (
+                          <div className="mt-4 overflow-hidden rounded-xl border border-fuchsia-100 bg-fuchsia-50">
+                            {activity.image ? (
+                              <div className="relative aspect-square w-full bg-neutral-900">
+                                <Image
+                                  src={activity.image}
+                                  alt={activity.titleName}
+                                  fill
+                                  unoptimized
+                                  sizes="(max-width: 1024px) 100vw, 700px"
+                                  className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+                                <div className="absolute inset-x-0 bottom-0 p-4">
+                                  <p className="text-lg font-black text-white drop-shadow">{activity.titleName}</p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="p-4">
+                                <p className="font-black text-neutral-900">{activity.titleName}</p>
+                              </div>
+                            )}
+                            <div className="flex justify-end border-t border-fuchsia-100 bg-white p-3">
+                              <a
+                                href={activity.productUrl || '/suppls'}
+                                target={activity.productUrl ? '_blank' : undefined}
+                                rel={activity.productUrl ? 'noopener noreferrer' : undefined}
+                                className="inline-flex items-center gap-2 rounded-lg bg-fuchsia-700 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-fuchsia-800"
+                              >
+                                <MdShoppingBag className="text-lg" />
+                                {t('viewProduct')}
+                              </a>
+                            </div>
                           </div>
                         )}
 
@@ -405,6 +516,10 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                             </p>
                           )}
                         </div>
+                        <WallComments
+                          activityId={activity.wallActivityId}
+                          initialCount={activity.commentCount}
+                        />
                       </div>
                     </article>
                   );

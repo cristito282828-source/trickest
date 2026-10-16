@@ -8,6 +8,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
@@ -58,6 +59,16 @@ model User {
   threadProposals     ThreadProposal[] // Propuestas que el usuario creó en hilos
   threadProposalVotes ThreadProposalVote[] // Votos del usuario a propuestas de hilos
   wallReactions       WallReaction[]
+  wallComments        WallComment[]
+  skateGamesCreated   SkateGame[]          @relation("SkateGameChallenger")
+  skateGamesReceived  SkateGame[]          @relation("SkateGameOpponent")
+  skateGamesJudged    SkateGame[]          @relation("SkateGameJudge")
+  skateGameWins       SkateGame[]          @relation("SkateGameWinner")
+  skateGameLosses     SkateGame[]          @relation("SkateGameLoser")
+  skateGameTurns      SkateGameTurn[]
+  skateGameCheckIns   SkateGameCheckIn[]
+  skateGameRatingsGiven SkateGameRating[]   @relation("SkateGameRatingRater")
+  skateGameRatingsReceived SkateGameRating[] @relation("SkateGameRatingJudge")
 }
 
 model SocialMedia {
@@ -88,6 +99,7 @@ model Challenge {
   level        Int // Nivel del reto (1-10, 0 para bonus)
   name         String // Nombre del truco (ej: "Ollie", "Kickflip")
   description  String // Descripción del truco
+  imageUrl     String? // Imagen representativa del desafío
   demoVideoUrl String // URL del video demo (YouTube)
   isBonus      Boolean      @default(false) // Si es un nivel bonus
   difficulty   String // "easy", "medium", "hard", "expert"
@@ -278,6 +290,7 @@ model WallActivity {
   sourceId   Int
   createdAt  DateTime          @default(now())
   reactions  WallReaction[]
+  comments   WallComment[]
 
   @@unique([type, sourceId])
   @@index([createdAt])
@@ -296,6 +309,119 @@ model WallReaction {
 
   @@unique([activityId, userId])
   @@index([activityId, type])
+}
+
+model WallComment {
+  id              Int           @id @default(autoincrement())
+  activityId      Int
+  userId          String
+  parentCommentId Int?
+  content         String        @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  activity      WallActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user          User         @relation(fields: [userId], references: [email], onDelete: Cascade)
+  parentComment WallComment? @relation("WallCommentReplies", fields: [parentCommentId], references: [id], onDelete: Cascade)
+  replies       WallComment[] @relation("WallCommentReplies")
+
+  @@index([activityId, parentCommentId, createdAt])
+  @@index([userId])
+}
+
+enum SkateGameStatus {
+  PENDING_ACCEPTANCE
+  READY
+  IN_PROGRESS
+  AWAITING_REPORT
+  COMPLETED
+  CANCELLED
+}
+
+model SkateGame {
+  id                    Int             @id @default(autoincrement())
+  challengerId          String
+  opponentId            String
+  judgeId               String
+  spotId                Int?
+  status                SkateGameStatus @default(PENDING_ACCEPTANCE)
+  challengerAcceptedAt  DateTime        @default(now())
+  opponentAcceptedAt    DateTime?
+  judgeAcceptedAt       DateTime?
+  startedAt             DateTime?
+  completedAt           DateTime?
+  challengerLetters     String          @default("")
+  opponentLetters       String          @default("")
+  winnerId              String?
+  loserId               String?
+  judgeReport           String?         @db.Text
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  challenger User               @relation("SkateGameChallenger", fields: [challengerId], references: [email], onDelete: Restrict)
+  opponent   User               @relation("SkateGameOpponent", fields: [opponentId], references: [email], onDelete: Restrict)
+  judge      User               @relation("SkateGameJudge", fields: [judgeId], references: [email], onDelete: Restrict)
+  winner     User?              @relation("SkateGameWinner", fields: [winnerId], references: [email], onDelete: Restrict)
+  loser      User?              @relation("SkateGameLoser", fields: [loserId], references: [email], onDelete: Restrict)
+  spot       Spot?              @relation(fields: [spotId], references: [id], onDelete: Restrict)
+  turns      SkateGameTurn[]
+  checkIns   SkateGameCheckIn[]
+  ratings    SkateGameRating[]
+
+  @@index([challengerId, status])
+  @@index([opponentId, status])
+  @@index([judgeId, status])
+  @@index([winnerId, status])
+  @@index([spotId])
+}
+
+model SkateGameTurn {
+  id               Int      @id @default(autoincrement())
+  gameId           Int
+  turnNumber       Int
+  attemptedBy      String
+  trickName        String
+  landed           Boolean
+  letterAwardedTo  String?
+  judgeNote        String?  @db.Text
+  createdAt        DateTime @default(now())
+
+  game        SkateGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player      User      @relation(fields: [attemptedBy], references: [email], onDelete: Restrict)
+
+  @@unique([gameId, turnNumber])
+  @@index([gameId, createdAt])
+}
+
+model SkateGameCheckIn {
+  id              Int      @id @default(autoincrement())
+  gameId          Int
+  userId          String
+  accuracyMeters  Float
+  checkedInAt     DateTime @default(now())
+
+  game SkateGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [email], onDelete: Restrict)
+
+  @@unique([gameId, userId])
+  @@index([gameId, checkedInAt])
+}
+
+model SkateGameRating {
+  id        Int      @id @default(autoincrement())
+  gameId    Int
+  raterId   String
+  judgeId   String
+  score     Int
+  comment   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  game  SkateGame @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  rater User      @relation("SkateGameRatingRater", fields: [raterId], references: [email], onDelete: Restrict)
+  judge User      @relation("SkateGameRatingJudge", fields: [judgeId], references: [email], onDelete: Restrict)
+
+  @@unique([gameId, raterId])
+  @@index([judgeId, score])
 }
 
 model AppSettings {
@@ -358,6 +484,7 @@ model Spot {
   photos_records SpotPhoto[]      @relation("SpotPhotos")
   reports        SpotReport[]
   comments       SpotComment[]
+  skateGames     SkateGame[]
 
   @@index([type])
   @@index([city])
@@ -702,6 +829,7 @@ enum WallActivityType {
   CHALLENGE_CREATED
   SUBMISSION_APPROVED
   SPOT_ADDED
+  PRODUCT_ADDED
 }
 
 enum WallReactionType {

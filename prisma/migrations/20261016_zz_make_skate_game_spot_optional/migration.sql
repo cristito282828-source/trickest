@@ -1,0 +1,1 @@
+ALTER TABLE "SkateGame" ALTER COLUMN "spotId" DROP NOT NULL;

@@ -8,16 +8,17 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get('limit') || '100');
     const offset = parseInt(searchParams.get('offset') || '0');
+    const gameRanking = searchParams.get('sort') === 'skate';
 
     // Obtener todos los usuarios con sus submissions aprobadas
     const usersWithScores = await prisma.user.findMany({
       where: {
         isActive: true,
-        submissions: {
-          some: {
-            status: 'approved',
-          },
-        },
+        OR: [
+          { submissions: { some: { status: 'approved' } } },
+          { skateGameWins: { some: { status: 'COMPLETED' } } },
+          { skateGameLosses: { some: { status: 'COMPLETED' } } },
+        ],
       },
       select: {
         email: true,
@@ -42,11 +43,33 @@ export async function GET(req: Request) {
             challengeId: true,
           },
         },
+        skateGameWins: {
+          where: { status: 'COMPLETED' },
+          select: { id: true },
+        },
+        skateGameLosses: {
+          where: { status: 'COMPLETED' },
+          select: { id: true },
+        },
       },
     });
+    const judgeRatings = usersWithScores.length
+      ? await prisma.skateGameRating.groupBy({
+          by: ['judgeId'],
+          where: { judgeId: { in: usersWithScores.map((user) => user.email) } },
+          _avg: { score: true },
+          _count: { _all: true },
+        })
+      : [];
+    const judgeRatingsByUser = new Map(
+      judgeRatings.map((rating) => [rating.judgeId, {
+        average: rating._avg.score,
+        count: rating._count._all,
+      }])
+    );
 
     // Calcular scores y ordenar
-    const leaderboard = usersWithScores
+    const rankedUsers = usersWithScores
       .map((user) => {
         const totalScore = user.submissions.reduce(
           (acc, sub) => acc + (sub.score || 0),
@@ -68,9 +91,18 @@ export async function GET(req: Request) {
           totalScore,
           challengesCompleted,
           submissionsApproved: user.submissions.length,
+          skateGamesWon: user.skateGameWins.length,
+          skateGamesLost: user.skateGameLosses.length,
+          judgeRating: judgeRatingsByUser.get(user.email)?.average ?? null,
+          judgeRatingCount: judgeRatingsByUser.get(user.email)?.count ?? 0,
         };
       })
-      .sort((a, b) => b.totalScore - a.totalScore)
+      .sort(gameRanking
+        ? (a, b) => b.skateGamesWon - a.skateGamesWon ||
+          a.skateGamesLost - b.skateGamesLost ||
+          b.totalScore - a.totalScore
+        : (a, b) => b.totalScore - a.totalScore);
+    const leaderboard = rankedUsers
       .map((user, index) => ({
         rank: index + 1,
         ...user,

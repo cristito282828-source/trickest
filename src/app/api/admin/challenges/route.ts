@@ -30,6 +30,7 @@ export async function GET() {
         level: challenge.level,
         name: challenge.name,
         description: challenge.description,
+        imageUrl: challenge.imageUrl,
         difficulty: challenge.difficulty,
         points: challenge.points,
         demoVideoUrl: challenge.demoVideoUrl,
@@ -60,10 +61,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { name, description, difficulty, points, demoVideoUrl, isBonus } = await request.json();
+    const { name, description, imageUrl, difficulty, points, demoVideoUrl, isBonus } = await request.json();
 
-    if (!name || !description || !difficulty) {
-      return NextResponse.json({ error: 'Name, description, and difficulty are required' }, { status: 400 });
+    if (!name || !description || !difficulty || typeof imageUrl !== 'string' || !imageUrl.trim()) {
+      return NextResponse.json(
+        { error: 'Name, description, difficulty, and challenge image are required' },
+        { status: 400 }
+      );
     }
 
     // Find next available level
@@ -77,6 +81,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         description,
+        imageUrl: imageUrl.trim(),
         difficulty,
         points: points || 100,
         demoVideoUrl: demoVideoUrl || '',
@@ -100,7 +105,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { challengeId, name, description, difficulty, points, demoVideoUrl, isBonus } = await request.json();
+    const { challengeId, name, description, imageUrl, difficulty, points, demoVideoUrl, isBonus } = await request.json();
 
     if (!challengeId) {
       return NextResponse.json({ error: 'Challenge ID is required' }, { status: 400 });
@@ -111,6 +116,7 @@ export async function PATCH(request: NextRequest) {
       data: {
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
+        ...(imageUrl !== undefined && { imageUrl: imageUrl || null }),
         ...(difficulty !== undefined && { difficulty }),
         ...(points !== undefined && { points }),
         ...(demoVideoUrl !== undefined && { demoVideoUrl }),

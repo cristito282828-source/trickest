@@ -1,0 +1,1 @@
+ALTER TYPE "WallActivityType" ADD VALUE 'PRODUCT_ADDED';

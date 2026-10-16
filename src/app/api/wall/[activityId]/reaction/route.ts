@@ -1,9 +1,10 @@
-import { WallActivityType, WallReactionType } from '@prisma/client';
+import { WallReactionType } from '@prisma/client';
 import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import prisma from '@/app/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse } from '@/lib/validation';
+import { isWallActivityVisible } from '@/lib/wall-activity';
 
 const validReactions = Object.values(WallReactionType);
 
@@ -42,7 +43,7 @@ export async function POST(
       where: { id: activityId },
       select: { id: true, type: true, sourceId: true },
     });
-    if (!activity || !(await isActivityVisible(activity.type, activity.sourceId))) {
+    if (!activity || !(await isWallActivityVisible(activity.type, activity.sourceId))) {
       return errorResponse('NOT_FOUND', 'Wall activity not found', 404);
     }
 
@@ -90,7 +91,7 @@ export async function DELETE(
       where: { id: activityId },
       select: { id: true, type: true, sourceId: true },
     });
-    if (!activity || !(await isActivityVisible(activity.type, activity.sourceId))) {
+    if (!activity || !(await isWallActivityVisible(activity.type, activity.sourceId))) {
       return errorResponse('NOT_FOUND', 'Wall activity not found', 404);
     }
 
@@ -102,50 +103,6 @@ export async function DELETE(
   } catch (error) {
     console.error('[API /wall/[activityId]/reaction] DELETE error:', error);
     return errorResponse('INTERNAL_ERROR', 'Error removing reaction', 500);
-  }
-}
-
-async function isActivityVisible(type: WallActivityType, sourceId: number) {
-  switch (type) {
-    case WallActivityType.USER_JOINED:
-      return Boolean(await prisma.user.findFirst({
-        where: { id: sourceId, isActive: true, profileStatus: 'complete' },
-        select: { id: true },
-      }));
-    case WallActivityType.TEAM_CREATED:
-      return Boolean(await prisma.team.findFirst({
-        where: { id: sourceId, isActive: true },
-        select: { id: true },
-      }));
-    case WallActivityType.CHALLENGE_CREATED:
-      return Boolean(await prisma.challenge.findUnique({
-        where: { id: sourceId },
-        select: { id: true },
-      }));
-    case WallActivityType.SUBMISSION_APPROVED:
-      return Boolean(await prisma.submission.findFirst({
-        where: {
-          id: sourceId,
-          status: 'approved',
-          videoUrl: { not: '' },
-          OR: [{ videoSource: 'youtube' }, { videoStatus: 'ready' }],
-        },
-        select: { id: true },
-      }));
-    case WallActivityType.SPOT_ADDED: {
-      const spot = await prisma.spot.findUnique({
-        where: { id: sourceId },
-        select: { createdBy: true },
-      });
-      if (!spot) return false;
-      const creator = await prisma.user.findUnique({
-        where: { email: spot.createdBy },
-        select: { isActive: true, showOnMap: true },
-      });
-      return Boolean(creator?.isActive && creator.showOnMap);
-    }
-    default:
-      return false;
   }
 }
 

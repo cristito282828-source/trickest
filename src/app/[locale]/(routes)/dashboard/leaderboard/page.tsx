@@ -21,6 +21,10 @@ interface LeaderboardUser {
   totalScore: number;
   challengesCompleted: number;
   submissionsApproved: number;
+  skateGamesWon: number;
+  skateGamesLost: number;
+  judgeRating: number | null;
+  judgeRatingCount: number;
 }
 
 interface LeaderboardTeam {
@@ -40,7 +44,7 @@ interface LeaderboardTeam {
   challengesCompleted: number;
 }
 
-type Tab = 'users' | 'teams';
+type Tab = 'users' | 'skate' | 'teams';
 
 export default function LeaderboardPage() {
   const { data: session } = useSession();
@@ -52,6 +56,7 @@ export default function LeaderboardPage() {
   const [teamsLeaderboard, setTeamsLeaderboard] = useState<LeaderboardTeam[]>(
     []
   );
+  const [skateLeaderboard, setSkateLeaderboard] = useState<LeaderboardUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -59,9 +64,10 @@ export default function LeaderboardPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [usersRes, teamsRes] = await Promise.all([
+        const [usersRes, teamsRes, skateRes] = await Promise.all([
           fetch('/api/leaderboards/users?limit=100'),
           fetch('/api/leaderboards/teams?limit=50'),
+          fetch('/api/leaderboards/users?sort=skate&limit=100'),
         ]);
 
         if (usersRes.ok) {
@@ -72,6 +78,10 @@ export default function LeaderboardPage() {
         if (teamsRes.ok) {
           const teamsData = await teamsRes.json();
           setTeamsLeaderboard(teamsData.leaderboard || []);
+        }
+        if (skateRes.ok) {
+          const skateData = await skateRes.json();
+          setSkateLeaderboard(skateData.leaderboard || []);
         }
       } catch (err) {
         console.error('Error:', err);
@@ -157,6 +167,16 @@ export default function LeaderboardPage() {
             {`👤 ${t('skatersTab')}`}
           </button>
           <button
+            onClick={() => setActiveTab('skate')}
+            className={`flex-1 py-3 px-4 rounded-lg font-bold uppercase transition-all ${
+              activeTab === 'skate'
+                ? 'bg-cyan-600 text-white'
+                : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700'
+            }`}
+          >
+            {`🛹 ${t('skateGamesTab')}`}
+          </button>
+          <button
             onClick={() => setActiveTab('teams')}
             className={`flex-1 py-3 px-4 rounded-lg font-bold uppercase transition-all ${
               activeTab === 'teams'
@@ -185,6 +205,9 @@ export default function LeaderboardPage() {
                 </p>
                 <p className="text-neutral-400 text-sm">
                   {t('challengesCompleted', { count: currentUserRank.challengesCompleted })}
+                </p>
+                <p className="text-neutral-500 text-xs">
+                {t('skateGameRecord', { wins: currentUserRank.skateGamesWon, losses: currentUserRank.skateGamesLost })}
                 </p>
               </div>
             </div>
@@ -280,6 +303,9 @@ export default function LeaderboardPage() {
                       <p className="text-neutral-400 text-xs uppercase">
                         {t('challenges')}
                       </p>
+                      <p className="mt-1 text-xs text-neutral-500">
+                        {t('skateGameRecord', { wins: user.skateGamesWon, losses: user.skateGamesLost })}
+                      </p>
                     </div>
                   </div>
                 </Link>
@@ -345,6 +371,50 @@ export default function LeaderboardPage() {
                       {user.challengesCompleted}
                     </p>
                     <p className="text-neutral-500 text-xs">{t('challenges')}</p>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      {t('skateGameRecord', { wins: user.skateGamesWon, losses: user.skateGamesLost })}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'skate' && (
+        <div className="max-w-4xl mx-auto">
+          {skateLeaderboard.length === 0 ? (
+            <div className="bg-neutral-800 border-4 border-neutral-700 rounded-lg p-8 text-center">
+              <p className="text-neutral-300 text-xl">{t('noSkateGamesYet')}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {skateLeaderboard.map((user) => (
+                <Link
+                  key={user.email}
+                  href={`/profile/${user.username}`}
+                  className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-colors hover:border-cyan-500 ${
+                    user.rank <= 3 ? 'border-cyan-700 bg-neutral-900' : 'border-neutral-700 bg-neutral-800'
+                  } ${user.email === session?.user?.email ? 'ring-2 ring-cyan-400' : ''}`}
+                >
+                  <span className="w-12 text-center text-2xl font-black text-cyan-300">{getRankIcon(user.rank)}</span>
+                  {user.photo ? (
+                    <Image src={user.photo} alt={user.name} width={48} height={48} className="rounded-full border-2 border-neutral-600" />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-700 font-black">{user.name.charAt(0).toUpperCase()}</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-black text-white">{user.name}</p>
+                    {user.judgeRating !== null && user.judgeRatingCount > 0 && (
+                      <p className="mt-1 text-xs text-purple-300">
+                        {t('judgeRating', { score: user.judgeRating.toFixed(1), count: user.judgeRatingCount })}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black text-green-300">{user.skateGamesWon} {t('gamesWon')}</p>
+                    <p className="text-sm font-bold text-red-300">{user.skateGamesLost} {t('gamesLost')}</p>
                   </div>
                 </Link>
               ))}
@@ -476,7 +546,9 @@ export default function LeaderboardPage() {
           <p className="text-neutral-400 text-center text-sm">
             {activeTab === 'users'
               ? t('legendUsers')
-              : t('legendTeams')}
+              : activeTab === 'skate'
+                ? t('legendSkateGames')
+                : t('legendTeams')}
           </p>
         </div>
       </div>

@@ -25,6 +25,8 @@
 - **[USER_FEATURES_CHECKLIST.md](USER_FEATURES_CHECKLIST.md)** - User-facing features by role
 
 ### Technical Guides
+- **[WALL_FEED_ALGORITHM.md](WALL_FEED_ALGORITHM.md)** - Feed ranking principles and the community wall's first iteration
+- **[SKATE_GAMES.md](SKATE_GAMES.md)** - Game of Skate flow, judge decisions, location privacy, and rankings
 - **[QUICK_FIX_401.md](QUICK_FIX_401.md)** - Fix 401 auth errors in production (3 min fix)
 - **[VERCEL_ENV_SETUP.md](VERCEL_ENV_SETUP.md)** - Environment variables for Vercel
 - **[FASE_2_VOTACION_COMUNIDAD.md](FASE_2_VOTACION_COMUNIDAD.md)** - Community voting system implementation
