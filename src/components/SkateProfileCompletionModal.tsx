@@ -9,9 +9,10 @@ import { useTranslations } from 'next-intl';
 interface ModalProps {
     openModal: boolean;
     handleModal: () => void;
+    onComplete: () => void;
 }
 
-const SkateProfileCompletionModal: React.FC<ModalProps> = ({ openModal, handleModal }) => {
+const SkateProfileCompletionModal: React.FC<ModalProps> = ({ openModal, handleModal, onComplete }) => {
     const [formData, setFormData] = useState({ phone: '', username: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string>('');
@@ -126,10 +127,7 @@ const SkateProfileCompletionModal: React.FC<ModalProps> = ({ openModal, handleMo
             }
 
             console.log('Profile completed successfully:', data);
-            handleModal();
-
-            // Reload page to update session state
-            window.location.reload();
+            onComplete();
         } catch (error) {
             console.error('Error completing profile:', error);
             setError(error instanceof Error ? error.message : t('errorUnknown'));

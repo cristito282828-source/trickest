@@ -43,6 +43,9 @@ interface CartContextValue {
   items: CartItem[];
   itemCount: number; // Total de items (sumando cantidades)
   hasItems: boolean;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
   addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
@@ -57,6 +60,7 @@ const STORAGE_KEY = 'trickest_orbital_cart';
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Hidratar desde localStorage al montar
@@ -131,6 +135,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems([]);
   }, []);
 
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+
   // Helpers
   const isInCart = useCallback(
     (productId: string) => items.some((i) => i.productId === productId),
@@ -155,6 +162,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       items,
       itemCount,
       hasItems,
+      isCartOpen,
+      openCart,
+      closeCart,
       addItem,
       removeItem,
       updateQuantity,
@@ -162,7 +172,20 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       isInCart,
       getQuantity,
     }),
-    [items, itemCount, hasItems, addItem, removeItem, updateQuantity, clearCart, isInCart, getQuantity]
+    [
+      items,
+      itemCount,
+      hasItems,
+      isCartOpen,
+      openCart,
+      closeCart,
+      addItem,
+      removeItem,
+      updateQuantity,
+      clearCart,
+      isInCart,
+      getQuantity,
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

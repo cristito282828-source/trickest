@@ -61,9 +61,9 @@ export default async function CommunityWallPage() {
       },
     }),
     prisma.challenge.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
       take: 8,
-      select: { id: true, name: true, imageUrl: true, level: true, points: true, createdAt: true },
+      select: { id: true, name: true, imageUrl: true, level: true, points: true, createdAt: true, updatedAt: true },
     }),
     prisma.submission.findMany({
       where: {
@@ -88,6 +88,7 @@ export default async function CommunityWallPage() {
       select: {
         id: true,
         name: true,
+        type: true,
         city: true,
         country: true,
         photos: true,
@@ -119,6 +120,7 @@ export default async function CommunityWallPage() {
   const visibleSpots = recentSpots.filter(
     (spot) => creatorsByEmail.get(spot.createdBy)?.showOnMap
   );
+  const currentChallengeId = recentChallenges[0]?.id;
   const productCutoff = Date.now() - PRODUCT_ACTIVITY_WINDOW_DAYS * 24 * 60 * 60 * 1000;
   const productActivities = (productsData?.products?.nodes ?? []).flatMap((product) => {
     if (!Number.isInteger(product.databaseId) || product.databaseId <= 0 || !product.date) return [];
@@ -170,6 +172,7 @@ export default async function CommunityWallPage() {
       image: challenge.imageUrl,
       level: challenge.level,
       points: challenge.points,
+      isCurrentChallenge: challenge.id === currentChallengeId,
     })),
     ...productActivities.map(({ product, createdAt, isNew }) => ({
       id: `product-${product.databaseId}`,
@@ -213,13 +216,19 @@ export default async function CommunityWallPage() {
           username: creator?.username || null,
         },
         titleName: spot.name,
+        spotId: spot.id,
+        spotType: spot.type.toLowerCase() === 'skateshop'
+          ? 'skateshop' as const
+          : spot.type.toLowerCase() === 'spot'
+            ? 'spot' as const
+            : 'skatepark' as const,
         city: spot.city,
         country: spot.country,
         image: spot.photos[0] || null,
       };
     }),
   ]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a, b) => compareWallActivities(a, b, currentChallengeId));
   const prioritizedProductActivities = allActivities
     .filter((activity) => activity.type === 'product_added')
     .slice(0, MAX_WALL_PRODUCT_ACTIVITIES);
@@ -227,7 +236,7 @@ export default async function CommunityWallPage() {
   const activities = [
     ...otherActivities.slice(0, 24 - prioritizedProductActivities.length),
     ...prioritizedProductActivities,
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  ].sort((a, b) => compareWallActivities(a, b, currentChallengeId));
 
   await prisma.wallActivity.createMany({
     data: activities.map(({ sourceType, sourceId, createdAt }) => ({
@@ -326,4 +335,15 @@ function toSafeVideoUrl(value: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function compareWallActivities(
+  a: { type: string; sourceId: number; createdAt: string },
+  b: { type: string; sourceId: number; createdAt: string },
+  currentChallengeId: number | undefined
+): number {
+  const aIsCurrentChallenge = a.type === 'challenge_created' && a.sourceId === currentChallengeId;
+  const bIsCurrentChallenge = b.type === 'challenge_created' && b.sourceId === currentChallengeId;
+  if (aIsCurrentChallenge !== bIsCurrentChallenge) return aIsCurrentChallenge ? -1 : 1;
+  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 }

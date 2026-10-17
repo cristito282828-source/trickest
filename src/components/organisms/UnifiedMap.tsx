@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type MutableRefObject } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L, { DivIconOptions } from 'leaflet';
 import { Link } from '@/i18n/routing';
@@ -48,7 +48,12 @@ const createSkaterIcon = (photo: string | undefined, name: string | undefined) =
 };
 
 // Function to create custom spot icon with photo
-const createSpotIcon = (photos: string[] | undefined, type: 'skatepark' | 'skateshop', name: string) => {
+const createSpotIcon = (
+  photos: string[] | undefined,
+  type: 'skatepark' | 'skateshop',
+  name: string,
+  highlighted = false
+) => {
   const hasPhoto = photos && photos.length > 0;
   const photoUrl = hasPhoto ? photos[0] : '';
 
@@ -79,12 +84,13 @@ const createSpotIcon = (photos: string[] | undefined, type: 'skatepark' | 'skate
           height: 44px;
           border-radius: 50%;
           border: 3px solid ${borderColor};
-          box-shadow: 0 0 15px ${glowColor}, 0 2px 8px rgba(0, 0, 0, 0.3);
+          box-shadow: ${highlighted ? `0 0 24px ${glowColor}, 0 0 12px ${borderColor}, 0 2px 8px rgba(0, 0, 0, 0.3)` : `0 0 15px ${glowColor}, 0 2px 8px rgba(0, 0, 0, 0.3)`};
           overflow: hidden;
           background: ${THEME_COLORS.inkInverse};
           display: flex;
           align-items: center;
           justify-content: center;
+          transform: ${highlighted ? 'scale(1.2)' : 'scale(1)'};
         ">
           ${hasPhoto
             ? `<img src="${photoUrl}" alt="${name}" class="spot-marker-image" style="width: 100%; height: 100%; object-fit: cover;" />`
@@ -148,16 +154,38 @@ interface UnifiedMapProps {
   height?: string;
   showSpots?: boolean;
   showSkaters?: boolean;
+  focusedSpotId?: number;
   onSpotValidated?: () => void;
   onSpotClick?: (spot: Spot) => void;
   onViewAllComments?: () => void;
 }
 
 // Component to auto-center the map
-function MapController({ spots, skaters }: { spots: Spot[]; skaters: Skater[] }) {
+function MapController({
+  spots,
+  skaters,
+  focusedSpotId,
+  markerRefs,
+}: {
+  spots: Spot[];
+  skaters: Skater[];
+  focusedSpotId?: number;
+  markerRefs: MutableRefObject<Map<number, L.Marker>>;
+}) {
   const map = useMap();
 
   useEffect(() => {
+    const focusedSpot = spots.find((spot) => spot.id === focusedSpotId);
+    if (focusedSpot) {
+      map.flyTo(
+        [focusedSpot.latitude, focusedSpot.longitude],
+        Math.max(map.getZoom(), 15),
+        { duration: 0.8 }
+      );
+      markerRefs.current.get(focusedSpot.id)?.openPopup();
+      return;
+    }
+
     const allPoints: [number, number][] = [
       ...spots.map(s => [s.latitude, s.longitude] as [number, number]),
       ...skaters.map(s => [s.latitude, s.longitude] as [number, number]),
@@ -167,7 +195,7 @@ function MapController({ spots, skaters }: { spots: Spot[]; skaters: Skater[] })
       const bounds = L.latLngBounds(allPoints);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
     }
-  }, [spots, skaters, map]);
+  }, [spots, skaters, focusedSpotId, markerRefs, map]);
 
   return null;
 }
@@ -180,6 +208,7 @@ export default function UnifiedMap({
   height = '600px',
   showSpots = true,
   showSkaters = true,
+  focusedSpotId,
   onSpotValidated,
   onSpotClick,
   onViewAllComments,
@@ -190,6 +219,7 @@ export default function UnifiedMap({
   const [validatingSpotId, setValidatingSpotId] = useState<number | null>(null);
   const [validatedSpotIds, setValidatedSpotIds] = useState<Set<number>>(new Set());
   const [validationError, setValidationError] = useState<string | null>(null);
+  const markerRefs = useRef<Map<number, L.Marker>>(new Map());
 
   // Mount component only on client and add CSS styles
   useEffect(() => {
@@ -390,15 +420,27 @@ export default function UnifiedMap({
         />
 
         {(displaySpots.length > 0 || displaySkaters.length > 0) && (
-          <MapController spots={displaySpots} skaters={displaySkaters} />
+          <MapController
+            spots={displaySpots}
+            skaters={displaySkaters}
+            focusedSpotId={focusedSpotId}
+            markerRefs={markerRefs}
+          />
         )}
 
         {/* Spot Markers */}
         {displaySpots.map((spot) => (
           <Marker
             key={`spot-${spot.id}`}
+            ref={(marker) => {
+              if (marker) {
+                markerRefs.current.set(spot.id, marker);
+              } else {
+                markerRefs.current.delete(spot.id);
+              }
+            }}
             position={[spot.latitude, spot.longitude]}
-            icon={createSpotIcon(spot.photos, spot.type, spot.name)}
+            icon={createSpotIcon(spot.photos, spot.type, spot.name, spot.id === focusedSpotId)}
             eventHandlers={{
               click: () => {
                 onSpotClick?.(spot);

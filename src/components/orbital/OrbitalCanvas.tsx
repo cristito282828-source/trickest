@@ -18,7 +18,7 @@ const CANVAS_BG = '#0a0a0f'; // Casi negro con tinte morado muy sutil
 
 export default function OrbitalCanvas({ products, selectedProductSlug = null }: OrbitalCanvasProps) {
   const t = useTranslations('supplsPage');
-  const { addItem, isInCart, getQuantity, items } = useCart();
+  const { addItem, openCart, isInCart, getQuantity, items } = useCart();
 
   // Helper: cantidad en carrito de un productId + variationId específico
   const getQuantityForCartItem = (productId: string, variationDatabaseId: number) => {
@@ -502,6 +502,7 @@ export default function OrbitalCanvas({ products, selectedProductSlug = null }: 
                 },
                 1
               );
+              openCart();
               setJustAdded(true);
               setTimeout(() => setJustAdded(false), 2000);
             }}

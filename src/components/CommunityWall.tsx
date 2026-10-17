@@ -25,6 +25,7 @@ type ActivityType =
   | 'spot_added'
   | 'product_added';
 
+type SpotType = 'skatepark' | 'skateshop' | 'spot';
 type ReactionType = 'LIKE' | 'LOVE' | 'LAUGH' | 'WOW' | 'ANGRY';
 
 interface ReactionState {
@@ -50,6 +51,9 @@ interface Activity {
   videoUrl?: string;
   productSlug?: string;
   productIsNew?: boolean;
+  isCurrentChallenge?: boolean;
+  spotId?: number;
+  spotType?: SpotType;
   city?: string | null;
   country?: string;
   reactionCounts: Record<ReactionType, number>;
@@ -63,7 +67,7 @@ interface CommunityWallProps {
   currentUser: { name: string; photo: string | null };
 }
 
-type Filter = 'all' | 'community' | 'challenges' | 'videos' | 'products';
+type Filter = 'all' | 'community' | 'challenges' | 'videos' | 'products' | 'spots';
 
 const activityStyles: Record<ActivityType, { icon: typeof MdCampaign; color: string }> = {
   user_joined: { icon: MdPersonAddAlt1, color: 'bg-sky-100 text-sky-700' },
@@ -148,6 +152,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
     if (filter === 'challenges') return activity.type === 'challenge_created';
     if (filter === 'videos') return activity.type === 'submission_approved';
     if (filter === 'products') return activity.type === 'product_added';
+    if (filter === 'spots') return activity.type === 'spot_added';
     return activity.type === 'user_joined' || activity.type === 'team_created' || activity.type === 'spot_added';
   }), [activities, filter]);
 
@@ -157,6 +162,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
     { id: 'challenges', label: t('challenges') },
     { id: 'videos', label: t('videos') },
     { id: 'products', label: t('products') },
+    { id: 'spots', label: t('spots') },
   ];
 
   const formatTime = (date: string) => {
@@ -181,7 +187,13 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
       case 'submission_approved':
         return t('submissionApproved', { name: activity.actor.name });
       case 'spot_added':
-        return t('spotAdded', { name: activity.actor.name });
+        if (activity.spotType === 'skateshop') {
+          return t('skateshopAdded', { name: activity.actor.name, spot: activity.titleName });
+        }
+        if (activity.spotType === 'spot') {
+          return t('streetSpotAdded', { name: activity.actor.name, spot: activity.titleName });
+        }
+        return t('skateparkAdded', { name: activity.actor.name, spot: activity.titleName });
       case 'product_added':
         return activity.productIsNew
           ? t('productAdded', { name: activity.titleName })
@@ -345,6 +357,13 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
 
                         {activity.type === 'challenge_created' && (
                           <div className="mt-4 overflow-hidden rounded-xl border border-amber-100 bg-amber-50">
+                            {activity.isCurrentChallenge && (
+                              <div className="border-b border-amber-100 bg-amber-100 px-4 py-2">
+                                <span className="rounded-full bg-amber-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                                  {t('currentChallenge')}
+                                </span>
+                              </div>
+                            )}
                             {activity.image ? (
                               <div className="relative aspect-square w-full bg-neutral-900">
                                 <Image
@@ -472,22 +491,47 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         {activity.type === 'spot_added' && (
                           <div className="mt-4 overflow-hidden rounded-xl border border-rose-100 bg-rose-50">
                             {activity.image && (
-                              <Image
-                                src={activity.image}
-                                alt=""
-                                width={720}
-                                height={360}
-                                unoptimized
-                                className="h-48 w-full object-cover"
-                              />
+                              <div className="relative aspect-square w-full bg-neutral-900">
+                                <Image
+                                  src={activity.image}
+                                  alt={activity.titleName}
+                                  fill
+                                  unoptimized
+                                  sizes="(max-width: 1024px) 100vw, 700px"
+                                  className="object-cover"
+                                />
+                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
+                                  <p className="font-black text-white">{activity.titleName}</p>
+                                </div>
+                              </div>
                             )}
                             <div className="flex items-center gap-2 p-4 text-sm font-semibold text-rose-900">
                               <MdLocationOn className="shrink-0 text-xl" />
-                              <span>
-                                {activity.city
-                                  ? t('location', { city: activity.city, country: activity.country || 'Colombia' })
-                                  : t('unknownLocation')}
-                              </span>
+                              <div className="min-w-0 flex-1">
+                                <span className="mb-1 block text-xs font-black uppercase tracking-wide text-rose-700">
+                                  {activity.spotType === 'skateshop'
+                                    ? t('skateshop')
+                                    : activity.spotType === 'spot'
+                                      ? t('streetSpot')
+                                      : t('skatepark')}
+                                </span>
+                                {!activity.image && (
+                                  <span className="mb-1 block font-black text-neutral-900">{activity.titleName}</span>
+                                )}
+                                <span className="block">
+                                  {activity.city
+                                    ? t('location', { city: activity.city, country: activity.country || 'Colombia' })
+                                    : t('unknownLocation')}
+                                </span>
+                              </div>
+                              {activity.spotId && (
+                                <Link
+                                  href={`/spots?spot=${activity.spotId}`}
+                                  className="shrink-0 rounded-lg bg-rose-700 px-3 py-2 text-xs font-black text-white transition-colors hover:bg-rose-800"
+                                >
+                                  {t('viewOnMap')}
+                                </Link>
+                              )}
                             </div>
                           </div>
                         )}

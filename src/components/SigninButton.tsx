@@ -19,10 +19,11 @@ type MenuOption = {
 
 const SigninButton = () => {
   const pathname = usePathname();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [openModal, setModal] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
   const [openSetPasswordModal, setOpenSetPasswordModal] = useState(false);
+  const [reloadAfterPasswordPrompt, setReloadAfterPasswordPrompt] = useState(false);
   const [selectedOption, setSelectedOption] = useState(0);
   const t = useTranslations('signinMenu');
 
@@ -43,32 +44,9 @@ const SigninButton = () => {
 
   const profileStatus = session?.user?.profileStatus || 'basic';
   const isProfileComplete = profileStatus === 'complete';
-  const hasPassword = session?.user?.hasPassword;
-
   // States for login/register
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
-  const [showPasswordReminder, setShowPasswordReminder] = useState(false);
-
-  // Check if we should show password reminder (once per week)
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user?.email && hasPassword === false) {
-      const lastReminder = localStorage.getItem('passwordReminderLastShown');
-      const now = Date.now();
-      const oneWeek = 7 * 24 * 60 * 60 * 1000;
-
-      // Show reminder if never shown or more than a week ago
-      if (!lastReminder || (now - parseInt(lastReminder)) > oneWeek) {
-        setShowPasswordReminder(true);
-      }
-    }
-  }, [session, hasPassword, status]);
-
-  // Function to dismiss reminder and set for next week
-  const dismissPasswordReminder = () => {
-    localStorage.setItem('passwordReminderLastShown', Date.now().toString());
-    setShowPasswordReminder(false);
-  };
 
   // Function to scroll to partners
   const scrollToPartners = () => {
@@ -316,6 +294,15 @@ const SigninButton = () => {
               <SkateProfileCompletionModal
                 openModal={openModal}
                 handleModal={handleModal}
+                onComplete={() => {
+                  setModal(false);
+                  if (session?.user?.hasPassword === false) {
+                    setReloadAfterPasswordPrompt(true);
+                    setOpenSetPasswordModal(true);
+                    return;
+                  }
+                  window.location.reload();
+                }}
               />
             </div>
           </div>
@@ -326,73 +313,12 @@ const SigninButton = () => {
       {/* Set password modal (Google users) - only for setup */}
       <SetPasswordModal
         isOpen={openSetPasswordModal}
-        onClose={() => setOpenSetPasswordModal(false)}
-        onSuccess={() => {
-          // Reload session to update hasPassword
-          window.location.reload();
+        onClose={() => {
+          setOpenSetPasswordModal(false);
+          if (reloadAfterPasswordPrompt) window.location.reload();
         }}
+        onSuccess={() => setReloadAfterPasswordPrompt(true)}
       />
-
-      {/* Password Reminder Modal (shown weekly) */}
-      {showPasswordReminder && (
-        <ModalPortal>
-        <div className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm z-[9999] p-4">
-          <div className="w-full max-w-md bg-gradient-to-b from-neutral-900 to-black border-4 border-accent-yellow-500 rounded-lg shadow-2xl shadow-accent-yellow-500/50 relative">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-accent-yellow-500 to-accent-yellow-600 p-4 rounded-t-lg border-b-4 border-accent-yellow-400">
-              <h2 className="text-lg md:text-xl font-black text-neutral-900 uppercase tracking-wider text-center">
-                🔐 SEGURIDAD DE CUENTA
-              </h2>
-            </div>
-
-            {/* Close button */}
-            <button
-              onClick={dismissPasswordReminder}
-              className="absolute top-2 right-2 z-10 bg-red-600 hover:bg-red-700 text-white font-bold w-8 h-8 rounded-full border-4 border-white shadow-lg transform hover:scale-110 transition-all text-sm"
-              type="button"
-              aria-label="Close"
-            >
-              ✕
-            </button>
-
-            {/* Content */}
-            <div className="p-6 text-center">
-              <div className="text-6xl mb-4">💡</div>
-              <h3 className="text-xl font-bold text-white mb-4">
-                ¿Sabías que puedes proteger tu cuenta aún más?
-              </h3>
-              <p className="text-neutral-300 mb-6">
-                Añade una contraseña a tu cuenta para acceder incluso sin conexión a Google.
-              </p>
-              <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => {
-                    setShowPasswordReminder(false);
-                    setOpenSetPasswordModal(true);
-                  }}
-                  className="w-full bg-accent-yellow-500 hover:bg-accent-yellow-600 text-neutral-900 font-bold py-3 px-6 rounded-lg border-4 border-accent-yellow-400 transition-all"
-                >
-                  CREAR CONTRASEÑA
-                </button>
-                <button
-                  onClick={dismissPasswordReminder}
-                  className="w-full bg-neutral-700 hover:bg-neutral-600 text-white font-bold py-3 px-6 rounded-lg border-4 border-neutral-500 transition-all"
-                >
-                  RECORDAR MÁS TARDE
-                </button>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t-4 border-neutral-700 bg-neutral-900/50 rounded-b-lg text-center">
-              <p className="text-neutral-400 text-xs">
-                Te recordaremos nuevamente en 7 días
-              </p>
-            </div>
-          </div>
-        </div>
-        </ModalPortal>
-      )}
 
       {/* Email Login Modal */}
       <LoginEmailForm

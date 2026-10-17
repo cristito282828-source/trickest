@@ -9,11 +9,20 @@ import { MdShoppingCart, MdClose, MdAdd, MdRemove, MdDelete } from 'react-icons/
 
 export default function FloatingCart() {
   const t = useTranslations('supplsPage');
-  const { items, itemCount, hasItems, removeItem, updateQuantity, clearCart } = useCart();
-  const [isOpen, setIsOpen] = useState(false);
+  const {
+    items,
+    itemCount,
+    hasItems,
+    isCartOpen,
+    openCart,
+    closeCart,
+    removeItem,
+    updateQuantity,
+    clearCart,
+  } = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
-  if (!hasItems && !isOpen) {
+  if (!hasItems && !isCartOpen) {
     return null;
   }
 
@@ -21,7 +30,7 @@ export default function FloatingCart() {
     <>
       {/* Botón flotante */}
       <button
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => isCartOpen ? closeCart() : openCart()}
         aria-label={t('viewCart')}
         className="fixed bottom-5 right-5 z-[9990] flex items-center gap-2 bg-accent-pink-500 hover:bg-accent-pink-600 text-white rounded-full px-4 py-3 shadow-2xl shadow-accent-pink-500/40 transition-all hover:scale-105 border-2 border-white"
       >
@@ -34,11 +43,11 @@ export default function FloatingCart() {
       </button>
 
       {/* Drawer del carrito */}
-      {isOpen && (
+      {isCartOpen && (
         <>
           {/* Overlay */}
           <div
-            onClick={() => setIsOpen(false)}
+            onClick={closeCart}
             className="fixed inset-0 z-[9991] bg-black/50 backdrop-blur-sm"
             aria-hidden="true"
           />
@@ -55,7 +64,7 @@ export default function FloatingCart() {
                 )}
               </h2>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={closeCart}
                 aria-label={t('closePanel')}
                 className="text-neutral-400 hover:text-white text-2xl"
               >
@@ -153,7 +162,7 @@ export default function FloatingCart() {
                 </button>
                 <button
                   onClick={() => {
-                    setIsOpen(false);
+                    closeCart();
                     setCheckoutOpen(true);
                   }}
                   className="w-full bg-accent-cyan-500 hover:bg-accent-cyan-600 text-neutral-900 font-black py-3 px-4 rounded-lg uppercase tracking-wider text-sm border-2 border-white shadow-lg transform hover:scale-105 transition-all"

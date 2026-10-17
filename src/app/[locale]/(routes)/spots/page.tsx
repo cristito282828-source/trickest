@@ -45,10 +45,18 @@ export default function SpotsPage() {
   const [showProximityModal, setShowProximityModal] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
+  const [focusedSpotId, setFocusedSpotId] = useState<number | undefined>();
 
   useEffect(() => {
     fetchSpots();
   }, [filterType, filterVerified]);
+
+  useEffect(() => {
+    const spotId = Number(new URLSearchParams(window.location.search).get('spot'));
+    if (Number.isSafeInteger(spotId) && spotId > 0) {
+      setFocusedSpotId(spotId);
+    }
+  }, []);
 
   const fetchSpots = async () => {
     try {
@@ -191,6 +199,7 @@ export default function SpotsPage() {
               spots={spots}
               height="600px"
               showSkaters={false}
+              focusedSpotId={focusedSpotId}
               onSpotValidated={handleSpotValidated}
               onSpotClick={handleSpotClick}
               onViewAllComments={handleViewAllComments}

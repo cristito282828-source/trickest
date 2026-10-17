@@ -681,10 +681,12 @@ export default function SpotProximityModal({ isOpen, onClose, onSpotRegistered, 
 
               {/* Type */}
               <div>
-                <label className="block text-accent-cyan-300 font-black uppercase text-sm mb-2">
+                <label htmlFor="new-spot-type" className="block text-accent-cyan-300 font-black uppercase text-sm mb-2">
                   {t('typeLabel')}
                 </label>
                 <select
+                  id="new-spot-type"
+                  aria-describedby="new-spot-type-help"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                   className="w-full px-4 py-3 bg-neutral-900 border-2 border-accent-cyan-500 rounded-lg text-white font-bold focus:outline-none focus:border-accent-cyan-300"
@@ -693,6 +695,13 @@ export default function SpotProximityModal({ isOpen, onClose, onSpotRegistered, 
                   <option value="SKATESHOP">{`🏪 ${t('skateshop')}`}</option>
                   <option value="SPOT">{`🎯 ${t('streetSpot')}`}</option>
                 </select>
+                <p id="new-spot-type-help" className="mt-2 text-sm text-neutral-300" aria-live="polite">
+                  {formData.type === 'SKATEPARK'
+                    ? t('skateparkHelp')
+                    : formData.type === 'SKATESHOP'
+                      ? t('skateshopHelp')
+                      : t('streetSpotHelp')}
+                </p>
               </div>
 
               {/* Photo/Video */}
