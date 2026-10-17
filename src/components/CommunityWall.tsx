@@ -245,10 +245,10 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
   };
 
   return (
-    <main className="min-h-[calc(100vh-80px)] bg-[#f0f2f5] px-4 py-6 pb-28 lg:px-8 lg:pb-8">
+    <main className="min-h-[calc(100vh-80px)] w-full min-w-0 overflow-x-clip bg-[#f0f2f5] px-4 py-6 pb-28 lg:px-8 lg:pb-8">
       <div className="mx-auto max-w-6xl">
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
-          <section aria-label={t('title')}>
+        <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+          <section className="min-w-0" aria-label={t('title')}>
             <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
               <div className="flex items-center gap-3">
                 <Avatar photo={currentUser.photo} name={currentUser.name} />
@@ -299,7 +299,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                 <p className="mt-1 text-sm text-neutral-500">{t('emptyDescription')}</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="min-w-0 space-y-4">
                 {visibleActivities.map((activity) => {
                   const style = activityStyles[activity.type];
                   const Icon = style.icon;
@@ -312,7 +312,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                     : emptyReactionState;
 
                   return (
-                    <article key={activity.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                    <article key={activity.id} className="min-w-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                       <div className="p-4">
                         <div className="flex items-start gap-3">
                           {href ? (
@@ -331,7 +331,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                             />
                           )}
                           <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-x-1 text-sm text-neutral-800">
+                            <div className="flex min-w-0 flex-wrap items-center gap-x-1 text-sm text-neutral-800 [overflow-wrap:anywhere]">
                               {href ? (
                                 <Link href={href} className="font-extrabold hover:text-cyan-700 hover:underline">
                                   {activity.actor.name}
@@ -365,14 +365,14 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                               </div>
                             )}
                             {activity.image ? (
-                              <div className="relative aspect-square w-full bg-neutral-900">
+                              <div className="relative aspect-square w-full max-w-full overflow-hidden bg-neutral-900">
                                 <Image
                                   src={activity.image}
                                   alt={activity.titleName}
                                   fill
                                   unoptimized
-                                  sizes="(max-width: 1024px) 100vw, 700px"
-                                  className="object-cover"
+                                  sizes="(max-width: 1023px) calc(100vw - 64px), 700px"
+                                  className="max-w-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                                 <div className="absolute inset-x-0 bottom-0 p-4">
@@ -405,14 +405,14 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         {activity.type === 'product_added' && (
                           <div className="mt-4 overflow-hidden rounded-xl border border-fuchsia-100 bg-fuchsia-50">
                             {activity.image ? (
-                              <div className="relative aspect-square w-full bg-neutral-900">
+                              <div className="relative aspect-square w-full max-w-full overflow-hidden bg-neutral-900">
                                 <Image
                                   src={activity.image}
                                   alt={activity.titleName}
                                   fill
                                   unoptimized
-                                  sizes="(max-width: 1024px) 100vw, 700px"
-                                  className="object-cover"
+                                  sizes="(max-width: 1023px) calc(100vw - 64px), 700px"
+                                  className="max-w-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                                 <span className="absolute left-3 top-3 rounded-md bg-fuchsia-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
@@ -491,21 +491,21 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         {activity.type === 'spot_added' && (
                           <div className="mt-4 overflow-hidden rounded-xl border border-rose-100 bg-rose-50">
                             {activity.image && (
-                              <div className="relative aspect-square w-full bg-neutral-900">
+                              <div className="relative aspect-square w-full max-w-full overflow-hidden bg-neutral-900">
                                 <Image
                                   src={activity.image}
                                   alt={activity.titleName}
                                   fill
                                   unoptimized
-                                  sizes="(max-width: 1024px) 100vw, 700px"
-                                  className="object-cover"
+                                  sizes="(max-width: 1023px) calc(100vw - 64px), 700px"
+                                  className="max-w-full object-cover"
                                 />
                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
                                   <p className="font-black text-white">{activity.titleName}</p>
                                 </div>
                               </div>
                             )}
-                            <div className="flex items-center gap-2 p-4 text-sm font-semibold text-rose-900">
+                            <div className="flex flex-wrap items-center gap-2 p-4 text-sm font-semibold text-rose-900">
                               <MdLocationOn className="shrink-0 text-xl" />
                               <div className="min-w-0 flex-1">
                                 <span className="mb-1 block text-xs font-black uppercase tracking-wide text-rose-700">
@@ -527,7 +527,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                               {activity.spotId && (
                                 <Link
                                   href={`/spots?spot=${activity.spotId}`}
-                                  className="shrink-0 rounded-lg bg-rose-700 px-3 py-2 text-xs font-black text-white transition-colors hover:bg-rose-800"
+                                  className="rounded-lg bg-rose-700 px-3 py-2 text-xs font-black text-white transition-colors hover:bg-rose-800"
                                 >
                                   {t('viewOnMap')}
                                 </Link>
