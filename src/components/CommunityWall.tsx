@@ -551,14 +551,16 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                   aria-pressed={selected}
                                   disabled={activity.wallActivityId === undefined || savingReactionId !== null}
                                   onClick={() => handleReaction(activity, option.type)}
-                                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                                  className={`inline-flex items-center gap-1 rounded-full border p-2 text-sm transition-colors disabled:cursor-wait disabled:opacity-60 sm:px-3 sm:py-1.5 ${
                                     selected
                                       ? 'border-cyan-300 bg-cyan-50 font-bold text-cyan-800'
                                       : 'border-neutral-200 bg-white text-neutral-700 hover:border-cyan-200 hover:bg-neutral-50'
                                   }`}
                                 >
                                   <span aria-hidden="true">{option.emoji}</span>
-                                  <span>{count > 0 ? count : t(option.label)}</span>
+                                  <span className="hidden sm:inline">
+                                    {count > 0 ? count : t(option.label)}
+                                  </span>
                                 </button>
                               );
                             })}
