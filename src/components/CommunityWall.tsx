@@ -1,11 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { createSlug } from '@/lib/utils/slug';
 import WallComments from '@/components/WallComments';
+import { MessageCircle } from 'lucide-react';
 import {
   MdCampaign,
   MdEmojiEvents,
@@ -78,12 +79,12 @@ const activityStyles: Record<ActivityType, { icon: typeof MdCampaign; color: str
   product_added: { icon: MdShoppingBag, color: 'bg-fuchsia-100 text-fuchsia-700' },
 };
 
-const reactionOptions: { type: ReactionType; emoji: string; label: `reaction${string}` }[] = [
-  { type: 'LIKE', emoji: '👍', label: 'reactionLike' },
+const reactionOptions: { type: ReactionType; emoji?: string; label: `reaction${string}` }[] = [
+  { type: 'LIKE', label: 'reactionLike' },
   { type: 'LOVE', emoji: '❤️', label: 'reactionLove' },
   { type: 'LAUGH', emoji: '😂', label: 'reactionLaugh' },
   { type: 'WOW', emoji: '😮', label: 'reactionWow' },
-  { type: 'ANGRY', emoji: '😡', label: 'reactionAngry' },
+  { type: 'ANGRY', label: 'reactionAngry' },
 ];
 
 const emptyReactionState: ReactionState = {
@@ -129,6 +130,44 @@ function Avatar({
   );
 }
 
+function SkateboardSideIcon({ className = 'h-6 w-10' }: { className?: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-block bg-cyan-700 ${className}`}
+      style={{
+        maskImage: "url('/skateboard-reaction.svg')",
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        maskSize: 'contain',
+        WebkitMaskImage: "url('/skateboard-reaction.svg')",
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+        WebkitMaskSize: 'contain',
+      }}
+    />
+  );
+}
+
+function AngryBikeIcon() {
+  return (
+    <span
+      aria-hidden="true"
+      className="inline-block h-12 w-12 bg-red-600"
+      style={{
+        maskImage: "url('/vecteezy_kids-bike-flat-vector-design_5511903.svg')",
+        maskRepeat: 'no-repeat',
+        maskPosition: 'center',
+        maskSize: 'contain',
+        WebkitMaskImage: "url('/vecteezy_kids-bike-flat-vector-design_5511903.svg')",
+        WebkitMaskRepeat: 'no-repeat',
+        WebkitMaskPosition: 'center',
+        WebkitMaskSize: 'contain',
+      }}
+    />
+  );
+}
+
 export default function CommunityWall({ activities, stats, currentUser }: CommunityWallProps) {
   const t = useTranslations('communityWall');
   const locale = useLocale();
@@ -146,6 +185,26 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
   );
   const [savingReactionId, setSavingReactionId] = useState<number | null>(null);
   const [reactionErrorId, setReactionErrorId] = useState<number | null>(null);
+  const [reactionPickerActivityId, setReactionPickerActivityId] = useState<string | null>(null);
+  const [openCommentsActivityId, setOpenCommentsActivityId] = useState<number | undefined>();
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  const clearReactionHold = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  };
+
+  const startReactionHold = (activity: Activity) => {
+    clearReactionHold();
+    longPressTriggeredRef.current = false;
+    holdTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setReactionPickerActivityId(activity.id);
+    }, 450);
+  };
 
   const visibleActivities = useMemo(() => activities.filter((activity) => {
     if (filter === 'all') return true;
@@ -244,6 +303,18 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
     }
   };
 
+  const handleLikeClick = (activity: Activity) => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+    setReactionPickerActivityId(null);
+    const currentReaction = activity.wallActivityId !== undefined && reactionStates[activity.wallActivityId]
+      ? reactionStates[activity.wallActivityId].userReaction
+      : activity.userReaction;
+    void handleReaction(activity, currentReaction ?? 'LIKE');
+  };
+
   return (
     <main className="min-h-[calc(100vh-80px)] w-full min-w-0 overflow-x-clip bg-[#f0f2f5] px-4 py-6 pb-28 lg:px-8 lg:pb-8">
       <div className="mx-auto max-w-6xl">
@@ -310,6 +381,12 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         userReaction: activity.userReaction,
                       }
                     : emptyReactionState;
+                  const isCommentsOpen = activity.wallActivityId !== undefined
+                    && openCommentsActivityId === activity.wallActivityId;
+                  const activeReaction = reactionState.userReaction
+                    ? reactionOptions.find((option) => option.type === reactionState.userReaction) ?? reactionOptions[0]
+                    : reactionOptions[0];
+                  const activeReactionCount = reactionState.reactionCounts[activeReaction.type];
 
                   return (
                     <article key={activity.id} className="min-w-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
@@ -537,33 +614,105 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         <div className="mt-4 border-t border-neutral-100 pt-3">
-                          <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('reactions')}>
-                            {reactionOptions.map((option) => {
-                              const count = reactionState.reactionCounts[option.type];
-                              const selected = reactionState.userReaction === option.type;
-
-                              return (
-                                <button
-                                  key={option.type}
-                                  type="button"
-                                  title={t(option.label)}
-                                  aria-label={`${t(option.label)} (${count})`}
-                                  aria-pressed={selected}
-                                  disabled={activity.wallActivityId === undefined || savingReactionId !== null}
-                                  onClick={() => handleReaction(activity, option.type)}
-                                  className={`inline-flex items-center gap-1 rounded-full border p-2 text-sm transition-colors disabled:cursor-wait disabled:opacity-60 sm:px-3 sm:py-1.5 ${
-                                    selected
-                                      ? 'border-cyan-300 bg-cyan-50 font-bold text-cyan-800'
-                                      : 'border-neutral-200 bg-white text-neutral-700 hover:border-cyan-200 hover:bg-neutral-50'
-                                  }`}
-                                >
-                                  <span aria-hidden="true">{option.emoji}</span>
-                                  <span className="hidden sm:inline">
-                                    {count > 0 ? count : t(option.label)}
+                          <div className="flex items-center justify-between gap-3">
+                            <div
+                              className="relative"
+                              onMouseEnter={() => {
+                                if (window.matchMedia('(hover: hover)').matches) {
+                                  setReactionPickerActivityId(activity.id);
+                                }
+                              }}
+                              onMouseLeave={() => {
+                                if (window.matchMedia('(hover: hover)').matches) {
+                                  setReactionPickerActivityId(null);
+                                }
+                              }}
+                            >
+                              <button
+                                type="button"
+                                title={t(activeReaction.label)}
+                                aria-label={`${t(activeReaction.label)} (${activeReactionCount})`}
+                                aria-pressed={reactionState.userReaction !== null}
+                                disabled={activity.wallActivityId === undefined || savingReactionId !== null}
+                                onPointerDown={(event) => {
+                                  if (event.pointerType !== 'mouse') startReactionHold(activity);
+                                }}
+                                onPointerUp={clearReactionHold}
+                                onPointerLeave={() => {
+                                  clearReactionHold();
+                                  longPressTriggeredRef.current = false;
+                                }}
+                                onPointerCancel={clearReactionHold}
+                                onContextMenu={(event) => event.preventDefault()}
+                                onClick={() => handleLikeClick(activity)}
+                                className={`relative inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-full border text-sm font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                                  reactionState.userReaction !== null
+                                    ? 'border-cyan-300 bg-cyan-50 text-cyan-800'
+                                    : 'border-neutral-200 bg-white text-neutral-700 hover:border-cyan-200 hover:bg-neutral-50'
+                                }`}
+                              >
+                                {reactionState.userReaction === 'LIKE'
+                                  ? <SkateboardSideIcon className="h-6 w-10" />
+                                  : reactionState.userReaction === 'ANGRY'
+                                  ? <AngryBikeIcon />
+                                  : reactionState.userReaction
+                                  ? <span aria-hidden="true" className="text-[2.5rem] leading-none">{activeReaction.emoji}</span>
+                                  : <span className="text-cyan-700"><SkateboardSideIcon className="h-6 w-10" /></span>}
+                                {activeReactionCount > 0 && (
+                                  <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-neutral-800 px-1 text-[10px] leading-5 text-white">
+                                    {activeReactionCount}
                                   </span>
-                                </button>
-                              );
-                            })}
+                                )}
+                              </button>
+                              {reactionPickerActivityId === activity.id && (
+                                <div
+                                  className="absolute bottom-full left-0 z-20 grid w-[22rem] max-w-[calc(100vw-5rem)] grid-cols-5 gap-1 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-lg"
+                                  role="group"
+                                  aria-label={t('reactions')}
+                                >
+                                  {reactionOptions.map((option) => (
+                                    <button
+                                      key={option.type}
+                                      type="button"
+                                      title={t(option.label)}
+                                      aria-label={`${t(option.label)} (${reactionState.reactionCounts[option.type]})`}
+                                      aria-pressed={reactionState.userReaction === option.type}
+                                      disabled={savingReactionId !== null}
+                                      onClick={() => {
+                                        void handleReaction(activity, option.type);
+                                        setReactionPickerActivityId(null);
+                                        longPressTriggeredRef.current = false;
+                                      }}
+                                      className={`flex h-16 w-full min-w-0 items-center justify-center rounded-full text-[2.5rem] leading-none transition-colors disabled:opacity-60 ${
+                                        reactionState.userReaction === option.type
+                                          ? 'bg-cyan-100'
+                                          : 'hover:bg-neutral-100'
+                                      }`}
+                                    >
+                                      {option.type === 'LIKE'
+                                        ? <SkateboardSideIcon className="h-6 w-10" />
+                                        : option.type === 'ANGRY'
+                                        ? <AngryBikeIcon />
+                                        : <span aria-hidden="true">{option.emoji}</span>}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              aria-label={t('commentsCount', { count: activity.commentCount })}
+                              aria-expanded={isCommentsOpen}
+                              disabled={activity.wallActivityId === undefined}
+                              onClick={() => {
+                                const activityId = activity.wallActivityId;
+                                setOpenCommentsActivityId((openId) => openId === activityId ? undefined : activityId);
+                              }}
+                              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-cyan-800 disabled:opacity-50"
+                            >
+                              <MessageCircle size={18} />
+                              <span>{t('commentsCount', { count: activity.commentCount })}</span>
+                            </button>
                           </div>
                           {reactionErrorId === activity.wallActivityId && (
                             <p role="alert" className="mt-2 text-xs font-medium text-red-600">
@@ -574,6 +723,11 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         <WallComments
                           activityId={activity.wallActivityId}
                           initialCount={activity.commentCount}
+                          isOpen={isCommentsOpen}
+                          onOpenChange={(isOpen) => {
+                            setOpenCommentsActivityId(isOpen ? activity.wallActivityId : undefined);
+                          }}
+                          hideTrigger
                         />
                       </div>
                     </article>

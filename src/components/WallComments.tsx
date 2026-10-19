@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
@@ -25,14 +25,25 @@ interface WallComment {
 interface WallCommentsProps {
   activityId: number | undefined;
   initialCount: number;
+  isOpen?: boolean;
+  onOpenChange?: (isOpen: boolean) => void;
+  hideTrigger?: boolean;
 }
 
-export default function WallComments({ activityId, initialCount }: WallCommentsProps) {
+export default function WallComments({
+  activityId,
+  initialCount,
+  isOpen: controlledIsOpen,
+  onOpenChange,
+  hideTrigger = false,
+}: WallCommentsProps) {
   const { data: session } = useSession();
   const t = useTranslations('communityWall');
   const locale = useLocale();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = controlledIsOpen ?? internalIsOpen;
   const [comments, setComments] = useState<WallComment[]>([]);
+  const commentsLengthRef = useRef(0);
   const [replies, setReplies] = useState<Record<number, WallComment[]>>({});
   const [expandedReplies, setExpandedReplies] = useState<Record<number, boolean>>({});
   const [hasMoreReplies, setHasMoreReplies] = useState<Record<number, boolean>>({});
@@ -47,12 +58,17 @@ export default function WallComments({ activityId, initialCount }: WallCommentsP
   const [replyTarget, setReplyTarget] = useState<number | null>(null);
   const [error, setError] = useState('');
 
-  const loadComments = async (append = false) => {
+  const updateIsOpen = (open: boolean) => {
+    if (controlledIsOpen === undefined) setInternalIsOpen(open);
+    onOpenChange?.(open);
+  };
+
+  const loadComments = useCallback(async (append = false) => {
     if (activityId === undefined) return;
     setLoading(true);
     setError('');
     try {
-      const offset = append ? comments.length : 0;
+      const offset = append ? commentsLengthRef.current : 0;
       const response = await fetch(`/api/wall/${activityId}/comments?offset=${offset}`);
       const result: unknown = await response.json();
       if (!response.ok || !isApiResponse(result)) {
@@ -62,9 +78,11 @@ export default function WallComments({ activityId, initialCount }: WallCommentsP
       if (!Array.isArray(data.comments) || typeof data.total !== 'number' || typeof data.hasMore !== 'boolean') {
         throw new Error(t('commentsLoadError'));
       }
-      setComments((current) => append
-        ? [...current, ...data.comments as WallComment[]]
-        : data.comments as WallComment[]);
+      const loadedComments = data.comments as WallComment[];
+      commentsLengthRef.current = append
+        ? commentsLengthRef.current + loadedComments.length
+        : loadedComments.length;
+      setComments((current) => append ? [...current, ...loadedComments] : loadedComments);
       setCommentCount(data.total);
       setHasMoreComments(data.hasMore);
     } catch (loadError) {
@@ -73,15 +91,14 @@ export default function WallComments({ activityId, initialCount }: WallCommentsP
     } finally {
       setLoading(false);
     }
-  };
+  }, [activityId, t]);
+
+  useEffect(() => {
+    if (isOpen) void loadComments();
+  }, [isOpen, loadComments]);
 
   const toggleComments = () => {
-    if (isOpen) {
-      setIsOpen(false);
-      return;
-    }
-    setIsOpen(true);
-    void loadComments();
+    updateIsOpen(!isOpen);
   };
 
   const loadReplies = async (commentId: number, append = false) => {
@@ -172,7 +189,7 @@ export default function WallComments({ activityId, initialCount }: WallCommentsP
       if (commentCount <= 1) {
         setCommentCount(0);
         setComments([]);
-        setIsOpen(false);
+        updateIsOpen(false);
       } else {
         await loadComments();
         if (comment.parentCommentId !== null) {
@@ -271,17 +288,19 @@ export default function WallComments({ activityId, initialCount }: WallCommentsP
   );
 
   return (
-    <div className="mt-3 border-t border-neutral-100 pt-3">
-      <button
-        type="button"
-        onClick={toggleComments}
-        aria-expanded={isOpen}
-        disabled={activityId === undefined}
-        className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-bold text-neutral-600 hover:bg-neutral-100 hover:text-cyan-800 disabled:opacity-50"
-      >
-        <MessageCircle size={17} />
-        {isOpen ? t('hideComments') : t('commentsCount', { count: commentCount })}
-      </button>
+    <div className={hideTrigger ? '' : 'mt-3 border-t border-neutral-100 pt-3'}>
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={toggleComments}
+          aria-expanded={isOpen}
+          disabled={activityId === undefined}
+          className="inline-flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-bold text-neutral-600 hover:bg-neutral-100 hover:text-cyan-800 disabled:opacity-50"
+        >
+          <MessageCircle size={17} />
+          {isOpen ? t('hideComments') : t('commentsCount', { count: commentCount })}
+        </button>
+      )}
 
       {isOpen && (
         <div className="mt-3 space-y-3">
