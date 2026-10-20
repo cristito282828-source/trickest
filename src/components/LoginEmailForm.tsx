@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import ModalPortal from './ModalPortal';
 import { Button } from '@/components/atoms';
 
@@ -18,6 +18,7 @@ export default function LoginEmailForm({ isOpen, onClose, onSuccess, onSwitchToR
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const locale = useLocale();
   const t = useTranslations('loginForm');
 
   if (!isOpen) return null;
@@ -131,7 +132,7 @@ export default function LoginEmailForm({ isOpen, onClose, onSuccess, onSwitchToR
           {/* Google Login Button */}
           <Button
             type="button"
-            onClick={() => signIn('google')}
+            onClick={() => signIn('google', { callbackUrl: `/${locale}/dashboard/muro` })}
             disabled={isLoading}
             variant="purple"
             size="lg"

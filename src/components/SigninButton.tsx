@@ -3,7 +3,7 @@
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import LoginEmailForm from './LoginEmailForm';
 import RegisterEmailForm from './RegisterEmailForm';
 import SetPasswordModal from './SetPasswordModal';
@@ -19,6 +19,7 @@ type MenuOption = {
 
 const SigninButton = () => {
   const pathname = usePathname();
+  const locale = useLocale();
   const { data: session } = useSession();
   const [openModal, setModal] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
@@ -114,7 +115,7 @@ const SigninButton = () => {
           label: t('loginGoogle'),
           action: () => {
             handleMenu();
-            signIn('google');
+            signIn('google', { callbackUrl: `/${locale}/dashboard/muro` });
           },
           isPrimary: true,
         },
@@ -326,7 +327,7 @@ const SigninButton = () => {
         onClose={() => setShowLoginForm(false)}
         onSuccess={() => {
           setShowLoginForm(false);
-          window.location.reload(); // Reload to show badge
+          window.location.assign(`/${locale}/dashboard/muro`);
         }}
         onSwitchToRegister={() => {
           setShowLoginForm(false);
@@ -340,7 +341,7 @@ const SigninButton = () => {
         onClose={() => setShowRegisterForm(false)}
         onSuccess={() => {
           setShowRegisterForm(false);
-          window.location.reload(); // Reload to show badge
+          window.location.assign(`/${locale}/dashboard/muro`);
         }}
         onSwitchToLogin={() => {
           setShowRegisterForm(false);

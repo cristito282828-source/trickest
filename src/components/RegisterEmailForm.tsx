@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import ModalPortal from './ModalPortal';
 import { Button } from '@/components/atoms';
 
@@ -20,6 +20,7 @@ export default function RegisterEmailForm({ isOpen, onClose, onSuccess, onSwitch
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const locale = useLocale();
   const t = useTranslations('registerForm');
 
   if (!isOpen) return null;
@@ -110,7 +111,7 @@ export default function RegisterEmailForm({ isOpen, onClose, onSuccess, onSwitch
           {/* Google Login Button — primero, prominente */}
           <button
             type="button"
-            onClick={() => signIn('google')}
+            onClick={() => signIn('google', { callbackUrl: `/${locale}/dashboard/muro` })}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-gray-800 font-bold uppercase tracking-wider text-sm py-3 px-4 rounded-lg border border-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
