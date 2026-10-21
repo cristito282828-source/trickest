@@ -10,7 +10,13 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <div className="bg-neutral-100 min-h-screen antialiased text-neutral-300">
       <Providers>
-        <div className="flex flex-col lg:flex-row" style={{ marginTop: '80px', minHeight: 'calc(100vh - 80px)' }}>
+        <div
+          className="flex flex-col transition-[margin,min-height] duration-200 motion-reduce:transition-none lg:flex-row"
+          style={{
+            marginTop: 'var(--dashboard-header-offset, 80px)',
+            minHeight: 'calc(100vh - var(--dashboard-header-offset, 80px))',
+          }}
+        >
           {/* Sidebar - solo visible en desktop */}
           <div className="hidden lg:block h-full">
             <Sidebar />

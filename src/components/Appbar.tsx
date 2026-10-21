@@ -45,6 +45,16 @@ const Appbar = () => {
   const [modalCommentId, setModalCommentId] = useState<number | null>(null);
   const t = useTranslations();
 
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--dashboard-header-offset',
+      isDashboardRoute && !isDashboardChromeVisible ? '0px' : '80px'
+    );
+
+    return () => {
+      document.documentElement.style.setProperty('--dashboard-header-offset', '80px');
+    };
+  }, [isDashboardRoute, isDashboardChromeVisible]);
 
   // Fetch user score and photo
   useEffect(() => {
