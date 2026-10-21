@@ -60,6 +60,7 @@ model User {
   threadProposalVotes ThreadProposalVote[] // Votos del usuario a propuestas de hilos
   wallReactions       WallReaction[]
   wallComments        WallComment[]
+  wallReposts         WallRepost[]
   skateGamesCreated   SkateGame[]          @relation("SkateGameChallenger")
   skateGamesReceived  SkateGame[]          @relation("SkateGameOpponent")
   skateGamesJudged    SkateGame[]          @relation("SkateGameJudge")
@@ -291,6 +292,7 @@ model WallActivity {
   createdAt  DateTime          @default(now())
   reactions  WallReaction[]
   comments   WallComment[]
+  reposts    WallRepost[]
 
   @@unique([type, sourceId])
   @@index([createdAt])
@@ -327,6 +329,20 @@ model WallComment {
 
   @@index([activityId, parentCommentId, createdAt])
   @@index([userId])
+}
+
+model WallRepost {
+  id         Int          @id @default(autoincrement())
+  activityId Int
+  userId     String
+  createdAt  DateTime     @default(now())
+
+  activity WallActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [email], onDelete: Cascade)
+
+  @@unique([activityId, userId])
+  @@index([activityId])
+  @@index([userId, createdAt])
 }
 
 enum SkateGameStatus {

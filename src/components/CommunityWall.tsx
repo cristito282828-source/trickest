@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
 import { createSlug } from '@/lib/utils/slug';
 import WallComments from '@/components/WallComments';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Repeat2 } from 'lucide-react';
 import {
   MdCampaign,
   MdEmojiEvents,
@@ -60,6 +60,8 @@ interface Activity {
   reactionCounts: Record<ReactionType, number>;
   userReaction: ReactionType | null;
   commentCount: number;
+  repostCount: number;
+  isReposted: boolean;
 }
 
 interface CommunityWallProps {
@@ -149,11 +151,11 @@ function SkateboardSideIcon({ className = 'h-6 w-10' }: { className?: string }) 
   );
 }
 
-function AngryBikeIcon() {
+function AngryBikeIcon({ className = 'h-12 w-12' }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className="inline-block h-12 w-12 bg-red-600"
+      className={`inline-block bg-red-600 ${className}`}
       style={{
         maskImage: "url('/vecteezy_kids-bike-flat-vector-design_5511903.svg')",
         maskRepeat: 'no-repeat',
@@ -186,6 +188,19 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
   const [savingReactionId, setSavingReactionId] = useState<number | null>(null);
   const [reactionErrorId, setReactionErrorId] = useState<number | null>(null);
   const [reactionPickerActivityId, setReactionPickerActivityId] = useState<string | null>(null);
+  const [repostStates, setRepostStates] = useState<Record<number, { count: number; isReposted: boolean }>>(
+    () => activities.reduce<Record<number, { count: number; isReposted: boolean }>>((states, activity) => {
+      if (activity.wallActivityId !== undefined) {
+        states[activity.wallActivityId] = {
+          count: activity.repostCount,
+          isReposted: activity.isReposted,
+        };
+      }
+      return states;
+    }, {})
+  );
+  const [savingRepostId, setSavingRepostId] = useState<number | null>(null);
+  const [repostErrorId, setRepostErrorId] = useState<number | null>(null);
   const [openCommentsActivityId, setOpenCommentsActivityId] = useState<number | undefined>();
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
@@ -315,6 +330,38 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
     void handleReaction(activity, currentReaction ?? 'LIKE');
   };
 
+  const handleRepost = async (activity: Activity) => {
+    const activityId = activity.wallActivityId;
+    if (activityId === undefined || savingRepostId !== null) return;
+
+    const currentState = repostStates[activityId] ?? {
+      count: activity.repostCount,
+      isReposted: activity.isReposted,
+    };
+    setSavingRepostId(activityId);
+    setRepostErrorId(null);
+
+    try {
+      const response = await fetch(`/api/wall/${activityId}/repost`, {
+        method: currentState.isReposted ? 'DELETE' : 'POST',
+      });
+      const result: unknown = await response.json();
+      if (!response.ok || !isRepostResponse(result)) {
+        throw new Error('Unable to update repost');
+      }
+      const savedRepostState = result.data;
+      if (!isRepostState(savedRepostState)) {
+        throw new Error('Invalid repost response');
+      }
+      setRepostStates((current) => ({ ...current, [activityId]: savedRepostState }));
+    } catch (error) {
+      console.error('Error updating wall repost:', error);
+      setRepostErrorId(activityId);
+    } finally {
+      setSavingRepostId(null);
+    }
+  };
+
   return (
     <main className="min-h-[calc(100vh-80px)] w-full min-w-0 overflow-x-clip bg-neutral-50 px-4 py-6 pb-28 lg:px-8 lg:pb-8">
       <div className="mx-auto max-w-6xl">
@@ -387,6 +434,12 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                     ? reactionOptions.find((option) => option.type === reactionState.userReaction) ?? reactionOptions[0]
                     : reactionOptions[0];
                   const activeReactionCount = reactionState.reactionCounts[activeReaction.type];
+                  const repostState = activity.wallActivityId !== undefined
+                    ? repostStates[activity.wallActivityId] ?? {
+                        count: activity.repostCount,
+                        isReposted: activity.isReposted,
+                      }
+                    : { count: 0, isReposted: false };
 
                   return (
                     <article key={activity.id} className="min-w-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
@@ -613,10 +666,10 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                           </div>
                         )}
 
-                        <div className="mt-4 border-t border-neutral-100 pt-3">
-                          <div className="flex items-center justify-between gap-3">
+                        <div className="mt-4 border-t border-neutral-100 pt-2">
+                          <div className="grid grid-cols-3 items-center gap-1">
                             <div
-                              className="relative"
+                              className="relative min-w-0"
                               onMouseEnter={() => {
                                 if (window.matchMedia('(hover: hover)').matches) {
                                   setReactionPickerActivityId(activity.id);
@@ -645,28 +698,24 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                 onPointerCancel={clearReactionHold}
                                 onContextMenu={(event) => event.preventDefault()}
                                 onClick={() => handleLikeClick(activity)}
-                                className={`relative inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-full border text-sm font-bold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                                className={`relative inline-flex h-11 w-full min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs font-medium transition-colors disabled:cursor-wait disabled:opacity-60 ${
                                   reactionState.userReaction !== null
-                                    ? 'border-cyan-300 bg-cyan-50 text-cyan-800'
-                                    : 'border-neutral-200 bg-white text-neutral-700 hover:border-cyan-200 hover:bg-neutral-50'
+                                    ? 'text-cyan-700 hover:bg-cyan-50'
+                                    : 'text-neutral-500 hover:bg-neutral-50'
                                 } select-none`}
                               >
                                 {reactionState.userReaction === 'LIKE'
-                                  ? <SkateboardSideIcon className="h-6 w-10" />
+                                  ? <SkateboardSideIcon className="h-4 w-7" />
                                   : reactionState.userReaction === 'ANGRY'
-                                  ? <AngryBikeIcon />
+                                  ? <AngryBikeIcon className="h-6 w-6" />
                                   : reactionState.userReaction
-                                  ? <span aria-hidden="true" className="select-none text-[2.5rem] leading-none">{activeReaction.emoji}</span>
-                                  : <span className="text-cyan-700"><SkateboardSideIcon className="h-6 w-10" /></span>}
-                                {activeReactionCount > 0 && (
-                                  <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-neutral-800 px-1 text-[10px] leading-5 text-white">
-                                    {activeReactionCount}
-                                  </span>
-                                )}
+                                  ? <span aria-hidden="true" className="select-none text-xl leading-none">{activeReaction.emoji}</span>
+                                  : <SkateboardSideIcon className="h-4 w-7" />}
+                                <span className="truncate">{activeReactionCount > 0 ? activeReactionCount : t(activeReaction.label)}</span>
                               </button>
                               {reactionPickerActivityId === activity.id && (
                                 <div
-                                  className="absolute bottom-full left-0 z-20 grid w-[22rem] max-w-[calc(100vw-5rem)] select-none grid-cols-5 gap-1 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-lg"
+                                  className="absolute bottom-full left-0 z-20 grid w-[18rem] max-w-[calc(100vw-3rem)] select-none grid-cols-5 gap-1 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-lg"
                                   role="group"
                                   aria-label={t('reactions')}
                                   onContextMenu={(event) => event.preventDefault()}
@@ -684,16 +733,16 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                         setReactionPickerActivityId(null);
                                         longPressTriggeredRef.current = false;
                                       }}
-                                      className={`flex h-16 w-full min-w-0 select-none items-center justify-center rounded-full text-[2.5rem] leading-none transition-colors disabled:opacity-60 ${
+                                      className={`flex h-12 w-full min-w-0 select-none items-center justify-center rounded-full text-2xl leading-none transition-colors disabled:opacity-60 ${
                                         reactionState.userReaction === option.type
                                           ? 'bg-cyan-100'
                                           : 'hover:bg-neutral-100'
                                       }`}
                                     >
                                       {option.type === 'LIKE'
-                                        ? <SkateboardSideIcon className="h-6 w-10" />
+                                        ? <SkateboardSideIcon className="h-4 w-7" />
                                         : option.type === 'ANGRY'
-                                        ? <AngryBikeIcon />
+                                        ? <AngryBikeIcon className="h-8 w-8" />
                                         : <span aria-hidden="true" className="select-none">{option.emoji}</span>}
                                     </button>
                                   ))}
@@ -709,15 +758,39 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                 const activityId = activity.wallActivityId;
                                 setOpenCommentsActivityId((openId) => openId === activityId ? undefined : activityId);
                               }}
-                              className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-bold text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-cyan-800 disabled:opacity-50"
+                              className="inline-flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-50 hover:text-cyan-700 disabled:opacity-50"
                             >
-                              <MessageCircle size={18} />
-                              <span>{t('commentsCount', { count: activity.commentCount })}</span>
+                              <MessageCircle size={16} />
+                              <span className="truncate">{t('commentsCount', { count: activity.commentCount })}</span>
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`${t(repostState.isReposted ? 'reposted' : 'repost')} (${repostState.count})`}
+                              aria-pressed={repostState.isReposted}
+                              disabled={activity.wallActivityId === undefined || savingRepostId !== null}
+                              onClick={() => void handleRepost(activity)}
+                              className={`inline-flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs font-medium transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                                repostState.isReposted
+                                  ? 'text-cyan-700 hover:bg-cyan-50'
+                                  : 'text-neutral-500 hover:bg-neutral-50 hover:text-cyan-700'
+                              }`}
+                            >
+                              <Repeat2 size={16} />
+                              <span className="truncate">
+                                {repostState.count > 0
+                                  ? t('repostCount', { count: repostState.count })
+                                  : t(repostState.isReposted ? 'reposted' : 'repost')}
+                              </span>
                             </button>
                           </div>
                           {reactionErrorId === activity.wallActivityId && (
                             <p role="alert" className="mt-2 text-xs font-medium text-red-600">
                               {t('reactionError')}
+                            </p>
+                          )}
+                          {repostErrorId === activity.wallActivityId && (
+                            <p role="alert" className="mt-2 text-xs font-medium text-red-600">
+                              {t('repostError')}
                             </p>
                           )}
                         </div>
@@ -784,6 +857,25 @@ function isReactionResponse(value: unknown): value is {
   error?: { message?: string };
 } {
   return Boolean(value && typeof value === 'object' && 'success' in value);
+}
+
+function isRepostState(value: unknown): value is { count: number; isReposted: boolean } {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as { count?: unknown; isReposted?: unknown };
+  return typeof candidate.count === 'number' && Number.isInteger(candidate.count) && candidate.count >= 0
+    && typeof candidate.isReposted === 'boolean';
+}
+
+function isRepostResponse(value: unknown): value is {
+  success: true;
+  data?: unknown;
+} {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    'success' in value &&
+    value.success === true
+  );
 }
 
 function Stat({ icon, label }: { icon: React.ReactNode; label: string }) {

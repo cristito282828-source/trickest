@@ -257,7 +257,7 @@ export default async function CommunityWallPage() {
     select: { id: true, type: true, sourceId: true },
   });
   const activityIds = wallActivities.map((activity) => activity.id);
-  const [reactionGroups, userReactions, commentGroups] = activityIds.length
+  const [reactionGroups, userReactions, commentGroups, repostGroups, userReposts] = activityIds.length
     ? await Promise.all([
         prisma.wallReaction.groupBy({
           by: ['activityId', 'type'],
@@ -273,8 +273,17 @@ export default async function CommunityWallPage() {
           where: { activityId: { in: activityIds } },
           _count: { _all: true },
         }),
+        prisma.wallRepost.groupBy({
+          by: ['activityId'],
+          where: { activityId: { in: activityIds } },
+          _count: { _all: true },
+        }),
+        prisma.wallRepost.findMany({
+          where: { activityId: { in: activityIds }, userId: email },
+          select: { activityId: true },
+        }),
       ])
-    : [[], [], []];
+    : [[], [], [], [], []];
 
   const wallActivityIdsBySource = new Map(
     wallActivities.map((activity) => [`${activity.type}:${activity.sourceId}`, activity.id])
@@ -293,6 +302,10 @@ export default async function CommunityWallPage() {
   const commentCountsByActivity = new Map(
     commentGroups.map((group) => [group.activityId, group._count._all])
   );
+  const repostCountsByActivity = new Map(
+    repostGroups.map((group) => [group.activityId, group._count._all])
+  );
+  const userRepostedActivities = new Set(userReposts.map((repost) => repost.activityId));
 
   const activitiesWithReactions = activities.map((activity) => {
     const key = `${activity.sourceType}:${activity.sourceId}`;
@@ -303,6 +316,8 @@ export default async function CommunityWallPage() {
       ...activity,
       wallActivityId,
       commentCount: wallActivityId ? commentCountsByActivity.get(wallActivityId) ?? 0 : 0,
+      repostCount: wallActivityId ? repostCountsByActivity.get(wallActivityId) ?? 0 : 0,
+      isReposted: wallActivityId ? userRepostedActivities.has(wallActivityId) : false,
       reactionCounts: {
         LIKE: counts.LIKE ?? 0,
         LOVE: counts.LOVE ?? 0,
