@@ -8,6 +8,7 @@ import { useSession, signOut } from 'next-auth/react';
 import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
+import { useAutoHideDashboardChrome } from '@/hooks/useAutoHideDashboardChrome';
 
 interface MenuItem {
   path: string;
@@ -21,6 +22,7 @@ export const MobileGameMenu = () => {
   const t = useTranslations();
   const pathname = usePathname();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const { isVisible, reveal } = useAutoHideDashboardChrome(true, pathname);
 
   // Main navigation items (show 4 primary on bottom bar)
   const skaterMenuItems: MenuItem[] = useMemo(() => [
@@ -207,7 +209,12 @@ export const MobileGameMenu = () => {
   return (
     <>
       {/* Fixed bottom navigation bar - Game HUD style */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[9995] bg-neutral-900/95 backdrop-blur-md border-t-4 border-accent-cyan-500/50 shadow-2xl shadow-accent-cyan-500/20">
+      <div
+        onFocusCapture={reveal}
+        className={`fixed bottom-0 left-0 right-0 z-[9995] border-t border-neutral-200 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-lg backdrop-blur-md transition-transform duration-200 motion-reduce:transition-none lg:hidden ${
+          isVisible || showMoreMenu ? 'translate-y-0' : 'pointer-events-none translate-y-full'
+        }`}
+      >
         <div className="flex items-center justify-around px-2 py-2">
           {menuItems.map((item) => (
             <Link
@@ -216,27 +223,23 @@ export const MobileGameMenu = () => {
               className="flex flex-col items-center gap-1 px-2 py-1 min-w-[60px]"
             >
               <div className={`
-                relative p-2 rounded-lg transition-all duration-200
+                relative p-2 rounded-lg transition-colors duration-200
                 ${isActive(item.path)
-                  ? 'bg-gradient-to-br from-accent-cyan-500 to-accent-purple-600 shadow-lg shadow-accent-cyan-500/50 scale-110'
-                  : 'bg-neutral-800 hover:bg-neutral-700'
+                  ? 'bg-cyan-700 text-white'
+                  : 'bg-neutral-100 hover:bg-neutral-200'
                 }
               `}>
-                {/* Active glow effect */}
-                {isActive(item.path) && (
-                  <div className="absolute inset-0 bg-accent-cyan-400/30 rounded-lg animate-pulse blur-sm"></div>
-                )}
                 <div className="relative">
                   {React.cloneElement(item.icon, {
                     className: isActive(item.path)
-                      ? 'text-white drop-shadow-lg'
-                      : 'text-neutral-400'
+                      ? 'text-white'
+                      : 'text-neutral-500'
                   })}
                 </div>
               </div>
               <span className={`
-                text-[10px] font-black uppercase tracking-wider
-                ${isActive(item.path) ? 'text-accent-cyan-400' : 'text-neutral-500'}
+                text-[10px] font-bold uppercase tracking-wide
+                ${isActive(item.path) ? 'text-cyan-800' : 'text-neutral-500'}
               `}>
                 {item.title.substring(0, 6)}
               </span>
@@ -248,24 +251,24 @@ export const MobileGameMenu = () => {
             <button
               onClick={() => setShowMoreMenu(!showMoreMenu)}
               className={`
-                relative p-2 rounded-lg transition-all duration-200
+                relative p-2 rounded-lg transition-colors duration-200
                 ${showMoreMenu
-                  ? 'bg-gradient-to-br from-accent-purple-500 to-accent-pink-500 shadow-lg shadow-accent-purple-500/50 scale-110'
-                  : 'bg-neutral-800 hover:bg-neutral-700'
+                  ? 'bg-cyan-700'
+                  : 'bg-neutral-100 hover:bg-neutral-200'
                 }
               `}
             >
               {/* More dots icon */}
               <div className="flex flex-col items-center gap-0.5">
-                <div className={`w-1.5 h-1.5 rounded-full ${showMoreMenu ? 'bg-white' : 'bg-neutral-400'}`}></div>
-                <div className={`w-1.5 h-1.5 rounded-full ${showMoreMenu ? 'bg-white' : 'bg-neutral-400'}`}></div>
-                <div className={`w-1.5 h-1.5 rounded-full ${showMoreMenu ? 'bg-white' : 'bg-neutral-400'}`}></div>
+                <div className={`w-1.5 h-1.5 rounded-full ${showMoreMenu ? 'bg-white' : 'bg-neutral-500'}`}></div>
+                <div className={`w-1.5 h-1.5 rounded-full ${showMoreMenu ? 'bg-white' : 'bg-neutral-500'}`}></div>
+                <div className={`w-1.5 h-1.5 rounded-full ${showMoreMenu ? 'bg-white' : 'bg-neutral-500'}`}></div>
               </div>
             </button>
 
             {/* Floating "MORE" menu popup */}
             {showMoreMenu && (
-              <div className="absolute bottom-full right-0 mb-2 w-48 bg-neutral-900/98 backdrop-blur-xl border-4 border-accent-purple-500/50 rounded-xl shadow-2xl shadow-accent-purple-500/30 overflow-hidden">
+              <div className="absolute bottom-full right-0 mb-2 w-48 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl">
                 <div className="p-2">
                   {secondaryItems.map((item) => (
                     <Link
@@ -275,17 +278,17 @@ export const MobileGameMenu = () => {
                       className={`
                         flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-200
                         ${isActive(item.path)
-                          ? 'bg-gradient-to-r from-accent-purple-500 to-accent-pink-500'
-                          : 'hover:bg-neutral-800'
+                          ? 'bg-cyan-50'
+                          : 'hover:bg-neutral-100'
                         }
                       `}
                     >
-                      <div className={isActive(item.path) ? 'text-white' : 'text-neutral-400'}>
+                      <div className={isActive(item.path) ? 'text-cyan-800' : 'text-neutral-500'}>
                         {item.icon}
                       </div>
                       <span className={`
-                        text-sm font-black uppercase tracking-wide
-                        ${isActive(item.path) ? 'text-white' : 'text-neutral-300'}
+                        text-sm font-bold uppercase tracking-wide
+                        ${isActive(item.path) ? 'text-cyan-900' : 'text-neutral-700'}
                       `}>
                         {item.title}
                       </span>
@@ -312,7 +315,7 @@ export const MobileGameMenu = () => {
       {/* Close backdrop when more menu is open */}
       {showMoreMenu && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-[9994]"
+          className="fixed inset-0 z-[9994] bg-black/30 lg:hidden"
           onClick={() => setShowMoreMenu(false)}
         />
       )}

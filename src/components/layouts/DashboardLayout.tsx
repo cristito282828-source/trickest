@@ -17,7 +17,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           {/* Contenido principal con padding bottom para el menu mobile */}
-          <div className="flex-1 w-full text-neutral-900 overflow-y-auto pb-20 lg:pb-0">
+          <div className="flex-1 w-full overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] text-neutral-900 lg:pb-0">
             {children}
           </div>
         </div>

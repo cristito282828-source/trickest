@@ -8,8 +8,10 @@ import { useTranslations } from 'next-intl';
 import SigninButton from './SigninButton';
 import LocationToggle from './LocationToggle';
 import LanguageSwitcher from './LanguageSwitcher';
+import { usePathname } from 'next/navigation';
 import { useRealtime } from '@/providers/SupabaseRealtimeProvider';
 import SpotModal from '@/components/organisms/SpotModal';
+import { useAutoHideDashboardChrome } from '@/hooks/useAutoHideDashboardChrome';
 
 interface UserScore {
   totalScore: number;
@@ -31,6 +33,9 @@ interface Notification {
 const Appbar = () => {
   const { data: session } = useSession();
   const { unreadCount, markNotificationsSeen, refreshUnreadCount } = useRealtime();
+  const pathname = usePathname();
+  const isDashboardRoute = pathname.split('/').includes('dashboard');
+  const { isVisible: isDashboardChromeVisible, reveal } = useAutoHideDashboardChrome(isDashboardRoute, pathname);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -202,7 +207,12 @@ const Appbar = () => {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[9990] flex p-4 items-center w-full bg-transparent backdrop-blur-sm">
+    <header
+      onFocusCapture={reveal}
+      className={`fixed top-0 left-0 right-0 z-[9990] flex w-full items-center bg-transparent px-4 pb-4 pt-[calc(1rem+env(safe-area-inset-top))] backdrop-blur-sm transition-transform duration-200 motion-reduce:transition-none ${
+        isDashboardRoute && !isDashboardChromeVisible ? '-translate-y-full pointer-events-none' : 'translate-y-0'
+      }`}
+    >
       <div className={session?.user ? 'md:hidden' : ''}>
         <SigninButton />
       </div>

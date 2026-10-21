@@ -71,12 +71,12 @@ interface CommunityWallProps {
 type Filter = 'all' | 'community' | 'challenges' | 'videos' | 'products' | 'spots';
 
 const activityStyles: Record<ActivityType, { icon: typeof MdCampaign; color: string }> = {
-  user_joined: { icon: MdPersonAddAlt1, color: 'bg-sky-100 text-sky-700' },
-  team_created: { icon: MdGroups, color: 'bg-violet-100 text-violet-700' },
-  challenge_created: { icon: MdEmojiEvents, color: 'bg-amber-100 text-amber-700' },
-  submission_approved: { icon: MdOutlinePlayCircle, color: 'bg-emerald-100 text-emerald-700' },
-  spot_added: { icon: MdLocationOn, color: 'bg-rose-100 text-rose-700' },
-  product_added: { icon: MdShoppingBag, color: 'bg-fuchsia-100 text-fuchsia-700' },
+  user_joined: { icon: MdPersonAddAlt1, color: 'bg-neutral-100 text-neutral-600' },
+  team_created: { icon: MdGroups, color: 'bg-neutral-100 text-neutral-600' },
+  challenge_created: { icon: MdEmojiEvents, color: 'bg-neutral-100 text-neutral-600' },
+  submission_approved: { icon: MdOutlinePlayCircle, color: 'bg-neutral-100 text-neutral-600' },
+  spot_added: { icon: MdLocationOn, color: 'bg-neutral-100 text-neutral-600' },
+  product_added: { icon: MdShoppingBag, color: 'bg-neutral-100 text-neutral-600' },
 };
 
 const reactionOptions: { type: ReactionType; emoji?: string; label: `reaction${string}` }[] = [
@@ -316,7 +316,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
   };
 
   return (
-    <main className="min-h-[calc(100vh-80px)] w-full min-w-0 overflow-x-clip bg-[#f0f2f5] px-4 py-6 pb-28 lg:px-8 lg:pb-8">
+    <main className="min-h-[calc(100vh-80px)] w-full min-w-0 overflow-x-clip bg-neutral-50 px-4 py-6 pb-28 lg:px-8 lg:pb-8">
       <div className="mx-auto max-w-6xl">
         <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           <section className="min-w-0" aria-label={t('title')}>
@@ -329,10 +329,10 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
               </div>
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 pt-3">
                 <div className="flex items-center gap-2 text-sm font-semibold text-neutral-500">
-                  <MdCampaign className="text-xl text-purple-600" />
+                  <MdCampaign className="text-xl text-cyan-700" />
                   <span>{t('composerTitle')}</span>
                 </div>
-                <span className="rounded-full bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700">
+                <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-bold text-neutral-600">
                   {t('premiumOnly')}
                 </span>
               </div>
@@ -433,10 +433,10 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         </div>
 
                         {activity.type === 'challenge_created' && (
-                          <div className="mt-4 overflow-hidden rounded-xl border border-amber-100 bg-amber-50">
+                          <div className="mt-4 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
                             {activity.isCurrentChallenge && (
-                              <div className="border-b border-amber-100 bg-amber-100 px-4 py-2">
-                                <span className="rounded-full bg-amber-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                              <div className="border-b border-neutral-200 bg-neutral-100 px-4 py-2">
+                                <span className="rounded-full bg-cyan-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
                                   {t('currentChallenge')}
                                 </span>
                               </div>
@@ -454,7 +454,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
                                 <div className="absolute inset-x-0 bottom-0 p-4">
                                   <p className="text-lg font-black text-white drop-shadow">{activity.titleName}</p>
-                                  <p className="mt-1 text-sm font-semibold text-amber-200">
+                                  <p className="mt-1 text-sm font-semibold text-neutral-100">
                                     {t('challengeLevel', { level: activity.level ?? 0, points: activity.points ?? 0 })}
                                   </p>
                                 </div>
@@ -462,15 +462,15 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                             ) : (
                               <div className="p-4">
                                 <p className="font-black text-neutral-900">{activity.titleName}</p>
-                                <p className="mt-1 text-sm font-semibold text-amber-800">
+                                <p className="mt-1 text-sm font-semibold text-neutral-600">
                                   {t('challengeLevel', { level: activity.level ?? 0, points: activity.points ?? 0 })}
                                 </p>
                               </div>
                             )}
-                            <div className="flex justify-end border-t border-amber-100 bg-white p-3">
+                            <div className="flex justify-end border-t border-neutral-200 bg-white p-3">
                               <Link
                                 href={`/dashboard/skaters/tricks/${encodeURIComponent(activity.titleName)}`}
-                                className="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-amber-600"
+                                className="inline-flex items-center gap-2 rounded-lg bg-cyan-700 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-cyan-800"
                               >
                                 <MdSkateboarding className="text-lg" />
                                 {t('playChallenge')}
@@ -480,7 +480,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         {activity.type === 'product_added' && (
-                          <div className="mt-4 overflow-hidden rounded-xl border border-fuchsia-100 bg-fuchsia-50">
+                          <div className="mt-4 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
                             {activity.image ? (
                               <div className="relative aspect-square w-full max-w-full overflow-hidden bg-neutral-900">
                                 <Image
@@ -492,7 +492,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                   className="max-w-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-                                <span className="absolute left-3 top-3 rounded-md bg-fuchsia-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                                <span className="absolute left-3 top-3 rounded-md bg-neutral-900/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
                                   {activity.productIsNew ? t('newProduct') : t('featuredProductBadge')}
                                 </span>
                                 <div className="absolute inset-x-0 bottom-0 p-4">
@@ -501,18 +501,18 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                               </div>
                             ) : (
                               <div className="p-4">
-                                <span className="mb-2 inline-block rounded-md bg-fuchsia-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
+                                <span className="mb-2 inline-block rounded-md bg-neutral-800 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
                                   {activity.productIsNew ? t('newProduct') : t('featuredProductBadge')}
                                 </span>
                                 <p className="font-black text-neutral-900">{activity.titleName}</p>
                               </div>
                             )}
-                            <div className="flex justify-end border-t border-fuchsia-100 bg-white p-3">
+                            <div className="flex justify-end border-t border-neutral-200 bg-white p-3">
                               <Link
                                 href={activity.productSlug
                                   ? `/suppls?product=${encodeURIComponent(activity.productSlug)}`
                                   : '/suppls'}
-                                className="inline-flex items-center gap-2 rounded-lg bg-fuchsia-700 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-fuchsia-800"
+                                className="inline-flex items-center gap-2 rounded-lg bg-cyan-700 px-4 py-2 text-sm font-black text-white transition-colors hover:bg-cyan-800"
                               >
                                 <MdShoppingBag className="text-lg" />
                                 {t('viewProduct')}
@@ -522,21 +522,21 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         {activity.type === 'team_created' && (
-                          <div className="mt-4 flex items-center gap-3 rounded-xl border border-violet-100 bg-violet-50 p-4">
+                          <div className="mt-4 flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
                             {activity.image ? (
                               <Image src={activity.image} alt="" width={56} height={56} unoptimized className="h-14 w-14 rounded-xl object-cover" />
                             ) : (
-                              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-violet-200 text-violet-800">
+                              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-neutral-200 text-neutral-700">
                                 <MdGroups className="text-3xl" />
                               </div>
                             )}
                             <div className="min-w-0 flex-1">
-                              <p className="text-xs font-bold uppercase tracking-wider text-violet-700">{t('team')}</p>
+                              <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">{t('team')}</p>
                               <p className="truncate font-black text-neutral-900">{activity.titleName}</p>
                             </div>
                             <Link
                               href={`/teams/${createSlug(activity.titleName)}`}
-                              className="rounded-lg bg-violet-700 px-3 py-2 text-xs font-bold text-white hover:bg-violet-800"
+                              className="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-bold text-white hover:bg-cyan-800"
                             >
                               {t('openTeam')}
                             </Link>
@@ -566,7 +566,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         {activity.type === 'spot_added' && (
-                          <div className="mt-4 overflow-hidden rounded-xl border border-rose-100 bg-rose-50">
+                          <div className="mt-4 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
                             {activity.image && (
                               <div className="relative aspect-square w-full max-w-full overflow-hidden bg-neutral-900">
                                 <Image
@@ -582,10 +582,10 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                 </div>
                               </div>
                             )}
-                            <div className="flex flex-wrap items-center gap-2 p-4 text-sm font-semibold text-rose-900">
+                            <div className="flex flex-wrap items-center gap-2 p-4 text-sm font-semibold text-neutral-700">
                               <MdLocationOn className="shrink-0 text-xl" />
                               <div className="min-w-0 flex-1">
-                                <span className="mb-1 block text-xs font-black uppercase tracking-wide text-rose-700">
+                                <span className="mb-1 block text-xs font-black uppercase tracking-wide text-neutral-500">
                                   {activity.spotType === 'skateshop'
                                     ? t('skateshop')
                                     : activity.spotType === 'spot'
@@ -604,7 +604,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                               {activity.spotId && (
                                 <Link
                                   href={`/spots?spot=${activity.spotId}`}
-                                  className="rounded-lg bg-rose-700 px-3 py-2 text-xs font-black text-white transition-colors hover:bg-rose-800"
+                                  className="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-black text-white transition-colors hover:bg-cyan-800"
                                 >
                                   {t('viewOnMap')}
                                 </Link>
@@ -649,14 +649,14 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                   reactionState.userReaction !== null
                                     ? 'border-cyan-300 bg-cyan-50 text-cyan-800'
                                     : 'border-neutral-200 bg-white text-neutral-700 hover:border-cyan-200 hover:bg-neutral-50'
-                                }`}
+                                } select-none`}
                               >
                                 {reactionState.userReaction === 'LIKE'
                                   ? <SkateboardSideIcon className="h-6 w-10" />
                                   : reactionState.userReaction === 'ANGRY'
                                   ? <AngryBikeIcon />
                                   : reactionState.userReaction
-                                  ? <span aria-hidden="true" className="text-[2.5rem] leading-none">{activeReaction.emoji}</span>
+                                  ? <span aria-hidden="true" className="select-none text-[2.5rem] leading-none">{activeReaction.emoji}</span>
                                   : <span className="text-cyan-700"><SkateboardSideIcon className="h-6 w-10" /></span>}
                                 {activeReactionCount > 0 && (
                                   <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-neutral-800 px-1 text-[10px] leading-5 text-white">
@@ -666,9 +666,10 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                               </button>
                               {reactionPickerActivityId === activity.id && (
                                 <div
-                                  className="absolute bottom-full left-0 z-20 grid w-[22rem] max-w-[calc(100vw-5rem)] grid-cols-5 gap-1 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-lg"
+                                  className="absolute bottom-full left-0 z-20 grid w-[22rem] max-w-[calc(100vw-5rem)] select-none grid-cols-5 gap-1 rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-lg"
                                   role="group"
                                   aria-label={t('reactions')}
+                                  onContextMenu={(event) => event.preventDefault()}
                                 >
                                   {reactionOptions.map((option) => (
                                     <button
@@ -683,7 +684,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                         setReactionPickerActivityId(null);
                                         longPressTriggeredRef.current = false;
                                       }}
-                                      className={`flex h-16 w-full min-w-0 items-center justify-center rounded-full text-[2.5rem] leading-none transition-colors disabled:opacity-60 ${
+                                      className={`flex h-16 w-full min-w-0 select-none items-center justify-center rounded-full text-[2.5rem] leading-none transition-colors disabled:opacity-60 ${
                                         reactionState.userReaction === option.type
                                           ? 'bg-cyan-100'
                                           : 'hover:bg-neutral-100'
@@ -693,7 +694,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                         ? <SkateboardSideIcon className="h-6 w-10" />
                                         : option.type === 'ANGRY'
                                         ? <AngryBikeIcon />
-                                        : <span aria-hidden="true">{option.emoji}</span>}
+                                        : <span aria-hidden="true" className="select-none">{option.emoji}</span>}
                                     </button>
                                   ))}
                                 </div>

@@ -133,6 +133,12 @@ from-green-500 to-teal-500       /* Tab Redes Sociales */
 
 ## Sistema de Colores por Contexto
 
+### Muro social
+- **Base:** superficies blancas y grises neutras para que el contenido de las publicaciones destaque.
+- **Acento:** cyan para selección, navegación activa y acciones principales.
+- **Estados:** reservar verde, rojo y amarillo para comunicar estados reales; evitar asignar un color distinto a cada tipo de publicación.
+- **Jerarquía:** priorizar tipografía, espaciado y agrupación sobre gradientes, brillos y bordes de alto contraste.
+
 ### Skater Dashboard
 - **Primary:** Cyan (#22d3ee) - Representa tecnología y modernidad
 - **Secondary:** Purple (#a855f7) - Creatividad y estilo
