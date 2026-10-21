@@ -13,14 +13,29 @@ export function useAutoHideDashboardChrome(enabled: boolean, resetKey?: string) 
       if (!enabled) return;
     }
 
-    let lastScrollY = Math.max(window.scrollY, 0);
+    let lastScrollY = 0;
+    let lastScroller: EventTarget | null = null;
     let accumulatedDelta = 0;
     let lastDirection: 'up' | 'down' | null = null;
 
-    const handleScroll = () => {
+    const handleScroll = (event: Event) => {
       if (!mobileViewport.matches) return;
 
-      const scrollY = Math.max(window.scrollY, 0);
+      const target = event.target;
+      const scroller = target instanceof HTMLElement
+        ? target
+        : document.scrollingElement;
+      if (!scroller) return;
+
+      if (lastScroller !== target) {
+        lastScroller = target;
+        lastScrollY = Math.max(scroller.scrollTop, 0);
+        accumulatedDelta = 0;
+        lastDirection = null;
+        return;
+      }
+
+      const scrollY = Math.max(scroller.scrollTop, 0);
       const delta = scrollY - lastScrollY;
       lastScrollY = scrollY;
 
@@ -45,14 +60,15 @@ export function useAutoHideDashboardChrome(enabled: boolean, resetKey?: string) 
     const handleViewportChange = () => {
       setIsVisible(true);
       lastScrollY = Math.max(window.scrollY, 0);
+      lastScroller = null;
       accumulatedDelta = 0;
       lastDirection = null;
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('scroll', handleScroll, { capture: true, passive: true });
     mobileViewport.addEventListener('change', handleViewportChange);
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll, true);
       mobileViewport.removeEventListener('change', handleViewportChange);
     };
   }, [enabled, resetKey]);
