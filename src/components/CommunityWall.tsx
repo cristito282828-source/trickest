@@ -667,9 +667,9 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         <div className="mt-4 border-t border-neutral-100 pt-2">
-                          <div className="grid grid-cols-3 items-center gap-1">
+                          <div className="flex flex-wrap items-center justify-start gap-1">
                             <div
-                              className="relative min-w-0"
+                              className="relative shrink-0"
                               onMouseEnter={() => {
                                 if (window.matchMedia('(hover: hover)').matches) {
                                   setReactionPickerActivityId(activity.id);
@@ -698,7 +698,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                 onPointerCancel={clearReactionHold}
                                 onContextMenu={(event) => event.preventDefault()}
                                 onClick={() => handleLikeClick(activity)}
-                                className={`relative inline-flex h-11 w-full min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs font-medium transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                                className={`relative inline-flex h-10 min-w-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors disabled:cursor-wait disabled:opacity-60 ${
                                   reactionState.userReaction !== null
                                     ? 'text-cyan-700 hover:bg-cyan-50'
                                     : 'text-neutral-500 hover:bg-neutral-50'
@@ -758,10 +758,10 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                 const activityId = activity.wallActivityId;
                                 setOpenCommentsActivityId((openId) => openId === activityId ? undefined : activityId);
                               }}
-                              className="inline-flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-50 hover:text-cyan-700 disabled:opacity-50"
+                              className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-xs font-medium text-neutral-500 transition-colors hover:bg-neutral-50 hover:text-cyan-700 disabled:opacity-50"
                             >
                               <MessageCircle size={16} />
-                              <span className="truncate">{t('commentsCount', { count: activity.commentCount })}</span>
+                              {activity.commentCount > 0 && <span>{activity.commentCount}</span>}
                             </button>
                             <button
                               type="button"
@@ -769,18 +769,14 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                               aria-pressed={repostState.isReposted}
                               disabled={activity.wallActivityId === undefined || savingRepostId !== null}
                               onClick={() => void handleRepost(activity)}
-                              className={`inline-flex h-11 min-w-0 items-center justify-center gap-1.5 rounded-lg px-1 text-xs font-medium transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                              className={`inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors disabled:cursor-wait disabled:opacity-60 ${
                                 repostState.isReposted
                                   ? 'text-cyan-700 hover:bg-cyan-50'
                                   : 'text-neutral-500 hover:bg-neutral-50 hover:text-cyan-700'
                               }`}
                             >
                               <Repeat2 size={16} />
-                              <span className="truncate">
-                                {repostState.count > 0
-                                  ? t('repostCount', { count: repostState.count })
-                                  : t(repostState.isReposted ? 'reposted' : 'repost')}
-                              </span>
+                              {repostState.count > 0 && <span>{repostState.count}</span>}
                             </button>
                           </div>
                           {reactionErrorId === activity.wallActivityId && (
