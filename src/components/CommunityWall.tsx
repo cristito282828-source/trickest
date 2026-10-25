@@ -363,11 +363,11 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
   };
 
   return (
-    <main className="min-h-[calc(100vh-80px)] w-full min-w-0 overflow-x-clip bg-neutral-50 px-4 py-6 pb-28 lg:px-8 lg:pb-8">
-      <div className="mx-auto max-w-6xl">
+    <main className="min-h-[calc(100vh-80px)] w-full min-w-0 overflow-x-clip bg-neutral-50 pb-28 lg:px-8 lg:py-6 lg:pb-8">
+      <div className="mx-auto w-full lg:max-w-6xl">
         <div className="grid min-w-0 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
           <section className="min-w-0" aria-label={t('title')}>
-            <div className="mb-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <div className="border-b border-neutral-200 bg-white p-4 lg:mb-4 lg:rounded-2xl lg:border lg:shadow-sm">
               <div className="flex items-center gap-3">
                 <Avatar photo={currentUser.photo} name={currentUser.name} />
                 <div className="min-w-0 flex-1 rounded-full bg-neutral-100 px-4 py-3 text-sm text-neutral-500">
@@ -385,7 +385,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
               </div>
             </div>
 
-            <div className="mb-4 flex gap-2 overflow-x-auto rounded-2xl border border-neutral-200 bg-white p-2 shadow-sm">
+            <div className="flex gap-2 overflow-x-auto border-b border-neutral-200 bg-white p-2 lg:mb-4 lg:rounded-2xl lg:border lg:shadow-sm">
               {filters.map((item) => (
                 <button
                   key={item.id}
@@ -403,7 +403,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
               ))}
             </div>
 
-            <div className="mb-3 flex items-center justify-between px-1">
+            <div className="mb-3 flex items-center justify-between px-4 pt-4 lg:px-1 lg:pt-0">
               <h2 className="font-black text-neutral-800">{t('communityTitle')}</h2>
               <span className="text-xs font-semibold text-neutral-500">
                 {t('activityCount', { count: visibleActivities.length })}
@@ -411,13 +411,13 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
             </div>
 
             {visibleActivities.length === 0 ? (
-              <div className="rounded-2xl border border-neutral-200 bg-white px-6 py-12 text-center shadow-sm">
+              <div className="border-y border-neutral-200 bg-white px-6 py-12 text-center lg:rounded-2xl lg:border lg:shadow-sm">
                 <MdSkateboarding className="mx-auto mb-3 text-4xl text-cyan-600" />
                 <h3 className="font-black text-neutral-800">{t('emptyTitle')}</h3>
                 <p className="mt-1 text-sm text-neutral-500">{t('emptyDescription')}</p>
               </div>
             ) : (
-              <div className="min-w-0 space-y-4">
+              <div className="min-w-0 divide-y divide-neutral-200 lg:space-y-4 lg:divide-y-0">
                 {visibleActivities.map((activity) => {
                   const style = activityStyles[activity.type];
                   const Icon = style.icon;
@@ -442,7 +442,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                     : { count: 0, isReposted: false };
 
                   return (
-                    <article key={activity.id} className="min-w-0 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                    <article key={activity.id} className="min-w-0 overflow-hidden bg-white lg:rounded-2xl lg:border lg:shadow-sm">
                       <div className="p-4">
                         <div className="flex items-start gap-3">
                           {href ? (
@@ -486,7 +486,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         </div>
 
                         {activity.type === 'challenge_created' && (
-                          <div className="mt-4 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
+                          <div className="-mx-4 mt-4 overflow-hidden border-y border-neutral-200 bg-neutral-50 lg:mx-0 lg:rounded-xl lg:border">
                             {activity.isCurrentChallenge && (
                               <div className="border-b border-neutral-200 bg-neutral-100 px-4 py-2">
                                 <span className="rounded-full bg-cyan-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white">
@@ -501,7 +501,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                   alt={activity.titleName}
                                   fill
                                   unoptimized
-                                  sizes="(max-width: 1023px) calc(100vw - 64px), 700px"
+                                  sizes="(max-width: 1023px) 100vw, 700px"
                                   className="max-w-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
@@ -533,7 +533,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         {activity.type === 'product_added' && (
-                          <div className="mt-4 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
+                          <div className="-mx-4 mt-4 overflow-hidden border-y border-neutral-200 bg-neutral-50 lg:mx-0 lg:rounded-xl lg:border">
                             {activity.image ? (
                               <div className="relative aspect-square w-full max-w-full overflow-hidden bg-neutral-900">
                                 <Image
@@ -541,7 +541,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                   alt={activity.titleName}
                                   fill
                                   unoptimized
-                                  sizes="(max-width: 1023px) calc(100vw - 64px), 700px"
+                                  sizes="(max-width: 1023px) 100vw, 700px"
                                   className="max-w-full object-cover"
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
@@ -575,7 +575,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         {activity.type === 'team_created' && (
-                          <div className="mt-4 flex items-center gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4">
+                          <div className="-mx-4 mt-4 flex items-center gap-3 border-y border-neutral-200 bg-neutral-50 p-4 lg:mx-0 lg:rounded-xl lg:border">
                             {activity.image ? (
                               <Image src={activity.image} alt="" width={56} height={56} unoptimized className="h-14 w-14 rounded-xl object-cover" />
                             ) : (
@@ -597,7 +597,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         {activity.type === 'submission_approved' && (
-                          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                          <div className="-mx-4 mt-4 flex flex-wrap items-center justify-between gap-3 border-y border-emerald-100 bg-emerald-50 p-4 lg:mx-0 lg:rounded-xl lg:border">
                             <div>
                               <p className="font-black text-neutral-900">
                                 {t('approvedVideo', { name: activity.titleName })}
@@ -619,7 +619,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                         )}
 
                         {activity.type === 'spot_added' && (
-                          <div className="mt-4 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-50">
+                          <div className="-mx-4 mt-4 overflow-hidden border-y border-neutral-200 bg-neutral-50 lg:mx-0 lg:rounded-xl lg:border">
                             {activity.image && (
                               <div className="relative aspect-square w-full max-w-full overflow-hidden bg-neutral-900">
                                 <Image
@@ -627,7 +627,7 @@ export default function CommunityWall({ activities, stats, currentUser }: Commun
                                   alt={activity.titleName}
                                   fill
                                   unoptimized
-                                  sizes="(max-width: 1023px) calc(100vw - 64px), 700px"
+                                  sizes="(max-width: 1023px) 100vw, 700px"
                                   className="max-w-full object-cover"
                                 />
                                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-4 pt-12">
