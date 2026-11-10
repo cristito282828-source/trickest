@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     }
 
     const query = request.nextUrl.searchParams.get('q')?.trim() || '';
-    if (query.length < 2) return successResponse({ users: [] });
+    if (query.length === 1) return successResponse({ users: [] });
 
     const latitudeDelta = skateGameRadiusMeters / 111_320;
     const longitudeDelta = latitudeDelta / Math.max(Math.cos(challenger.latitude * Math.PI / 180), 0.01);
@@ -32,10 +32,12 @@ export async function GET(request: NextRequest) {
         showOnMap: true,
         latitude: { gte: challenger.latitude - latitudeDelta, lte: challenger.latitude + latitudeDelta },
         longitude: { gte: challenger.longitude - longitudeDelta, lte: challenger.longitude + longitudeDelta },
-        OR: [
-          { username: { contains: query, mode: 'insensitive' } },
-          { name: { contains: query, mode: 'insensitive' } },
-        ],
+        ...(query.length >= 2 && {
+          OR: [
+            { username: { contains: query, mode: 'insensitive' as const } },
+            { name: { contains: query, mode: 'insensitive' as const } },
+          ],
+        }),
       },
       select: { username: true, name: true, photo: true, role: true, latitude: true, longitude: true },
       orderBy: { username: 'asc' },
@@ -46,13 +48,17 @@ export async function GET(request: NextRequest) {
       const distance = calculateDistanceMeters(challenger.latitude!, challenger.longitude!, user.latitude, user.longitude);
       if (distance > skateGameRadiusMeters) return [];
       return [{
-        username: user.username,
-        name: user.name,
-        photo: user.photo,
-        role: user.role,
-        distanceMeters: Math.round(distance / 10) * 10,
+        distance,
+        user: {
+          username: user.username,
+          name: user.name,
+          photo: user.photo,
+          role: user.role,
+          distanceMeters: Math.round(distance / 10) * 10,
+        },
       }];
-    }).slice(0, 10);
+    }).sort((first, second) => first.distance - second.distance).slice(0, 10)
+      .map(({ user }) => user);
     return successResponse({ users: nearbyUsers, radiusMeters: skateGameRadiusMeters });
   } catch (error) {
     console.error('[API /skate-games/users] GET error:', error);

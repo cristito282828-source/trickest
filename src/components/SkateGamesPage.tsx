@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { MdArrowForward, MdGavel, MdLocationOn, MdSportsScore } from 'react-icons/md';
+import { MdArrowForward, MdGavel, MdLocationOn, MdRefresh, MdSportsScore } from 'react-icons/md';
 
 interface GameListItem {
   id: number;
@@ -35,10 +35,9 @@ export default function SkateGamesPage() {
   const [games, setGames] = useState<GameListItem[]>([]);
   const [selectedOpponent, setSelectedOpponent] = useState<Candidate | null>(null);
   const [selectedJudge, setSelectedJudge] = useState<Candidate | null>(null);
-  const [opponentQuery, setOpponentQuery] = useState('');
-  const [judgeQuery, setJudgeQuery] = useState('');
-  const [opponentCandidates, setOpponentCandidates] = useState<Candidate[]>([]);
-  const [judgeCandidates, setJudgeCandidates] = useState<Candidate[]>([]);
+  const [nearbyUsers, setNearbyUsers] = useState<Candidate[]>([]);
+  const [loadingNearbyUsers, setLoadingNearbyUsers] = useState(true);
+  const [nearbyUsersError, setNearbyUsersError] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -64,35 +63,30 @@ export default function SkateGamesPage() {
     void loadGames();
   }, [loadGames]);
 
-  useEffect(() => {
-    if (selectedOpponent || opponentQuery.trim().length < 2) {
-      setOpponentCandidates([]);
-      return;
+  const loadNearbyUsers = useCallback(async () => {
+    setLoadingNearbyUsers(true);
+    setNearbyUsersError('');
+    try {
+      const response = await fetch('/api/skate-games/users');
+      const result: unknown = await response.json();
+      if (!response.ok || !isResponse(result)) {
+        throw new Error(response.status === 400 ? t('locationRequired') : t('nearbyUsersError'));
+      }
+      const users = getData(result).users;
+      if (!Array.isArray(users)) throw new Error(t('nearbyUsersError'));
+      setNearbyUsers(users as Candidate[]);
+    } catch (loadError) {
+      console.error('Error loading nearby skaters:', loadError);
+      setNearbyUsersError(loadError instanceof Error ? loadError.message : t('nearbyUsersError'));
+      setNearbyUsers([]);
+    } finally {
+      setLoadingNearbyUsers(false);
     }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => {
-      void searchUsers(opponentQuery, setOpponentCandidates, setError, t('searchError'), controller.signal);
-    }, 250);
-    return () => {
-      clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [opponentQuery, selectedOpponent, t]);
+  }, [t]);
 
   useEffect(() => {
-    if (selectedJudge || judgeQuery.trim().length < 2) {
-      setJudgeCandidates([]);
-      return;
-    }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => {
-      void searchUsers(judgeQuery, setJudgeCandidates, setError, t('searchError'), controller.signal);
-    }, 250);
-    return () => {
-      clearTimeout(timeout);
-      controller.abort();
-    };
-  }, [judgeQuery, selectedJudge, t]);
+    void loadNearbyUsers();
+  }, [loadNearbyUsers]);
 
   const createGame = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -114,9 +108,8 @@ export default function SkateGamesPage() {
       setSuccess(t('challengeSent'));
       setSelectedOpponent(null);
       setSelectedJudge(null);
-      setOpponentQuery('');
-      setJudgeQuery('');
       await loadGames();
+      await loadNearbyUsers();
     } catch (createError) {
       console.error('Error creating skate game:', createError);
       setError(createError instanceof Error ? createError.message : t('createError'));
@@ -126,7 +119,7 @@ export default function SkateGamesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-8 text-white md:px-8">
+    <main className="bg-neutral-950 px-4 py-8 text-white md:px-8">
       <div className="mx-auto max-w-5xl">
         <header className="relative mb-8 overflow-hidden rounded-2xl border border-cyan-800/80 bg-neutral-900 p-6 shadow-xl md:p-8">
           <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rotate-12 border-[24px] border-cyan-950/70" aria-hidden="true" />
@@ -156,57 +149,120 @@ export default function SkateGamesPage() {
           <div className="mb-6 flex flex-wrap items-start justify-between gap-3 border-b border-neutral-800 pb-5">
             <div>
               <p className="mb-2 text-[10px] font-black uppercase tracking-[0.22em] text-cyan-300">{t('sessionCall')}</p>
-              <h2 className="text-2xl font-black uppercase tracking-tight md:text-3xl">{t('createTitle')}</h2>
+              <h2 className="text-2xl font-black uppercase tracking-tight md:text-3xl">{t('nearbyTitle')}</h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">{t('createDescription')}</p>
             </div>
-            <span className="rounded-md border border-neutral-700 px-3 py-2 font-mono text-xs font-bold text-neutral-400">01 / 02</span>
-          </div>
-          <form onSubmit={createGame} className="grid gap-4 md:grid-cols-2">
-            <div className="flex gap-3 rounded-xl border border-cyan-900/70 bg-cyan-950/30 p-4 text-sm leading-6 text-cyan-100 md:col-span-2">
-              <MdLocationOn className="mt-0.5 shrink-0 text-xl text-cyan-300" />
-              <p>{t('nearbyUsersNote')}</p>
-            </div>
-            <UserPicker
-              step="01"
-              label={t('opponent')}
-              placeholder={t('searchSkater')}
-              query={opponentQuery}
-              candidates={opponentCandidates.filter((user) => user.username !== selectedJudge?.username)}
-              selected={selectedOpponent}
-              onQuery={(value) => {
-                setSelectedOpponent(null);
-                setOpponentQuery(value);
-              }}
-              onSelect={(user) => {
-                setSelectedOpponent(user);
-                setOpponentQuery('');
-              }}
-            />
-            <UserPicker
-              step="02"
-              label={t('judge')}
-              placeholder={t('searchJudge')}
-              query={judgeQuery}
-              candidates={judgeCandidates.filter((user) => user.username !== selectedOpponent?.username)}
-              selected={selectedJudge}
-              onQuery={(value) => {
-                setSelectedJudge(null);
-                setJudgeQuery(value);
-              }}
-              onSelect={(user) => {
-                setSelectedJudge(user);
-                setJudgeQuery('');
-              }}
-            />
             <button
-              type="submit"
-              disabled={saving || !selectedOpponent || !selectedJudge}
-              className="group flex items-center justify-center gap-3 rounded-xl bg-cyan-600 px-5 py-4 font-black uppercase tracking-[0.12em] text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50 md:col-span-2"
+              type="button"
+              onClick={() => void loadNearbyUsers()}
+              disabled={loadingNearbyUsers}
+              className="inline-flex items-center gap-2 rounded-lg border border-neutral-700 px-3 py-2 text-xs font-black uppercase text-neutral-300 transition-colors hover:border-cyan-600 hover:text-cyan-200 disabled:opacity-50"
             >
-              {saving ? t('sending') : t('sendChallenge')}
-              {!saving && <MdArrowForward className="text-xl transition-transform group-hover:translate-x-1" />}
+              <MdRefresh className={loadingNearbyUsers ? 'animate-spin' : ''} />
+              {t('refreshNearby')}
             </button>
-          </form>
+          </div>
+          <div className="mb-5 flex gap-3 rounded-xl border border-cyan-900/70 bg-cyan-950/30 p-4 text-sm leading-6 text-cyan-100">
+            <MdLocationOn className="mt-0.5 shrink-0 text-xl text-cyan-300" />
+            <p>{t('nearbyUsersNote')}</p>
+          </div>
+          {nearbyUsersError ? (
+            <div role="alert" className="rounded-xl border border-amber-800 bg-amber-950/40 p-5 text-sm text-amber-100">
+              <p>{nearbyUsersError}</p>
+            </div>
+          ) : loadingNearbyUsers ? (
+            <p className="py-8 text-center text-neutral-400">{t('loadingNearby')}</p>
+          ) : nearbyUsers.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-neutral-700 p-6 text-center text-sm text-neutral-400">
+              {t('noNearbyUsers')}
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <h3 className="font-black uppercase tracking-wide text-neutral-200">{t('nearbySkaters')}</h3>
+                <span className="font-mono text-xs text-neutral-500">{nearbyUsers.length}</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {nearbyUsers.map((candidate) => (
+                  <NearbySkaterCard
+                    key={candidate.username}
+                    candidate={candidate}
+                    action={selectedOpponent?.username === candidate.username ? t('selectedOpponent') : t('challenge')}
+                    selected={selectedOpponent?.username === candidate.username}
+                    onSelect={() => {
+                      setSelectedOpponent(candidate);
+                      setSelectedJudge(null);
+                      setError('');
+                    }}
+                    disabled={saving}
+                  />
+                ))}
+              </div>
+              {selectedOpponent && (
+                <div className="mt-6 rounded-xl border border-cyan-800/70 bg-cyan-950/20 p-4 md:p-5">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-black uppercase tracking-wider text-cyan-300">{t('opponentSelected')}</p>
+                      <p className="mt-1 font-bold text-white">{userName(selectedOpponent)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedOpponent(null);
+                        setSelectedJudge(null);
+                      }}
+                      className="text-xs font-black uppercase text-cyan-300 hover:text-cyan-100"
+                    >
+                      {t('change')}
+                    </button>
+                  </div>
+                  <div className="mt-5 border-t border-cyan-900/70 pt-4">
+                    <p className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide text-neutral-200">
+                      <MdGavel className="text-lg text-purple-300" /> {t('chooseJudge')}
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {nearbyUsers
+                        .filter((user) => user.username !== selectedOpponent.username)
+                        .map((candidate) => (
+                          <button
+                            key={candidate.username}
+                            type="button"
+                            onClick={() => setSelectedJudge(candidate)}
+                            className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
+                              selectedJudge?.username === candidate.username
+                                ? 'border-purple-500 bg-purple-950/50'
+                                : 'border-neutral-800 bg-neutral-950/60 hover:border-purple-700'
+                            }`}
+                          >
+                            <UserAvatar user={candidate} />
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-bold text-white">{userName(candidate)}</span>
+                              <span className="block text-xs text-neutral-400">~{approximateDistance(candidate.distanceMeters)} m</span>
+                            </span>
+                            {selectedJudge?.username === candidate.username && (
+                              <span className="text-xs font-black uppercase text-purple-200">{t('selectedJudge')}</span>
+                            )}
+                          </button>
+                        ))}
+                    </div>
+                    {nearbyUsers.length < 2 && (
+                      <p className="mt-3 text-sm text-neutral-400">{t('needJudge')}</p>
+                    )}
+                  </div>
+                  <form onSubmit={createGame} className="mt-5">
+                    <button
+                      type="submit"
+                      disabled={saving || !selectedJudge}
+                      className="group flex w-full items-center justify-center gap-3 rounded-xl bg-cyan-600 px-5 py-4 font-black uppercase tracking-[0.12em] text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {saving ? t('sending') : t('sendChallenge')}
+                      {!saving && <MdArrowForward className="text-xl transition-transform group-hover:translate-x-1" />}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </>
+          )}
         </section>
 
         <section>
@@ -265,68 +321,38 @@ export default function SkateGamesPage() {
   );
 }
 
-function UserPicker({
-  step, label, placeholder, query, candidates, selected, onQuery, onSelect,
+function NearbySkaterCard({
+  candidate, action, selected, onSelect, disabled,
 }: {
-  step: string;
-  label: string;
-  placeholder: string;
-  query: string;
-  candidates: Candidate[];
-  selected: Candidate | null;
-  onQuery: (value: string) => void;
-  onSelect: (user: Candidate) => void;
+  candidate: Candidate;
+  action: string;
+  selected: boolean;
+  onSelect: () => void;
+  disabled: boolean;
 }) {
-  const t = useTranslations('skateGamesPage');
   return (
-    <div className="relative rounded-xl border border-neutral-800 bg-neutral-950/60 p-4">
-      <label className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide text-neutral-200">
-        <span className="grid h-7 w-7 place-items-center rounded-md bg-neutral-800 font-mono text-xs text-cyan-300">{step}</span>
-        {label}
-      </label>
-      {selected ? (
-        <div className="flex items-center gap-3 rounded-lg border border-cyan-800 bg-neutral-900 p-3">
-          <UserAvatar user={selected} />
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-bold text-white">{userName(selected)}</p>
-            <p className="truncate text-xs text-neutral-400">@{selected.username}</p>
-          </div>
-          <button type="button" onClick={() => onQuery('')} className="shrink-0 rounded-md px-2 py-1 text-xs font-black uppercase text-cyan-300 transition-colors hover:bg-cyan-950">{t('change')}</button>
-        </div>
-      ) : (
-        <>
-          <input
-            value={query}
-            onChange={(event) => onQuery(event.target.value)}
-            placeholder={placeholder}
-            minLength={2}
-            className="w-full rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3 text-sm text-white outline-none transition-colors placeholder:text-neutral-600 focus:border-cyan-500"
-          />
-          {query.trim().length >= 2 && candidates.length > 0 && (
-            <div className="absolute inset-x-4 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-xl border border-neutral-700 bg-neutral-900 shadow-xl">
-              {candidates.map((candidate) => (
-                <button
-                  key={candidate.username}
-                  type="button"
-                  onClick={() => onSelect(candidate)}
-                  className="flex w-full items-center gap-3 border-b border-neutral-800 px-4 py-3 text-left text-sm transition-colors last:border-b-0 hover:bg-neutral-800"
-                >
-                  <UserAvatar user={candidate} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-bold">{userName(candidate)}</span>
-                    <span className="block truncate text-xs text-neutral-400">@{candidate.username}</span>
-                  </span>
-                  <span className="shrink-0 rounded-md bg-cyan-950 px-2 py-1 text-[10px] font-bold text-cyan-200">
-                    ~{approximateDistance(candidate.distanceMeters)} m
-                  </span>
-                  {candidate.role === 'judge' && <span className="shrink-0 rounded bg-purple-900 px-1.5 py-1 text-[10px] font-black uppercase text-purple-200">{t('judge')}</span>}
-                </button>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
+    <article className={`flex items-center gap-3 rounded-xl border p-3 ${
+      selected ? 'border-cyan-600 bg-cyan-950/30' : 'border-neutral-800 bg-neutral-950/60'
+    }`}>
+      <UserAvatar user={candidate} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-bold text-white">{userName(candidate)}</p>
+        <p className="truncate text-xs text-neutral-400">@{candidate.username}</p>
+        <p className="mt-1 flex items-center gap-1 text-xs text-cyan-200">
+          <MdLocationOn /> ~{approximateDistance(candidate.distanceMeters)} m
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onSelect}
+        disabled={disabled}
+        className={`shrink-0 rounded-lg px-3 py-2 text-xs font-black uppercase transition-colors disabled:opacity-50 ${
+          selected ? 'bg-neutral-800 text-neutral-300 hover:bg-neutral-700' : 'bg-cyan-600 text-white hover:bg-cyan-700'
+        }`}
+      >
+        {action}
+      </button>
+    </article>
   );
 }
 
@@ -367,28 +393,6 @@ function statusClass(status: string) {
   if (status === 'IN_PROGRESS' || status === 'AWAITING_REPORT') return 'bg-cyan-950 text-cyan-300';
   if (status === 'CANCELLED') return 'bg-neutral-800 text-neutral-500';
   return 'bg-amber-950 text-amber-300';
-}
-
-async function searchUsers(
-  query: string,
-  setUsers: (users: Candidate[]) => void,
-  setError: (message: string) => void,
-  errorMessage: string,
-  signal: AbortSignal
-) {
-  try {
-    const searchParams = new URLSearchParams({ q: query.trim() });
-    const response = await fetch(`/api/skate-games/users?${searchParams.toString()}`, { signal });
-    const result: unknown = await response.json();
-    if (!response.ok || !isResponse(result)) throw new Error(getError(result) || errorMessage);
-    const users = getData(result).users;
-    setUsers(Array.isArray(users) ? users as Candidate[] : []);
-  } catch (error) {
-    if (error instanceof Error && error.name === 'AbortError') return;
-    console.error('Error searching for game participants:', error);
-    setError(error instanceof Error ? error.message : errorMessage);
-    setUsers([]);
-  }
 }
 
 function isResponse(value: unknown): value is { success?: boolean; data?: unknown; error?: unknown } {

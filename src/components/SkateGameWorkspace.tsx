@@ -169,7 +169,7 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
   if (loading) return <main className="p-10 text-center text-neutral-300">{t('loading')}</main>;
   if (!game) {
     return (
-      <main className="min-h-screen bg-neutral-950 p-8 text-center text-white">
+      <main className="bg-neutral-950 p-8 text-center text-white">
         <p className="mb-4">{error || t('notFound')}</p>
         <Link href="/dashboard/skate-games" className="font-bold text-cyan-300">{t('backToGames')}</Link>
       </main>
@@ -185,7 +185,7 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
   const didReachSkate = game.challengerLetters.length === 5 || game.opponentLetters.length === 5;
 
   return (
-    <main className="min-h-screen bg-neutral-950 px-4 py-8 text-white md:px-8">
+    <main className="bg-neutral-950 px-4 py-8 text-white md:px-8">
       <div className="mx-auto max-w-4xl">
         <Link href="/dashboard/skate-games" className="mb-5 inline-flex items-center gap-2 text-sm font-bold text-cyan-300 hover:text-cyan-100">
           <MdArrowBack /> {t('backToGames')}

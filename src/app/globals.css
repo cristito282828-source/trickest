@@ -81,8 +81,6 @@ body {
 
 main {
   background: rgb(var(--color-surface-1));
-  height: 100vh;
-  height: 100dvh;
 }
 
 .swiper-horizontal > .swiper-pagination-bullets .swiper-pagination-bullet,
