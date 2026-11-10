@@ -6,11 +6,34 @@ export const skateGameRadiusMeters = 100;
 export const skateGameMaxGpsAccuracyMeters = 100;
 export const skateGameCheckInFreshnessMs = 15 * 60_000;
 
-export async function findAccessibleSkateGame(id: number, userEmail: string) {
+export async function isQualifiedSkateJudge(userEmail: string) {
+  const user = await prisma.user.findUnique({
+    where: { email: userEmail },
+    select: { role: true, isActive: true, profileStatus: true },
+  });
+  return Boolean(
+    user?.isActive &&
+    user.profileStatus === 'complete' &&
+    (user.role === 'judge' || user.role === 'admin')
+  );
+}
+
+export async function findAccessibleSkateGame(
+  id: number,
+  userEmail: string,
+  canViewJudgeQueue = false
+) {
   return prisma.skateGame.findFirst({
     where: {
       id,
-      OR: [{ challengerId: userEmail }, { opponentId: userEmail }, { judgeId: userEmail }],
+      OR: [
+        { challengerId: userEmail },
+        { opponentId: userEmail },
+        { judgeId: userEmail },
+        ...(canViewJudgeQueue
+          ? [{ status: SkateGameStatus.AWAITING_JUDGE, judgeId: null }]
+          : []),
+      ],
     },
     include: {
       challenger: { select: { email: true, username: true, name: true, photo: true } },
@@ -60,7 +83,7 @@ export function serializeSkateGame(
     judgeReport: game.judgeReport,
     challenger: userData(game.challenger),
     opponent: userData(game.opponent),
-    judge: userData(game.judge),
+    judge: game.judge ? userData(game.judge) : null,
     winner: game.winner ? userData(game.winner) : null,
     loser: game.loser ? userData(game.loser) : null,
     spot: game.spot ? {

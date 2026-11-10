@@ -39,7 +39,7 @@ interface SkateGame {
   judgeReport: string | null;
   challenger: PublicUser;
   opponent: PublicUser;
-  judge: PublicUser;
+  judge: PublicUser | null;
   winner: PublicUser | null;
   loser: PublicUser | null;
   spot: { id: number; name: string; type: string; city: string | null } | null;
@@ -179,7 +179,7 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
   const isPlayer = game.viewerRole !== 'judge';
   const invitedRole = game.viewerRole === 'opponent' && !game.opponentAcceptedAt
     ? 'opponent'
-    : game.viewerRole === 'judge' && !game.judgeAcceptedAt
+    : game.viewerRole === 'judge' && game.judge && !game.judgeAcceptedAt
       ? 'judge'
       : null;
   const didReachSkate = game.challengerLetters.length === 5 || game.opponentLetters.length === 5;
@@ -227,7 +227,7 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
           </div>
           <div className="mt-4 rounded-xl border border-purple-900 bg-purple-950/40 p-4">
             <p className="flex items-center gap-2 text-sm font-bold text-purple-200">
-              <MdGavel /> {t('assignedJudge')}: {userName(game.judge)}
+              <MdGavel /> {t('assignedJudge')}: {game.judge ? userName(game.judge) : t('notAssigned')}
             </p>
             {judgeRating.count > 0 && (
               <p className="mt-1 text-xs text-purple-300">
@@ -236,13 +236,17 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
             )}
           </div>
 
-          {game.status === 'PENDING_ACCEPTANCE' && (
+          {(game.status === 'PENDING_ACCEPTANCE' || game.status === 'AWAITING_JUDGE') && (
             <div className="mt-5 rounded-xl border border-amber-900 bg-amber-950/40 p-4">
               <p className="mb-3 text-sm text-amber-200">
-                {t('acceptanceStatus', {
-                  opponent: game.opponentAcceptedAt ? t('accepted') : t('waiting'),
-                  judge: game.judgeAcceptedAt ? t('accepted') : t('waiting'),
-                })}
+                {game.judge
+                  ? t('acceptanceStatus', {
+                    opponent: game.opponentAcceptedAt ? t('accepted') : t('waiting'),
+                    judge: game.judgeAcceptedAt ? t('accepted') : t('waiting'),
+                  })
+                  : t('opponentAcceptanceStatus', {
+                    opponent: game.opponentAcceptedAt ? t('accepted') : t('waiting'),
+                  })}
               </p>
               {invitedRole && (
                 <div className="flex flex-wrap gap-2">
@@ -264,7 +268,8 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
                   </button>
                 </div>
               )}
-              {game.viewerRole === 'challenger' && (
+              {(game.viewerRole === 'challenger' ||
+                game.viewerRole === 'opponent' && game.status === 'AWAITING_JUDGE') && (
                 <button
                   type="button"
                   disabled={busy}
@@ -272,6 +277,22 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
                   className="rounded-lg bg-neutral-700 px-4 py-2 text-sm font-bold hover:bg-neutral-600 disabled:opacity-50"
                 >
                   {t('cancelGame')}
+                </button>
+              )}
+            </div>
+          )}
+
+          {game.status === 'AWAITING_JUDGE' && (
+            <div className="mt-5 rounded-xl border border-purple-900 bg-purple-950/40 p-4 text-sm text-purple-100">
+              <p>{t('waitingForJudge')}</p>
+              {game.viewerRole === 'judge' && !game.judge && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void requestAction('claim', {}, t('judgeClaimed'))}
+                  className="mt-3 rounded-lg bg-purple-600 px-4 py-2 font-black text-white transition-colors hover:bg-purple-700 disabled:opacity-50"
+                >
+                  {busy ? t('claimingGame') : t('claimGame')}
                 </button>
               )}
             </div>
@@ -520,6 +541,7 @@ const inputClass = 'mt-1 block w-full rounded-lg border border-neutral-700 bg-ne
 function statusTranslationKey(status: string) {
   const keys: Record<string, string> = {
     PENDING_ACCEPTANCE: 'statusPending',
+    AWAITING_JUDGE: 'statusAwaitingJudge',
     READY: 'statusReady',
     IN_PROGRESS: 'statusPlaying',
     AWAITING_REPORT: 'statusAwaitingReport',

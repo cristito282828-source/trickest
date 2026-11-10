@@ -347,6 +347,7 @@ model WallRepost {
 
 enum SkateGameStatus {
   PENDING_ACCEPTANCE
+  AWAITING_JUDGE
   READY
   IN_PROGRESS
   AWAITING_REPORT
@@ -358,7 +359,7 @@ model SkateGame {
   id                    Int             @id @default(autoincrement())
   challengerId          String
   opponentId            String
-  judgeId               String
+  judgeId               String?
   spotId                Int?
   status                SkateGameStatus @default(PENDING_ACCEPTANCE)
   challengerAcceptedAt  DateTime        @default(now())
@@ -376,7 +377,7 @@ model SkateGame {
 
   challenger User               @relation("SkateGameChallenger", fields: [challengerId], references: [email], onDelete: Restrict)
   opponent   User               @relation("SkateGameOpponent", fields: [opponentId], references: [email], onDelete: Restrict)
-  judge      User               @relation("SkateGameJudge", fields: [judgeId], references: [email], onDelete: Restrict)
+  judge      User?              @relation("SkateGameJudge", fields: [judgeId], references: [email], onDelete: Restrict)
   winner     User?              @relation("SkateGameWinner", fields: [winnerId], references: [email], onDelete: Restrict)
   loser      User?              @relation("SkateGameLoser", fields: [loserId], references: [email], onDelete: Restrict)
   spot       Spot?              @relation(fields: [spotId], references: [id], onDelete: Restrict)

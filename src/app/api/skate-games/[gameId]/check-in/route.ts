@@ -39,6 +39,9 @@ export async function POST(
     if (!game || game.judgeId !== email && game.opponentId !== email && game.challengerId !== email) {
       return errorResponse('NOT_FOUND', 'Skate game not found', 404);
     }
+    if (!game.judgeId) {
+      return errorResponse('JUDGE_REQUIRED', 'A judge must claim this game before check-in', 409);
+    }
     if (game.status !== SkateGameStatus.READY && game.status !== SkateGameStatus.IN_PROGRESS) {
       return errorResponse('GAME_NOT_READY', 'All participants must accept before checking in', 409);
     }

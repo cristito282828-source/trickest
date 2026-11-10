@@ -2,7 +2,12 @@ import { getServerSession } from 'next-auth';
 import prisma from '@/app/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse } from '@/lib/validation';
-import { findAccessibleSkateGame, parsePositiveInteger, serializeSkateGame } from '@/lib/skate-games';
+import {
+  findAccessibleSkateGame,
+  isQualifiedSkateJudge,
+  parsePositiveInteger,
+  serializeSkateGame,
+} from '@/lib/skate-games';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,17 +24,23 @@ export async function GET(
     const gameId = parsePositiveInteger(rawGameId);
     if (!gameId) return errorResponse('INVALID_ID', 'Invalid game ID', 400);
 
-    const game = await findAccessibleSkateGame(gameId, email);
+    const canViewJudgeQueue = await isQualifiedSkateJudge(email);
+    const game = await findAccessibleSkateGame(gameId, email, canViewJudgeQueue);
     if (!game) return errorResponse('NOT_FOUND', 'Skate game not found', 404);
-    const ratingSummary = await prisma.skateGameRating.aggregate({
-      where: { judgeId: game.judgeId },
-      _avg: { score: true },
-      _count: { _all: true },
-    });
+    const ratingSummary = game.judgeId
+      ? await prisma.skateGameRating.aggregate({
+        where: { judgeId: game.judgeId },
+        _avg: { score: true },
+        _count: { _all: true },
+      })
+      : null;
 
     return successResponse({
       game: serializeSkateGame(game, email),
-      judgeRating: { average: ratingSummary._avg.score, count: ratingSummary._count._all },
+      judgeRating: {
+        average: ratingSummary?._avg.score ?? null,
+        count: ratingSummary?._count._all ?? 0,
+      },
     });
   } catch (error) {
     console.error('[API /skate-games/[gameId]] GET error:', error);

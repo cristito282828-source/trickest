@@ -38,6 +38,9 @@ export async function POST(
     if (!game || game.status !== 'COMPLETED') {
       return errorResponse('GAME_NOT_COMPLETED', 'Only completed games can be rated', 409);
     }
+    if (!game.judgeId) {
+      return errorResponse('JUDGE_REQUIRED', 'This game has no assigned judge to rate', 409);
+    }
     if (email !== game.challengerId && email !== game.opponentId) {
       return errorResponse('PLAYERS_ONLY', 'Only players can rate the judge', 403);
     }

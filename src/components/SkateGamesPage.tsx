@@ -13,7 +13,7 @@ interface GameListItem {
   opponentLetters: string;
   challenger: PublicUser;
   opponent: PublicUser;
-  judge: PublicUser;
+  judge: PublicUser | null;
   winner: { username: string | null; name: string | null } | null;
   spot: { id: number; name: string; city: string | null } | null;
   viewerRole: 'challenger' | 'opponent' | 'judge';
@@ -33,13 +33,15 @@ interface Candidate extends PublicUser {
 export default function SkateGamesPage() {
   const t = useTranslations('skateGamesPage');
   const [games, setGames] = useState<GameListItem[]>([]);
+  const [judgeQueue, setJudgeQueue] = useState<GameListItem[]>([]);
+  const [canJudge, setCanJudge] = useState(false);
   const [selectedOpponent, setSelectedOpponent] = useState<Candidate | null>(null);
-  const [selectedJudge, setSelectedJudge] = useState<Candidate | null>(null);
   const [nearbyUsers, setNearbyUsers] = useState<Candidate[]>([]);
   const [loadingNearbyUsers, setLoadingNearbyUsers] = useState(true);
   const [nearbyUsersError, setNearbyUsersError] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [claimingGameId, setClaimingGameId] = useState<number | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -48,9 +50,14 @@ export default function SkateGamesPage() {
       const response = await fetch('/api/skate-games');
       const result: unknown = await response.json();
       if (!response.ok || !isResponse(result)) throw new Error(getError(result) || t('loadError'));
-      const games = getData(result).games;
-      if (!Array.isArray(games)) throw new Error(t('loadError'));
+      const data = getData(result);
+      const games = data.games;
+      if (!Array.isArray(games) || !Array.isArray(data.judgeQueue) || typeof data.canJudge !== 'boolean') {
+        throw new Error(t('loadError'));
+      }
       setGames(games as GameListItem[]);
+      setJudgeQueue(data.judgeQueue as GameListItem[]);
+      setCanJudge(data.canJudge);
     } catch (loadError) {
       console.error('Error loading skate games:', loadError);
       setError(loadError instanceof Error ? loadError.message : t('loadError'));
@@ -102,7 +109,7 @@ export default function SkateGamesPage() {
 
   const createGame = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!selectedOpponent || !selectedJudge || saving) return;
+    if (!selectedOpponent || saving) return;
     setSaving(true);
     setError('');
     setSuccess('');
@@ -112,14 +119,12 @@ export default function SkateGamesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           opponentUsername: selectedOpponent.username,
-          judgeUsername: selectedJudge.username,
         }),
       });
       const result: unknown = await response.json();
       if (!response.ok || !isResponse(result)) throw new Error(getError(result) || t('createError'));
       setSuccess(t('challengeSent'));
       setSelectedOpponent(null);
-      setSelectedJudge(null);
       await loadGames();
       await loadNearbyUsers();
     } catch (createError) {
@@ -127,6 +132,26 @@ export default function SkateGamesPage() {
       setError(createError instanceof Error ? createError.message : t('createError'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const claimGame = async (gameId: number) => {
+    if (claimingGameId !== null) return;
+    setClaimingGameId(gameId);
+    setError('');
+    setSuccess('');
+    try {
+      const response = await fetch(`/api/skate-games/${gameId}/claim`, { method: 'POST' });
+      const result: unknown = await response.json();
+      if (!response.ok || !isResponse(result)) throw new Error(getError(result) || t('claimError'));
+      setSuccess(t('judgeClaimed'));
+      await loadGames();
+    } catch (claimError) {
+      console.error('Error claiming skate game:', claimError);
+      setError(claimError instanceof Error ? claimError.message : t('claimError'));
+      await loadGames();
+    } finally {
+      setClaimingGameId(null);
     }
   };
 
@@ -203,7 +228,6 @@ export default function SkateGamesPage() {
                     selected={selectedOpponent?.username === candidate.username}
                     onSelect={() => {
                       setSelectedOpponent(candidate);
-                      setSelectedJudge(null);
                       setError('');
                     }}
                     disabled={saving}
@@ -221,7 +245,6 @@ export default function SkateGamesPage() {
                       type="button"
                       onClick={() => {
                         setSelectedOpponent(null);
-                        setSelectedJudge(null);
                       }}
                       className="text-xs font-black uppercase text-cyan-300 hover:text-cyan-100"
                     >
@@ -230,41 +253,14 @@ export default function SkateGamesPage() {
                   </div>
                   <div className="mt-5 border-t border-cyan-900/70 pt-4">
                     <p className="mb-3 flex items-center gap-2 text-sm font-black uppercase tracking-wide text-neutral-200">
-                      <MdGavel className="text-lg text-purple-300" /> {t('chooseJudge')}
+                      <MdGavel className="text-lg text-purple-300" /> {t('judgeQueueNotice')}
                     </p>
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {nearbyUsers
-                        .filter((user) => user.username !== selectedOpponent.username)
-                        .map((candidate) => (
-                          <button
-                            key={candidate.username}
-                            type="button"
-                            onClick={() => setSelectedJudge(candidate)}
-                            className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-colors ${
-                              selectedJudge?.username === candidate.username
-                                ? 'border-purple-500 bg-purple-950/50'
-                                : 'border-neutral-800 bg-neutral-950/60 hover:border-purple-700'
-                            }`}
-                          >
-                            <UserAvatar user={candidate} />
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-sm font-bold text-white">{userName(candidate)}</span>
-                              <span className="block text-xs text-neutral-400">~{approximateDistance(candidate.distanceMeters)} m</span>
-                            </span>
-                            {selectedJudge?.username === candidate.username && (
-                              <span className="text-xs font-black uppercase text-purple-200">{t('selectedJudge')}</span>
-                            )}
-                          </button>
-                        ))}
-                    </div>
-                    {nearbyUsers.length < 2 && (
-                      <p className="mt-3 text-sm text-neutral-400">{t('needJudge')}</p>
-                    )}
+                    <p className="text-sm leading-6 text-neutral-300">{t('judgeQueueNoticeDescription')}</p>
                   </div>
                   <form onSubmit={createGame} className="mt-5">
                     <button
                       type="submit"
-                      disabled={saving || !selectedJudge}
+                      disabled={saving}
                       className="group flex w-full items-center justify-center gap-3 rounded-xl bg-cyan-600 px-5 py-4 font-black uppercase tracking-[0.12em] text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {saving ? t('sending') : t('sendChallenge')}
@@ -276,6 +272,50 @@ export default function SkateGamesPage() {
             </>
           )}
         </section>
+
+        {canJudge && (
+          <section className="mb-8">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <p className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] text-purple-300">{t('sessionEyebrow')}</p>
+                <h2 className="text-xl font-black uppercase tracking-wide">{t('judgeQueueTitle')}</h2>
+              </div>
+              <span className="font-mono text-xs text-neutral-500">{String(judgeQueue.length).padStart(2, '0')}</span>
+            </div>
+            {judgeQueue.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-neutral-700 p-6 text-center text-sm text-neutral-400">
+                {t('judgeQueueEmpty')}
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {judgeQueue.map((game) => (
+                  <article key={game.id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-purple-900/70 bg-neutral-900 p-4 md:p-5">
+                    <Link
+                      href={`/dashboard/skate-games/${game.id}`}
+                      className="min-w-0 flex-1 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                    >
+                      <p className="font-black text-white">
+                        {userName(game.challenger)} vs. {userName(game.opponent)}
+                      </p>
+                      <p className="mt-1 flex items-center gap-1 text-xs text-neutral-400">
+                        <MdLocationOn />
+                        {game.spot ? `${game.spot.name}${game.spot.city ? ` · ${game.spot.city}` : ''}` : t('challengerLocation')}
+                      </p>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => void claimGame(game.id)}
+                      disabled={claimingGameId !== null}
+                      className="rounded-lg bg-purple-600 px-4 py-2 text-xs font-black uppercase text-white transition-colors hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {claimingGameId === game.id ? t('claimingGame') : t('claimGame')}
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <section>
           <div className="mb-4 flex items-end justify-between gap-3">
@@ -316,7 +356,7 @@ export default function SkateGamesPage() {
                     </span>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-neutral-400">
-                    <span className="flex items-center gap-1"><MdGavel /> {t('judge')}: {userName(game.judge)}</span>
+                    <span className="flex items-center gap-1"><MdGavel /> {t('judge')}: {game.judge ? userName(game.judge) : t('notAssigned')}</span>
                     {game.status !== 'PENDING_ACCEPTANCE' && game.status !== 'CANCELLED' && (
                       <span className="font-black tracking-widest text-white">
                         {game.challengerLetters || '—'} : {game.opponentLetters || '—'}
@@ -391,6 +431,7 @@ function userName(user: PublicUser) {
 function statusTranslationKey(status: string) {
   const keys: Record<string, string> = {
     PENDING_ACCEPTANCE: 'statusPending',
+    AWAITING_JUDGE: 'statusAwaitingJudge',
     READY: 'statusReady',
     IN_PROGRESS: 'statusPlaying',
     AWAITING_REPORT: 'statusAwaitingReport',
