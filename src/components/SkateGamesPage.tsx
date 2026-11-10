@@ -67,7 +67,7 @@ export default function SkateGamesPage() {
     setLoadingNearbyUsers(true);
     setNearbyUsersError('');
     try {
-      const response = await fetch('/api/skate-games/users');
+      const response = await fetch('/api/skate-games/users', { cache: 'no-store' });
       const result: unknown = await response.json();
       if (!response.ok || !isResponse(result)) {
         throw new Error(response.status === 400 ? t('locationRequired') : t('nearbyUsersError'));
@@ -87,6 +87,18 @@ export default function SkateGamesPage() {
   useEffect(() => {
     void loadNearbyUsers();
   }, [loadNearbyUsers]);
+
+  useEffect(() => {
+    const refreshNearbyUsers = () => void loadNearbyUsers();
+    window.addEventListener('skater-location-updated', refreshNearbyUsers);
+    const interval = nearbyUsersError
+      ? null
+      : window.setInterval(refreshNearbyUsers, 30_000);
+    return () => {
+      window.removeEventListener('skater-location-updated', refreshNearbyUsers);
+      if (interval !== null) window.clearInterval(interval);
+    };
+  }, [loadNearbyUsers, nearbyUsersError]);
 
   const createGame = async (event: React.FormEvent) => {
     event.preventDefault();

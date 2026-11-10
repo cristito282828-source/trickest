@@ -41,7 +41,6 @@ export async function GET(request: NextRequest) {
       },
       select: { username: true, name: true, photo: true, role: true, latitude: true, longitude: true },
       orderBy: { username: 'asc' },
-      take: 250,
     });
     const nearbyUsers = users.flatMap((user) => {
       if (!user.username || user.latitude === null || user.longitude === null) return [];
@@ -57,7 +56,7 @@ export async function GET(request: NextRequest) {
           distanceMeters: Math.round(distance / 10) * 10,
         },
       }];
-    }).sort((first, second) => first.distance - second.distance).slice(0, 10)
+    }).sort((first, second) => first.distance - second.distance)
       .map(({ user }) => user);
     return successResponse({ users: nearbyUsers, radiusMeters: skateGameRadiusMeters });
   } catch (error) {

@@ -60,10 +60,23 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
     }
 
-    // Validación: si showOnMap es true y se están proporcionando coordenadas, estas deben ser válidas
-    if (showOnMap && (latitude !== undefined && latitude !== null) && (!latitude || !longitude)) {
+    if (
+      latitude !== undefined &&
+      latitude !== null &&
+      (typeof latitude !== 'number' || !Number.isFinite(latitude) || latitude < -90 || latitude > 90)
+    ) {
       return NextResponse.json(
-        { error: 'Valid coordinates are required to appear on the map' },
+        { error: 'Latitude must be a valid coordinate' },
+        { status: 400 }
+      );
+    }
+    if (
+      longitude !== undefined &&
+      longitude !== null &&
+      (typeof longitude !== 'number' || !Number.isFinite(longitude) || longitude < -180 || longitude > 180)
+    ) {
+      return NextResponse.json(
+        { error: 'Longitude must be a valid coordinate' },
         { status: 400 }
       );
     }
@@ -74,8 +87,8 @@ export async function PUT(req: Request) {
     if (ciudad !== undefined) updateData.ciudad = ciudad || null;
     if (departamento !== undefined) updateData.departamento = departamento || null;
     if (estado !== undefined) updateData.estado = estado || null;
-    if (latitude !== undefined) updateData.latitude = latitude || null;
-    if (longitude !== undefined) updateData.longitude = longitude || null;
+    if (latitude !== undefined) updateData.latitude = latitude ?? null;
+    if (longitude !== undefined) updateData.longitude = longitude ?? null;
     if (showOnMap !== undefined) updateData.showOnMap = showOnMap;
 
     // Actualizar usuario
