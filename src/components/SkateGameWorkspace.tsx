@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/routing';
-import { MdArrowBack, MdCheckCircle, MdGavel, MdLocationOn, MdSportsScore } from 'react-icons/md';
+import { MdArrowBack, MdGavel, MdLocationOn, MdSportsScore } from 'react-icons/md';
 
 type PlayerRole = 'challenger' | 'opponent';
 
@@ -44,8 +44,6 @@ interface SkateGame {
   loser: PublicUser | null;
   spot: { id: number; name: string; type: string; city: string | null } | null;
   turns: GameTurn[];
-  checkIns: { username: string | null; name: string | null; checkedInAt: string; accuracyMeters: number }[];
-  myCheckIn: boolean;
   myRating: { id: number; score: number; comment: string | null } | null;
   viewerRole: 'challenger' | 'opponent' | 'judge';
 }
@@ -123,32 +121,6 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
     }
   };
 
-  const checkIn = () => {
-    if (!navigator.geolocation) {
-      setError(t('geolocationUnavailable'));
-      return;
-    }
-    setBusy(true);
-    setError('');
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        await requestAction('check-in', {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-        }, t('checkedIn'));
-      },
-      (geolocationError) => {
-        console.error('Could not access device location:', geolocationError);
-        setError(geolocationError.code === geolocationError.PERMISSION_DENIED
-          ? t('locationPermissionDenied')
-          : t('locationError'));
-        setBusy(false);
-      },
-      { enableHighAccuracy: true, timeout: 20_000, maximumAge: 0 }
-    );
-  };
-
   const submitTurn = (event: React.FormEvent) => {
     event.preventDefault();
     void requestAction('turns', {
@@ -216,13 +188,11 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
               label={t('challenger')}
               user={game.challenger}
               letters={game.challengerLetters}
-              checkedIn={hasCheckedIn(game, game.challenger)}
             />
             <PlayerCard
               label={t('opponent')}
               user={game.opponent}
               letters={game.opponentLetters}
-              checkedIn={hasCheckedIn(game, game.opponent)}
             />
           </div>
           <div className="mt-4 rounded-xl border border-purple-900 bg-purple-950/40 p-4">
@@ -295,28 +265,6 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
                   {busy ? t('claimingGame') : t('claimGame')}
                 </button>
               )}
-            </div>
-          )}
-
-          {game.status === 'READY' && (
-            <div className="mt-5 rounded-xl border border-cyan-900 bg-cyan-950/40 p-4">
-              <p className="mb-3 text-sm text-cyan-100">{t('checkInDescription')}</p>
-              <p className="mb-3 text-xs text-cyan-200">
-                {t('checkInProgress', { count: game.checkIns.filter((checkIn) =>
-                  Date.now() - new Date(checkIn.checkedInAt).getTime() <= 15 * 60_000
-                ).length, total: 3 })}
-              </p>
-              {!game.myCheckIn && (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={checkIn}
-                  className="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-black hover:bg-cyan-700 disabled:opacity-50"
-                >
-                  {busy ? t('checkingIn') : t('checkIn')}
-                </button>
-              )}
-              {game.myCheckIn && <p className="flex items-center gap-2 text-sm font-bold text-green-300"><MdCheckCircle /> {t('alreadyCheckedIn')}</p>}
             </div>
           )}
 
@@ -442,17 +390,12 @@ export default function SkateGameWorkspace({ gameId }: { gameId: string }) {
   );
 }
 
-function PlayerCard({ label, user, letters, checkedIn }: { label: string; user: PublicUser; letters: string; checkedIn: boolean }) {
-  const t = useTranslations('skateGamesPage');
+function PlayerCard({ label, user, letters }: { label: string; user: PublicUser; letters: string }) {
   return (
     <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-4">
       <p className="text-xs font-bold uppercase tracking-wider text-neutral-500">{label}</p>
       <p className="mt-1 font-black">{userName(user)}</p>
       <p className="mt-2 text-2xl font-black tracking-[0.3em] text-cyan-300">{letters || '—'}</p>
-      <p className="mt-2 flex items-center gap-1 text-xs text-neutral-400">
-        {checkedIn ? <MdCheckCircle className="text-green-400" /> : <MdLocationOn />}
-        {checkedIn ? t('presentAtSpot') : t('notCheckedIn')}
-      </p>
     </div>
   );
 }
@@ -522,13 +465,6 @@ function RatingForm({
         {busy ? t('saving') : t('rateJudge')}
       </button>
     </div>
-  );
-}
-
-function hasCheckedIn(game: SkateGame, user: PublicUser) {
-  return game.checkIns.some((checkIn) =>
-    checkIn.username && checkIn.username === user.username &&
-    Date.now() - new Date(checkIn.checkedInAt).getTime() <= 15 * 60_000
   );
 }
 

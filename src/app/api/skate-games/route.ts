@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse } from '@/lib/validation';
 import {
   calculateDistanceMeters,
+  hasFreshSkateGameLocation,
   isQualifiedSkateJudge,
   skateGameRadiusMeters,
 } from '@/lib/skate-games';
@@ -103,11 +104,29 @@ export async function POST(request: NextRequest) {
     const [challenger, opponent, openChallenges] = await Promise.all([
       prisma.user.findUnique({
         where: { email },
-        select: { email: true, name: true, isActive: true, profileStatus: true, showOnMap: true, latitude: true, longitude: true },
+        select: {
+          email: true,
+          name: true,
+          isActive: true,
+          profileStatus: true,
+          showOnMap: true,
+          latitude: true,
+          longitude: true,
+          locationUpdatedAt: true,
+        },
       }),
       prisma.user.findUnique({
         where: { username: body.opponentUsername.trim() },
-        select: { email: true, name: true, isActive: true, profileStatus: true, showOnMap: true, latitude: true, longitude: true },
+        select: {
+          email: true,
+          name: true,
+          isActive: true,
+          profileStatus: true,
+          showOnMap: true,
+          latitude: true,
+          longitude: true,
+          locationUpdatedAt: true,
+        },
       }),
       prisma.skateGame.count({
         where: {
@@ -128,7 +147,8 @@ export async function POST(request: NextRequest) {
     if (!challenger?.isActive || challenger.profileStatus !== 'complete') {
       return errorResponse('PROFILE_INCOMPLETE', 'Complete your profile before creating a game', 403);
     }
-    if (!challenger.showOnMap || challenger.latitude === null || challenger.longitude === null) {
+    if (!challenger.showOnMap || challenger.latitude === null || challenger.longitude === null ||
+        !hasFreshSkateGameLocation(challenger.locationUpdatedAt)) {
       return errorResponse('LOCATION_REQUIRED', 'Enable location sharing and refresh your location before creating a game', 400);
     }
     if (!opponent?.isActive || opponent.profileStatus !== 'complete') {
@@ -138,6 +158,7 @@ export async function POST(request: NextRequest) {
       user.showOnMap &&
       user.latitude !== null &&
       user.longitude !== null &&
+      hasFreshSkateGameLocation(user.locationUpdatedAt) &&
       calculateDistanceMeters(challenger.latitude!, challenger.longitude!, user.latitude, user.longitude) <= skateGameRadiusMeters;
     if (!isAvailableNearChallenger(opponent)) {
       return errorResponse('OPPONENT_NOT_AVAILABLE', 'The selected skater is not sharing a location within 100 meters of yours', 400);

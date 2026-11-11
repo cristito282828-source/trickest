@@ -279,6 +279,7 @@ export default function SkateGamesPage() {
               <div>
                 <p className="mb-1 text-[10px] font-black uppercase tracking-[0.22em] text-purple-300">{t('sessionEyebrow')}</p>
                 <h2 className="text-xl font-black uppercase tracking-wide">{t('judgeQueueTitle')}</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-400">{t('judgeQueueLocationNote')}</p>
               </div>
               <span className="font-mono text-xs text-neutral-500">{String(judgeQueue.length).padStart(2, '0')}</span>
             </div>

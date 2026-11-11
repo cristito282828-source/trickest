@@ -90,13 +90,13 @@ export async function POST(
       });
       const status = acceptances.opponentAcceptedAt
         ? acceptances.judgeId
-          ? acceptances.judgeAcceptedAt ? SkateGameStatus.READY : SkateGameStatus.PENDING_ACCEPTANCE
+          ? acceptances.judgeAcceptedAt ? SkateGameStatus.IN_PROGRESS : SkateGameStatus.PENDING_ACCEPTANCE
           : SkateGameStatus.AWAITING_JUDGE
         : SkateGameStatus.PENDING_ACCEPTANCE;
-      if (status === SkateGameStatus.READY) {
+      if (status === SkateGameStatus.IN_PROGRESS) {
         await transaction.skateGame.update({
           where: { id: gameId },
-          data: { status },
+          data: { status, startedAt: new Date() },
         });
       }
       const recipients = [game.challengerId, game.opponentId, game.judgeId]
@@ -106,8 +106,8 @@ export async function POST(
           userId,
           type: 'skate_game_response',
           title: 'Game of Skate invitation update',
-          message: status === SkateGameStatus.READY
-            ? 'All participants accepted. Check in at the selected spot to start.'
+          message: status === SkateGameStatus.IN_PROGRESS
+            ? 'All participants accepted. Your game is ready to play.'
             : 'A participant accepted the Game of Skate invitation.',
           link: `/dashboard/skate-games/${gameId}`,
         })),

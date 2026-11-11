@@ -30,6 +30,7 @@ model User {
   ciudad              String?
   latitude            Float? // Latitud para mostrar en el mapa
   longitude           Float? // Longitud para mostrar en el mapa
+  locationUpdatedAt   DateTime?
   showOnMap           Boolean              @default(false) // Si el usuario quiere aparecer en el mapa público
   birthdate           DateTime? // Nuevo campo para la fecha de nacimiento
   birthskate          DateTime? // Nuevo campo para la fecha de nacimiento
@@ -70,6 +71,8 @@ model User {
   skateGameCheckIns   SkateGameCheckIn[]
   skateGameRatingsGiven SkateGameRating[]   @relation("SkateGameRatingRater")
   skateGameRatingsReceived SkateGameRating[] @relation("SkateGameRatingJudge")
+
+  @@index([locationUpdatedAt])
 }
 
 model SocialMedia {

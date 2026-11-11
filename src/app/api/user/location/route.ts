@@ -29,6 +29,7 @@ export async function GET(req: Request) {
         estado: true,
         latitude: true,
         longitude: true,
+        locationUpdatedAt: true,
         showOnMap: true,
       },
     });
@@ -89,6 +90,12 @@ export async function PUT(req: Request) {
     if (estado !== undefined) updateData.estado = estado || null;
     if (latitude !== undefined) updateData.latitude = latitude ?? null;
     if (longitude !== undefined) updateData.longitude = longitude ?? null;
+    if (latitude !== undefined || longitude !== undefined) {
+      updateData.locationUpdatedAt =
+        typeof latitude === 'number' && typeof longitude === 'number'
+          ? new Date()
+          : null;
+    }
     if (showOnMap !== undefined) updateData.showOnMap = showOnMap;
 
     // Actualizar usuario
@@ -103,6 +110,7 @@ export async function PUT(req: Request) {
         estado: true,
         latitude: true,
         longitude: true,
+        locationUpdatedAt: true,
         showOnMap: true,
       },
     });

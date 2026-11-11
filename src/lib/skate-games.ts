@@ -3,8 +3,14 @@ import prisma from '@/app/lib/prisma';
 
 export const skateLetters = ['S', 'K', 'A', 'T', 'E'] as const;
 export const skateGameRadiusMeters = 100;
-export const skateGameMaxGpsAccuracyMeters = 100;
-export const skateGameCheckInFreshnessMs = 15 * 60_000;
+export const skateGameLocationFreshnessMs = 5 * 60_000;
+
+export function hasFreshSkateGameLocation(locationUpdatedAt: Date | null | undefined) {
+  return Boolean(
+    locationUpdatedAt &&
+    Date.now() - locationUpdatedAt.getTime() <= skateGameLocationFreshnessMs
+  );
+}
 
 export async function isQualifiedSkateJudge(userEmail: string) {
   const user = await prisma.user.findUnique({
@@ -45,9 +51,6 @@ export async function findAccessibleSkateGame(
       turns: {
         orderBy: { turnNumber: 'asc' },
         include: { player: { select: { username: true, name: true, photo: true } } },
-      },
-      checkIns: {
-        include: { user: { select: { email: true, username: true, name: true } } },
       },
       ratings: {
         where: { raterId: userEmail },
@@ -108,16 +111,6 @@ export function serializeSkateGame(
       judgeNote: turn.judgeNote,
       createdAt: turn.createdAt,
     })),
-    checkIns: game.checkIns.map((checkIn) => ({
-      username: checkIn.user.username,
-      name: checkIn.user.name,
-      checkedInAt: checkIn.checkedInAt,
-      accuracyMeters: checkIn.accuracyMeters,
-    })),
-    myCheckIn: game.checkIns.some((checkIn) =>
-      checkIn.user.email === viewerEmail &&
-      Date.now() - checkIn.checkedInAt.getTime() <= skateGameCheckInFreshnessMs
-    ),
     myRating: game.ratings[0] ?? null,
     viewerRole: game.challengerId === viewerEmail
       ? 'challenger'

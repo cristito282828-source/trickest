@@ -3,7 +3,11 @@ import { getServerSession } from 'next-auth';
 import prisma from '@/app/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { errorResponse, successResponse } from '@/lib/validation';
-import { calculateDistanceMeters, skateGameRadiusMeters } from '@/lib/skate-games';
+import {
+  calculateDistanceMeters,
+  hasFreshSkateGameLocation,
+  skateGameRadiusMeters,
+} from '@/lib/skate-games';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,9 +17,10 @@ export async function GET(request: NextRequest) {
 
     const challenger = await prisma.user.findUnique({
       where: { email },
-      select: { latitude: true, longitude: true, showOnMap: true },
+      select: { latitude: true, longitude: true, showOnMap: true, locationUpdatedAt: true },
     });
-    if (!challenger?.showOnMap || challenger.latitude === null || challenger.longitude === null) {
+    if (!challenger?.showOnMap || challenger.latitude === null || challenger.longitude === null ||
+        !hasFreshSkateGameLocation(challenger.locationUpdatedAt)) {
       return errorResponse('LOCATION_REQUIRED', 'Enable location sharing and refresh your location before searching', 400);
     }
 
@@ -30,6 +35,7 @@ export async function GET(request: NextRequest) {
         isActive: true,
         profileStatus: 'complete',
         showOnMap: true,
+        locationUpdatedAt: { gte: new Date(Date.now() - 5 * 60_000) },
         latitude: { gte: challenger.latitude - latitudeDelta, lte: challenger.latitude + latitudeDelta },
         longitude: { gte: challenger.longitude - longitudeDelta, lte: challenger.longitude + longitudeDelta },
         ...(query.length >= 2 && {
@@ -39,11 +45,20 @@ export async function GET(request: NextRequest) {
           ],
         }),
       },
-      select: { username: true, name: true, photo: true, role: true, latitude: true, longitude: true },
+      select: {
+        username: true,
+        name: true,
+        photo: true,
+        role: true,
+        latitude: true,
+        longitude: true,
+        locationUpdatedAt: true,
+      },
       orderBy: { username: 'asc' },
     });
     const nearbyUsers = users.flatMap((user) => {
-      if (!user.username || user.latitude === null || user.longitude === null) return [];
+      if (!user.username || user.latitude === null || user.longitude === null ||
+          !hasFreshSkateGameLocation(user.locationUpdatedAt)) return [];
       const distance = calculateDistanceMeters(challenger.latitude!, challenger.longitude!, user.latitude, user.longitude);
       if (distance > skateGameRadiusMeters) return [];
       return [{
