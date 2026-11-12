@@ -105,9 +105,9 @@ export class OrbitalEngine {
   update(deltaTime: number) {
     for (const p of this.products) {
       if (p.anchored) {
-        // El producto anclado se queda quieto en el centro
+        // Keep the selected product above the detail panel.
         p.x = this.width / 2
-        p.y = this.height / 2
+        p.y = this.getAnchoredY()
         continue
       }
 
@@ -219,7 +219,7 @@ export class OrbitalEngine {
     this.releaseAnchored()
     target.anchored = true
     target.x = this.width / 2
-    target.y = this.height / 2
+    target.y = this.getAnchoredY()
     target.vx = 0
     target.vy = 0
     this.anchoredId = target.id
@@ -303,6 +303,10 @@ export class OrbitalEngine {
     return this.products.find((p) => p.id === this.anchoredId) ?? null
   }
 
+  private getAnchoredY() {
+    return this.height * 0.28
+  }
+
   /**
    * Actualiza el tamaño del viewport (cuando el usuario redimensiona la ventana)
    */
@@ -315,7 +319,7 @@ export class OrbitalEngine {
       const anchored = this.products.find((p) => p.id === this.anchoredId)
       if (anchored) {
         anchored.x = width / 2
-        anchored.y = height / 2
+        anchored.y = this.getAnchoredY()
       }
     }
   }
