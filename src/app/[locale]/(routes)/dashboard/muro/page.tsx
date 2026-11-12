@@ -5,18 +5,14 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/app/lib/prisma';
 import CommunityWall from '@/components/CommunityWall';
 import { graphqlFetch } from '@/lib/woocommerce/graphql-client';
-import {
-  RECENT_PRODUCTS_BY_CATEGORY_ID_QUERY,
-  RECENT_PRODUCTS_QUERY,
-} from '@/lib/woocommerce/queries';
+import { RECENT_PRODUCTS_QUERY } from '@/lib/woocommerce/queries';
 import type { ExternalProduct } from '@/lib/woocommerce/types';
 
 export const dynamic = 'force-dynamic';
 
 const PRODUCT_ACTIVITY_WINDOW_DAYS = 30;
 const MAX_WALL_PRODUCT_ACTIVITIES = 2;
-const FEATURED_CATEGORY = process.env.WC_FEATURED_CATEGORY || 'trickest';
-const FEATURED_CATEGORY_IS_NUMERIC = /^\d+$/.test(FEATURED_CATEGORY);
+const MAX_RECENT_PRODUCTS = 50;
 
 export default async function CommunityWallPage() {
   const session = await getServerSession(authOptions);
@@ -96,17 +92,11 @@ export default async function CommunityWallPage() {
         createdBy: true,
       },
     }),
-    FEATURED_CATEGORY_IS_NUMERIC
-      ? graphqlFetch<{ products: { nodes: ExternalProduct[] } }>(
-          RECENT_PRODUCTS_BY_CATEGORY_ID_QUERY,
-          { categoryId: Number(FEATURED_CATEGORY), first: 20 },
-          3600
-        )
-      : graphqlFetch<{ products: { nodes: ExternalProduct[] } }>(
-          RECENT_PRODUCTS_QUERY,
-          { category: FEATURED_CATEGORY, first: 20 },
-          3600
-        ),
+    graphqlFetch<{ products: { nodes: ExternalProduct[] } }>(
+      RECENT_PRODUCTS_QUERY,
+      { first: MAX_RECENT_PRODUCTS },
+      60
+    ),
     prisma.user.count({ where: { isActive: true } }),
     prisma.team.count({ where: { isActive: true } }),
     prisma.challenge.count(),

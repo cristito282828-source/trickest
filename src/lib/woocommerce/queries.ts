@@ -65,29 +65,9 @@ export const FEATURED_PRODUCTS_QUERY = `
 `;
 
 export const RECENT_PRODUCTS_QUERY = `
-  query GetRecentProducts($category: String!, $first: Int = 20) {
+  query GetRecentProducts($first: Int = 50) {
     products(
-      where: { category: $category, orderby: { field: DATE, order: DESC } }
-      first: $first
-    ) {
-      nodes {
-        databaseId
-        name
-        slug
-        date
-        image {
-          sourceUrl
-          altText
-        }
-      }
-    }
-  }
-`;
-
-export const RECENT_PRODUCTS_BY_CATEGORY_ID_QUERY = `
-  query GetRecentProductsByCategoryId($categoryId: Int!, $first: Int = 20) {
-    products(
-      where: { categoryId: $categoryId, orderby: { field: DATE, order: DESC } }
+      where: { orderby: { field: DATE, order: DESC } }
       first: $first
     ) {
       nodes {
